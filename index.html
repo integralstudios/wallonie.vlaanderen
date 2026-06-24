@@ -19,10 +19,92 @@
         background-color: #000000;
       }
       .yellow {
-        background-color: #FAE042;
+        background-color: #FDDA24;
       }
       .red {
-        background-color: #ED2939;
+        background-color: #EF3340;
+      }
+      .mute-btn {
+        position: fixed;
+        right: 32px;
+        bottom: 32px;
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        z-index: 10;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .mute-btn .ring {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 48px;
+        height: 48px;
+        margin: -24px 0 0 -24px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+      }
+      .mute-btn:hover .ring,
+      .mute-btn:focus-visible .ring {
+        transform: scale(1.1);
+      }
+      .mute-btn:focus {
+        outline: none;
+      }
+      .mute-btn .icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        fill: #ffffff;
+        transform-origin: center;
+        /* ease-out (easeOutCubic) under 300ms; blur bridges the two icons so
+           the swap reads as one smooth morph rather than a crossfade of two
+           shapes (per Emil Kowalski's animation tips). */
+        transition: opacity 0.24s cubic-bezier(0.33, 1, 0.68, 1),
+          transform 0.24s cubic-bezier(0.33, 1, 0.68, 1),
+          filter 0.24s cubic-bezier(0.33, 1, 0.68, 1);
+      }
+      .mute-btn .icon-on {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        filter: blur(0);
+      }
+      .mute-btn .icon-off {
+        opacity: 0;
+        transform: scale(0.9) rotate(-10deg);
+        filter: blur(3px);
+      }
+      .mute-btn.is-muted .icon-on {
+        opacity: 0;
+        transform: scale(0.9) rotate(10deg);
+        filter: blur(3px);
+      }
+      .mute-btn.is-muted .icon-off {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        filter: blur(0);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .mute-btn .icon {
+          transition: opacity 0.15s linear;
+        }
+        .mute-btn .icon-on,
+        .mute-btn .icon-off,
+        .mute-btn.is-muted .icon-on,
+        .mute-btn.is-muted .icon-off {
+          transform: none;
+          filter: none;
+        }
       }
     </style>
   </head>
@@ -34,21 +116,61 @@
         <td class="red"></td>
       </tr>
     </table>
-    <iframe id="iframeAudio" src="belgium.mp3" allow="autoplay" style="display:none"></iframe>
-    <audio id="playAudio" preload="auto" loop autoplay>
+    <audio id="anthem" preload="auto" loop>
       <source src="belgium.mp3" type="audio/mpeg">
       <source src="belgium.ogg" type="audio/ogg">
     </audio>
+    <button id="muteBtn" class="mute-btn" type="button" aria-label="Mute" aria-pressed="false">
+      <span class="ring"></span>
+      <svg class="icon icon-on" viewBox="-0.58 -1.2 24 24" aria-hidden="true"><g transform="translate(4, 3)"><path d="M11.6100569,0.092080459 C11.8504906,0.223661289 12,0.475917369 12,0.750000596 L12,17.25 C12,17.5240841 11.8504906,17.7763386 11.6100569,17.9079208 C11.3696241,18.0395012 11.0765619,18.0294495 10.8457098,17.8817043 L4.7805481,14 L0.75,14 C0.335786432,14 0,13.6642141 0,13.250001 L0,4.75000048 C0,4.33578682 0.335786432,4 0.75,4 L4.7805481,4 L10.8457098,0.118297026 C11.0765619,-0.0294485241 11.3696241,-0.0395003706 11.6100569,0.092080459 Z"></path><path d="M15.4193678,4.58099794 C15.1264753,4.28810501 14.6516008,4.28810501 14.3587084,4.58099794 C14.065815,4.87389135 14.065815,5.3487649 14.3587084,5.64165831 C15.2191105,6.50206041 15.7499504,7.68853188 15.7499504,9.0004158 C15.7499504,10.3122997 15.2191095,11.4987717 14.3587084,12.3591728 C14.065815,12.6520662 14.065815,13.1269398 14.3587084,13.4198332 C14.6516008,13.7127266 15.1264753,13.7127266 15.4193678,13.4198332 C16.5495739,12.2896271 17.2499504,10.7260971 17.2499504,9.0004158 C17.2499504,7.27473259 16.5495739,5.71120453 15.4193678,4.58099794 Z"></path></g></svg>
+      <svg class="icon icon-off" viewBox="-1.64 -1.12 24 24" aria-hidden="true"><g transform="translate(2.5, 3)"><path d="M14,2.9393394 L14,0.750000596 C14,0.475917399 13.8504906,0.223661289 13.6100569,0.092080459 C13.3696241,-0.0395003706 13.0765619,-0.0294485241 12.8457098,0.118297026 L6.7805481,4 L2.75,4 C2.33578634,4 2,4.33578682 2,4.75000048 L2,13.250001 C2,13.6642141 2.33578634,14 2.75,14 L2.93933845,14 L0.219669923,16.7196693 C-0.0732233077,17.0125637 -0.0732233077,17.4874363 0.219669923,17.7803307 C0.512563094,18.0732231 0.987436891,18.0732231 1.28033018,17.7803307 L17.7803307,1.28033018 C18.0732231,0.987436891 18.0732231,0.512563094 17.7803307,0.219669923 C17.4874363,-0.0732233077 17.0125637,-0.0732233077 16.7196693,0.219669923 L14,2.9393394 Z"></path><path d="M12.8457098,17.8817043 L7.02432346,14.1560173 L14,7.18034029 L14,17.25 C14,17.5240841 13.8504906,17.7763386 13.6100569,17.9079208 C13.3696241,18.0395012 13.0765619,18.0294495 12.8457098,17.8817043 Z"></path></g></svg>
+    </button>
     <script>
       console.log('🇧🇪 BELGIE - BELGIQUE - BELGIEN 🇧🇪')
-      var isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-      if (!isChrome) {
-        var iframe = document.getElementById('iframeAudio');
-        iframe.parentNode.removeChild(iframe);
-      } else {
-        var audio = document.getElementById('playAudio');
-        audio.parentNode.removeChild(audio);
-      }
+      ;(function () {
+        var audio = document.getElementById('anthem');
+        var btn = document.getElementById('muteBtn');
+        var muted = false;
+
+        function render() {
+          btn.classList.toggle('is-muted', muted);
+          btn.setAttribute('aria-pressed', String(muted));
+          btn.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+        }
+
+        function play() {
+          if (muted) return;
+          var p = audio.play();
+          if (p && typeof p.then === 'function') p.catch(function () {});
+        }
+
+        // Start the anthem. Browsers block audible autoplay until the visitor
+        // interacts with the page, so also kick it off on the first interaction.
+        play();
+        var events = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
+        function onFirstInteraction(evt) {
+          // If this first interaction is the mute button itself, let its click
+          // handler decide whether to play. Otherwise pointerdown/keydown would
+          // start audible playback a beat before the click mutes it (a blip).
+          if (!btn.contains(evt.target)) play();
+          events.forEach(function (name) {
+            document.removeEventListener(name, onFirstInteraction);
+          });
+        }
+        events.forEach(function (name) {
+          document.addEventListener(name, onFirstInteraction);
+        });
+
+        // Mute / unmute, resuming playback when unmuted.
+        btn.addEventListener('click', function () {
+          muted = !muted;
+          audio.muted = muted;
+          play();
+          render();
+        });
+
+        render();
+      })();
     </script>
     <script> (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){ (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o), m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m) })(window,document,'script','//www.google-analytics.com/analytics.js','ga'); ga('create', 'UA-20134293-8', 'auto'); ga('send', 'pageview'); </script>
   </body>
