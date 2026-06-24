@@ -148,14 +148,17 @@
         // interacts with the page, so also kick it off on the first interaction.
         play();
         var events = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
-        function onFirstInteraction() {
-          play();
-          events.forEach(function (e) {
-            document.removeEventListener(e, onFirstInteraction);
+        function onFirstInteraction(evt) {
+          // If this first interaction is the mute button itself, let its click
+          // handler decide whether to play. Otherwise pointerdown/keydown would
+          // start audible playback a beat before the click mutes it (a blip).
+          if (!btn.contains(evt.target)) play();
+          events.forEach(function (name) {
+            document.removeEventListener(name, onFirstInteraction);
           });
         }
-        events.forEach(function (e) {
-          document.addEventListener(e, onFirstInteraction);
+        events.forEach(function (name) {
+          document.addEventListener(name, onFirstInteraction);
         });
 
         // Mute / unmute, resuming playback when unmuted.
