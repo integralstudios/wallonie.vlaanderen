@@ -322,6 +322,7 @@ test('lyrics language picker is center-aligned with the control buttons', () => 
   assert.doesNotMatch(html, /\.lyrics-language-switcher[\s\S]*top:\s*28px/);
   assert.match(html, /\.lyrics-language-switcher[\s\S]*--language-underline-x:\s*0px/);
   assert.match(html, /\.lyrics-language-switcher[\s\S]*--language-underline-width:\s*0px/);
+  assert.match(html, /\.lyrics-language-switcher[\s\S]*gap:\s*20px/);
   assert.match(html, /\.lyrics-language[\s\S]*border:\s*0/);
   assert.match(html, /\.lyrics-language[\s\S]*background:\s*transparent/);
   assert.match(html, /\.lyrics-language[\s\S]*color:\s*rgba\(255, 255, 255, 0\.6\)/);
@@ -341,6 +342,7 @@ test('lyrics language picker is center-aligned with the control buttons', () => 
   assert.match(html, /\.lyrics-language-underline[\s\S]*transform:\s*translate3d\(var\(--language-underline-x\), 0, 0\)/);
   assert.match(html, /\.lyrics-language-underline[\s\S]*transition:\s*transform 0\.34s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\),\s*width 0\.34s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\)/);
   assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-language-switcher[\s\S]*bottom:\s*38px/);
+  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-language-switcher[\s\S]*gap:\s*20px/);
   assert.match(html, /function updateLanguageUnderline\(\)/);
   assert.match(html, /document\.createRange\(\)/);
   assert.match(html, /range\.selectNodeContents\(selectedButton\)/);
