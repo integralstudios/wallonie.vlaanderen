@@ -93,9 +93,9 @@
         box-sizing: border-box;
         padding: 72px 24px 116px;
         color: #ffffff;
-        background: rgba(0, 0, 0, 0.42);
-        backdrop-filter: blur(28px) saturate(1.2);
-        -webkit-backdrop-filter: blur(28px) saturate(1.2);
+        background: #120f0d;
+        overflow: hidden;
+        isolation: isolate;
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.32s cubic-bezier(0.33, 1, 0.68, 1);
@@ -104,10 +104,30 @@
         opacity: 1;
         pointer-events: auto;
       }
-      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-        .lyrics-overlay {
-          background: rgba(0, 0, 0, 0.76);
-        }
+      .lyrics-background {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+        background: #120f0d;
+      }
+      .lyrics-background-image {
+        position: absolute;
+        inset: -42px;
+        background-image: url('lyrics-bg.jpg');
+        background-size: cover;
+        background-position: center;
+        filter: blur(28px) saturate(1.12);
+        opacity: 0.96;
+        transform: scale(1.08);
+      }
+      .lyrics-background-wash {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.34) 54%, rgba(0, 0, 0, 0.66)),
+          radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.08) 44%, rgba(0, 0, 0, 0.46) 100%);
       }
       .lyrics-language-switcher {
         position: fixed;
@@ -134,6 +154,8 @@
         background: rgba(255, 255, 255, 0.94);
       }
       .lyrics-viewport {
+        position: relative;
+        z-index: 1;
         width: min(1000px, 100%);
         max-height: min(76vh, 640px);
         overflow-y: auto;
@@ -195,6 +217,7 @@
       @media (prefers-reduced-motion: reduce) {
         .control-btn .ring,
         .lyrics-overlay,
+        .lyrics-background-image,
         .lyrics-line {
           transition: none;
         }
@@ -240,6 +263,10 @@
       </svg>
     </button>
     <section id="lyricsOverlay" class="lyrics-overlay" aria-hidden="true" aria-label="Lyrics" inert>
+      <div class="lyrics-background" aria-hidden="true">
+        <div class="lyrics-background-image"></div>
+        <div class="lyrics-background-wash"></div>
+      </div>
       <div class="lyrics-language-switcher" role="group" aria-label="Lyrics language">
         <button class="lyrics-language is-selected" type="button" data-language="nl" aria-pressed="true">NL</button>
         <button class="lyrics-language" type="button" data-language="fr" aria-pressed="false">FR</button>

@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const lyricsBackgroundPath = path.join(__dirname, '..', 'lyrics-bg.jpg');
 
 function tagWithAttribute(tagName, attributeName, value) {
   const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -70,12 +71,21 @@ test('mute control hooks are preserved', () => {
   assert.match(html, /\.mute-btn\.is-muted \.icon-off/);
 });
 
-test('lyrics overlay has blur, readable fallback, and reduced-motion styling', () => {
-  assert.match(html, /backdrop-filter:\s*blur\(/);
-  assert.match(html, /-webkit-backdrop-filter:\s*blur\(/);
-  assert.match(html, /@supports not \(\(backdrop-filter:\s*blur\(1px\)\)/);
+test('lyrics overlay uses the provided image as a blurred background', () => {
+  assert.ok(fs.existsSync(lyricsBackgroundPath), 'Expected lyrics-bg.jpg asset');
+  assert.ok(fs.statSync(lyricsBackgroundPath).size > 0, 'Expected lyrics-bg.jpg to be non-empty');
+  assert.match(html, /class="lyrics-background"/);
+  assert.match(html, /class="lyrics-background-image"/);
+  assert.match(html, /class="lyrics-background-wash"/);
+  assert.match(html, /\.lyrics-background-image[\s\S]*background-image:\s*url\('lyrics-bg\.jpg'\)/);
+  assert.match(html, /\.lyrics-background-image[\s\S]*background-size:\s*cover/);
+  assert.match(html, /\.lyrics-background-image[\s\S]*filter:\s*blur\(28px\) saturate\(1\.12\)/);
+  assert.match(html, /\.lyrics-background-image[\s\S]*transform:\s*scale\(1\.08\)/);
+  assert.match(html, /\.lyrics-background-wash[\s\S]*linear-gradient\(180deg/);
+  assert.doesNotMatch(html, /backdrop-filter:\s*blur\(/);
+  assert.doesNotMatch(html, /-webkit-backdrop-filter:\s*blur\(/);
   assert.match(html, /prefers-reduced-motion:\s*reduce/);
-  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.control-btn \.ring/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-background-image/);
   assert.match(html, /\.lyrics-viewport[\s\S]*overflow-y:\s*auto/);
   assert.doesNotMatch(html, /\.lyrics-line\.is-active/);
 });
