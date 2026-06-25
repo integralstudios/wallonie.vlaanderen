@@ -259,7 +259,14 @@
       ;(function () {
         var audio = document.getElementById('anthem');
         var btn = document.getElementById('muteBtn');
+        var lyricsBtn = document.getElementById('lyricsBtn');
+        var lyricsOverlay = document.getElementById('lyricsOverlay');
+        var lyricsTrack = document.getElementById('lyricsTrack');
+        var languageButtons = Array.prototype.slice.call(document.querySelectorAll('.lyrics-language'));
         var muted = false;
+        var lyricsOpen = false;
+        var selectedLanguage = 'nl';
+        var activeLineIndex = -1;
         var LYRICS = {
           nl: [
             { time: 0, text: "O dierbaar België" },
@@ -317,6 +324,49 @@
           if (p && typeof p.then === 'function') p.catch(function () {});
         }
 
+        function renderLyrics() {
+          var lines = LYRICS[selectedLanguage];
+          lyricsTrack.innerHTML = lines.map(function (line, index) {
+            return '<p class="lyrics-line" data-index="' + index + '">' + line.text + '</p>';
+          }).join('');
+          activeLineIndex = 0;
+          Array.prototype.forEach.call(lyricsTrack.children, function (lineNode, index) {
+            lineNode.classList.toggle('is-active', index === activeLineIndex);
+            lineNode.classList.toggle('is-past', false);
+          });
+        }
+
+        function renderLyricsControls() {
+          lyricsBtn.classList.toggle('is-active', lyricsOpen);
+          lyricsBtn.setAttribute('aria-pressed', String(lyricsOpen));
+          lyricsBtn.setAttribute('aria-label', lyricsOpen ? 'Hide lyrics' : 'Show lyrics');
+          lyricsOverlay.classList.toggle('is-open', lyricsOpen);
+          lyricsOverlay.setAttribute('aria-hidden', String(!lyricsOpen));
+          if (lyricsOpen) lyricsOverlay.removeAttribute('inert');
+          else lyricsOverlay.setAttribute('inert', '');
+          languageButtons.forEach(function (languageButton) {
+            var isSelected = languageButton.getAttribute('data-language') === selectedLanguage;
+            languageButton.classList.toggle('is-selected', isSelected);
+            languageButton.setAttribute('aria-pressed', String(isSelected));
+          });
+        }
+
+        function setLyricsOpen(open) {
+          lyricsOpen = open;
+          if (lyricsOpen && !lyricsTrack.children.length) renderLyrics();
+          renderLyricsControls();
+          if (lyricsOpen) {
+            play();
+          }
+        }
+
+        function setLanguage(language) {
+          if (!LYRICS[language] || selectedLanguage === language) return;
+          selectedLanguage = language;
+          renderLyrics();
+          renderLyricsControls();
+        }
+
         // Start the anthem. Browsers block audible autoplay until the visitor
         // interacts with the page, so also kick it off on the first interaction.
         play();
@@ -336,6 +386,20 @@
           document.addEventListener(name, onFirstInteraction);
         });
 
+        lyricsBtn.addEventListener('click', function () {
+          setLyricsOpen(!lyricsOpen);
+        });
+
+        languageButtons.forEach(function (languageButton) {
+          languageButton.addEventListener('click', function () {
+            setLanguage(languageButton.getAttribute('data-language'));
+          });
+        });
+
+        document.addEventListener('keydown', function (evt) {
+          if (evt.key === 'Escape' && lyricsOpen) setLyricsOpen(false);
+        });
+
         // Mute / unmute, resuming playback when unmuted.
         btn.addEventListener('click', function () {
           muted = !muted;
@@ -344,6 +408,7 @@
           render();
         });
 
+        renderLyricsControls();
         render();
       })();
     </script>

@@ -121,3 +121,15 @@ test('lyrics data has the expected language structure and timings', () => {
     });
   });
 });
+
+test('lyrics runtime exposes open, close, language, and render hooks', () => {
+  assert.match(html, /var lyricsOpen = false/);
+  assert.match(html, /var selectedLanguage = 'nl'/);
+  assert.match(html, /function setLyricsOpen\(open\)/);
+  assert.match(html, /function setLanguage\(language\)/);
+  assert.match(html, /function renderLyrics\(\)/);
+  assert.match(html, /lyricsBtn\.addEventListener\('click'/);
+  assert.match(html, /document\.addEventListener\('keydown'/);
+  assert.match(html, /lyricsOverlay\.removeAttribute\('inert'\)/);
+  assert.match(html, /lyricsOverlay\.setAttribute\('inert', ''\)/);
+});
