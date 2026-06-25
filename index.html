@@ -93,9 +93,9 @@
         box-sizing: border-box;
         padding: 72px 24px 116px;
         color: #ffffff;
-        background: #090809;
-        overflow: hidden;
-        isolation: isolate;
+        background: rgba(0, 0, 0, 0.42);
+        backdrop-filter: blur(28px) saturate(1.2);
+        -webkit-backdrop-filter: blur(28px) saturate(1.2);
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.32s cubic-bezier(0.33, 1, 0.68, 1);
@@ -104,54 +104,10 @@
         opacity: 1;
         pointer-events: auto;
       }
-      .lyrics-flag-blur-backdrop {
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        overflow: hidden;
-        pointer-events: none;
-        background: #090809;
-      }
-      .lyrics-flag-blur-layer {
-        position: absolute;
-        width: 165vmax;
-        height: 165vmax;
-        border-radius: 9999px;
-        background: linear-gradient(90deg, #030303 0 33.333%, #fdda24 33.333% 66.666%, #ef3340 66.666% 100%);
-        will-change: auto;
-      }
-      .lyrics-flag-blur-color {
-        top: -74vmax;
-        right: -58vmax;
-        filter: blur(58px) saturate(1.55) contrast(1.08);
-        opacity: 0.72;
-        mix-blend-mode: screen;
-        transform: translate3d(6%, -4%, 0) rotate(-24deg) scale(1.05);
-      }
-      .lyrics-flag-blur-shadow {
-        bottom: -78vmax;
-        left: -62vmax;
-        filter: blur(64px) saturate(1.2);
-        opacity: 0.78;
-        mix-blend-mode: multiply;
-        transform: translate3d(-8%, 5%, 0) rotate(18deg) scale(1.1);
-      }
-      .lyrics-flag-blur-glow {
-        top: -42vmax;
-        left: -18vmax;
-        width: 125vmax;
-        height: 125vmax;
-        filter: blur(44px) saturate(1.85);
-        opacity: 0.58;
-        mix-blend-mode: plus-lighter;
-        transform: translate3d(10%, 10%, 0) rotate(32deg) scale(0.92);
-      }
-      .lyrics-flag-blur-vignette {
-        position: absolute;
-        inset: 0;
-        background:
-          linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.42) 58%, rgba(0, 0, 0, 0.74)),
-          radial-gradient(circle at 52% 32%, rgba(255, 221, 60, 0.12), rgba(0, 0, 0, 0.2) 48%, rgba(0, 0, 0, 0.62) 100%);
+      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .lyrics-overlay {
+          background: rgba(0, 0, 0, 0.76);
+        }
       }
       .lyrics-language-switcher {
         position: fixed;
@@ -178,8 +134,6 @@
         background: rgba(255, 255, 255, 0.94);
       }
       .lyrics-viewport {
-        position: relative;
-        z-index: 1;
         width: min(1000px, 100%);
         max-height: min(76vh, 640px);
         overflow-y: auto;
@@ -241,7 +195,6 @@
       @media (prefers-reduced-motion: reduce) {
         .control-btn .ring,
         .lyrics-overlay,
-        .lyrics-flag-blur-layer,
         .lyrics-line {
           transition: none;
         }
@@ -287,12 +240,6 @@
       </svg>
     </button>
     <section id="lyricsOverlay" class="lyrics-overlay" aria-hidden="true" aria-label="Lyrics" inert>
-      <div class="lyrics-flag-blur-backdrop" aria-hidden="true">
-        <div class="lyrics-flag-blur-layer lyrics-flag-blur-color"></div>
-        <div class="lyrics-flag-blur-layer lyrics-flag-blur-shadow"></div>
-        <div class="lyrics-flag-blur-layer lyrics-flag-blur-glow"></div>
-        <div class="lyrics-flag-blur-vignette"></div>
-      </div>
       <div class="lyrics-language-switcher" role="group" aria-label="Lyrics language">
         <button class="lyrics-language is-selected" type="button" data-language="nl" aria-pressed="true">NL</button>
         <button class="lyrics-language" type="button" data-language="fr" aria-pressed="false">FR</button>
