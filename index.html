@@ -30,8 +30,10 @@
         --volume-wave-glow-fade-opacity: 0.14;
         --volume-wave-glow-size: 1px;
         --volume-wave-glow-peak-size: 2px;
-        --volume-wave-wobble: 4%;
-        --volume-wave-wobble-soft: 2%;
+        --volume-wave-peak-count: 14;
+        --volume-wave-amplitude: 3.4;
+        --volume-wave-softness: 0.64;
+        --volume-wave-rotation-speed: 1.15;
         --volume-wave-echo-count: 2;
         --volume-wave-echo-duration: 1.8s;
         --volume-wave-echo-delay: 0.9s;
@@ -122,36 +124,58 @@
         border-radius: 50%;
         transition: transform 0.2s ease;
       }
-      .control-btn .wave-echo {
+      .mute-btn .wave-ring {
         position: absolute;
         top: 50%;
         left: 50%;
-        width: 36px;
-        height: 36px;
-        box-sizing: border-box;
-        margin: -18px 0 0 -18px;
-        border: 1px solid transparent;
-        border-radius: 50%;
-        opacity: 0;
+        width: 44px;
+        height: 44px;
+        margin: -22px 0 0 -22px;
+        overflow: visible;
+        color: #ffffff;
         pointer-events: none;
+        transform-origin: center;
+        transition: transform 0.2s ease;
       }
-      .control-btn .wave-echo[hidden] {
+      .mute-btn .wave-path {
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.1;
+        transform-box: fill-box;
+        transform-origin: center;
+        vector-effect: non-scaling-stroke;
+      }
+      .mute-btn .wave-primary {
+        opacity: 0.5;
+        stroke-opacity: 0.5;
+      }
+      .mute-btn .wave-echo {
+        opacity: 0;
+        stroke-opacity: var(--volume-wave-echo-border-opacity);
+      }
+      .mute-btn .wave-path[hidden] {
         display: none;
       }
-      .mute-btn.is-playing .ring,
-      .mute-btn.is-dialkit-previewing .ring {
-        border-color: rgba(255, 255, 255, var(--volume-wave-border-opacity));
-        box-shadow: 0 0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity));
-        animation: volumeRingWave var(--volume-wave-duration) cubic-bezier(0.45, 0, 0.55, 1) infinite;
+      .mute-btn.is-playing .wave-primary,
+      .mute-btn.is-dialkit-previewing .wave-primary {
+        opacity: 1;
+        stroke-opacity: var(--volume-wave-border-opacity);
+        filter: drop-shadow(0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity)));
+        animation: volumeWavePulse var(--volume-wave-duration) cubic-bezier(0.45, 0, 0.55, 1) infinite;
       }
       .mute-btn.is-playing .wave-echo,
       .mute-btn.is-dialkit-previewing .wave-echo {
-        border-color: rgba(255, 255, 255, var(--volume-wave-echo-border-opacity));
         animation: volumeRingEcho var(--volume-wave-echo-duration) ease-out infinite;
         animation-delay: calc(var(--wave-index) * var(--volume-wave-echo-delay));
       }
       .control-btn:hover .ring,
       .control-btn:focus-visible .ring {
+        transform: scale(1.1);
+      }
+      .mute-btn:hover .wave-ring,
+      .mute-btn:focus-visible .wave-ring {
         transform: scale(1.1);
       }
       .control-btn:focus {
@@ -342,29 +366,15 @@
           transform: translate3d(0, 0, 0);
         }
       }
-      @keyframes volumeRingWave {
+      @keyframes volumeWavePulse {
         0%,
         100% {
-          border-radius: 50%;
-          box-shadow: 0 0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity));
+          filter: drop-shadow(0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity)));
+          opacity: 0.82;
         }
-        28% {
-          border-radius:
-            calc(50% - var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble))
-            / calc(50% - var(--volume-wave-wobble)) calc(50% + var(--volume-wave-wobble-soft)) calc(50% - var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble));
-          box-shadow: 0 0 0 var(--volume-wave-glow-peak-size) rgba(255, 255, 255, var(--volume-wave-glow-peak-opacity));
-        }
-        56% {
-          border-radius:
-            calc(50% + var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble-soft))
-            / calc(50% + var(--volume-wave-wobble-soft)) calc(50% - var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble));
-          box-shadow: 0 0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-fade-opacity));
-        }
-        78% {
-          border-radius:
-            calc(50% - var(--volume-wave-wobble)) calc(50% + var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble-soft))
-            / calc(50% + var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble-soft));
-          box-shadow: 0 0 0 var(--volume-wave-glow-peak-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity));
+        50% {
+          filter: drop-shadow(0 0 var(--volume-wave-glow-peak-size) rgba(255, 255, 255, var(--volume-wave-glow-peak-opacity)));
+          opacity: 1;
         }
       }
       @keyframes volumeRingEcho {
@@ -462,14 +472,16 @@
           transform: none;
         }
         .control-btn:hover .ring,
-        .control-btn:focus-visible .ring {
+        .control-btn:focus-visible .ring,
+        .mute-btn:hover .wave-ring,
+        .mute-btn:focus-visible .wave-ring {
           transform: none;
         }
-        .mute-btn.is-playing .ring,
-        .mute-btn.is-dialkit-previewing .ring {
+        .mute-btn.is-playing .wave-primary,
+        .mute-btn.is-dialkit-previewing .wave-primary {
           animation: none;
-          border-radius: 50%;
-          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+          filter: none;
+          opacity: 0.72;
         }
         .mute-btn.is-playing .wave-echo,
         .mute-btn.is-dialkit-previewing .wave-echo {
@@ -510,19 +522,21 @@
     </template>
     <button id="dialkitLauncher" class="dialkit-launcher" type="button" hidden>DialKit</button>
     <button id="muteBtn" class="mute-btn control-btn" type="button" aria-label="Mute" aria-pressed="false">
-      <span class="ring"></span>
-      <span class="wave-echo" style="--wave-index: 0" aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 1" aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 2" hidden aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 3" hidden aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 4" hidden aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 5" hidden aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 6" hidden aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 7" hidden aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 8" hidden aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 9" hidden aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 10" hidden aria-hidden="true"></span>
-      <span class="wave-echo" style="--wave-index: 11" hidden aria-hidden="true"></span>
+      <svg class="wave-ring" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+        <path id="muteWavePrimary" class="wave-path wave-primary"></path>
+        <path class="wave-path wave-echo" style="--wave-index: 0"></path>
+        <path class="wave-path wave-echo" style="--wave-index: 1"></path>
+        <path class="wave-path wave-echo" style="--wave-index: 2" hidden></path>
+        <path class="wave-path wave-echo" style="--wave-index: 3" hidden></path>
+        <path class="wave-path wave-echo" style="--wave-index: 4" hidden></path>
+        <path class="wave-path wave-echo" style="--wave-index: 5" hidden></path>
+        <path class="wave-path wave-echo" style="--wave-index: 6" hidden></path>
+        <path class="wave-path wave-echo" style="--wave-index: 7" hidden></path>
+        <path class="wave-path wave-echo" style="--wave-index: 8" hidden></path>
+        <path class="wave-path wave-echo" style="--wave-index: 9" hidden></path>
+        <path class="wave-path wave-echo" style="--wave-index: 10" hidden></path>
+        <path class="wave-path wave-echo" style="--wave-index: 11" hidden></path>
+      </svg>
       <svg class="icon icon-on" data-sketch-icon="volume-on" viewBox="0 0 24 24" aria-hidden="true">
         <g fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="9 8 5 8 5 16 9 16 15 19.25 15 4.75"></polygon>
@@ -580,6 +594,19 @@
         var languageSwitcher = document.querySelector('.lyrics-language-switcher');
         var languageUnderline = document.querySelector('.lyrics-language-underline');
         var languageButtons = Array.prototype.slice.call(document.querySelectorAll('.lyrics-language'));
+        var wavePrimaryPath = document.getElementById('muteWavePrimary');
+        var waveEchoPaths = Array.prototype.slice.call(document.querySelectorAll('.mute-btn .wave-echo'));
+        var waveParams = {
+          peakCount: 14,
+          amplitude: 3.4,
+          softness: 0.64,
+          rotationSpeed: 1.15
+        };
+        var wavePhase = 0;
+        var waveLastTimestamp = 0;
+        var waveAnimationFrame = null;
+        var wavePlaybackActive = false;
+        var wavePreviewActive = false;
         var muted = false;
         var playbackBlocked = false;
         var isPlaying = true;
@@ -646,6 +673,120 @@
           ]
         };
 
+        function buildWavePath(peakCount, amplitude, softness, phase) {
+          var center = 22;
+          var radius = 17.1;
+          var clampedPeaks = Math.max(3, Math.round(peakCount));
+          var steps = Math.max(144, clampedPeaks * 10);
+          var clampedAmplitude = Math.max(0, amplitude);
+          var clampedSoftness = Math.max(0.1, Math.min(1, softness));
+          var peakPower = 1 + (1 - clampedSoftness) * 5;
+          var path = '';
+
+          for (var i = 0; i <= steps; i += 1) {
+            var progress = i / steps;
+            var angle = -Math.PI / 2 + progress * Math.PI * 2;
+            var rawWave = (Math.sin(angle * clampedPeaks + phase) + 1) / 2;
+            var envelope = (Math.sin(angle * Math.max(3, Math.round(clampedPeaks / 2)) - phase * 0.72) + 1) / 2;
+            var shapedWave = Math.pow(rawWave, peakPower) * (0.78 + envelope * 0.32);
+            var localRadius = radius + clampedAmplitude * (shapedWave - 0.34);
+            var x = center + Math.cos(angle) * localRadius;
+            var y = center + Math.sin(angle) * localRadius;
+            path += (i === 0 ? 'M ' : ' L ') + x.toFixed(2) + ' ' + y.toFixed(2);
+          }
+
+          return path + ' Z';
+        }
+
+        function renderWavePaths() {
+          if (!wavePrimaryPath) return;
+          var pathData = buildWavePath(waveParams.peakCount, waveParams.amplitude, waveParams.softness, wavePhase);
+          wavePrimaryPath.setAttribute('d', pathData);
+          waveEchoPaths.forEach(function (waveEcho) {
+            waveEcho.setAttribute('d', pathData);
+          });
+        }
+
+        function shouldAnimateWave() {
+          return wavePlaybackActive || wavePreviewActive;
+        }
+
+        function prefersReducedMotion() {
+          return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+
+        function updateWaveAnimation(timestamp) {
+          var shouldMove = shouldAnimateWave() && !prefersReducedMotion();
+          if (!shouldMove) {
+            waveAnimationFrame = null;
+            waveLastTimestamp = 0;
+            renderWavePaths();
+            return;
+          }
+
+          if (!waveLastTimestamp) waveLastTimestamp = timestamp;
+          var delta = Math.min(64, timestamp - waveLastTimestamp) / 1000;
+          waveLastTimestamp = timestamp;
+          wavePhase += delta * waveParams.rotationSpeed * Math.PI * 2;
+          renderWavePaths();
+          waveAnimationFrame = window.requestAnimationFrame(updateWaveAnimation);
+        }
+
+        function syncWaveAnimation() {
+          var shouldMove = shouldAnimateWave() && !prefersReducedMotion();
+          if (!window.requestAnimationFrame || !window.cancelAnimationFrame) {
+            waveAnimationFrame = null;
+            waveLastTimestamp = 0;
+            renderWavePaths();
+            return;
+          }
+
+          if (shouldMove && waveAnimationFrame === null) {
+            waveAnimationFrame = window.requestAnimationFrame(updateWaveAnimation);
+          } else if (!shouldMove && waveAnimationFrame !== null) {
+            window.cancelAnimationFrame(waveAnimationFrame);
+            waveAnimationFrame = null;
+            waveLastTimestamp = 0;
+            renderWavePaths();
+          }
+        }
+
+        function applySoundwaveParams(params) {
+          document.documentElement.style.setProperty('--volume-wave-duration', params.duration + 's');
+          document.documentElement.style.setProperty('--volume-wave-border-opacity', String(params.ring.borderOpacity));
+          document.documentElement.style.setProperty('--volume-wave-glow-opacity', String(params.ring.glowOpacity));
+          document.documentElement.style.setProperty('--volume-wave-glow-peak-opacity', String(params.ring.glowPeakOpacity));
+          document.documentElement.style.setProperty('--volume-wave-glow-fade-opacity', String(params.ring.glowFadeOpacity));
+          document.documentElement.style.setProperty('--volume-wave-glow-size', params.ring.glowSize + 'px');
+          document.documentElement.style.setProperty('--volume-wave-glow-peak-size', params.ring.glowPeakSize + 'px');
+          waveParams.peakCount = Math.round(params.wave.peakCount);
+          waveParams.amplitude = params.wave.amplitude;
+          waveParams.softness = params.wave.softness;
+          waveParams.rotationSpeed = params.wave.rotationSpeed;
+          document.documentElement.style.setProperty('--volume-wave-peak-count', String(waveParams.peakCount));
+          document.documentElement.style.setProperty('--volume-wave-amplitude', String(waveParams.amplitude));
+          document.documentElement.style.setProperty('--volume-wave-softness', String(waveParams.softness));
+          document.documentElement.style.setProperty('--volume-wave-rotation-speed', String(waveParams.rotationSpeed));
+          var echoCount = Math.max(0, Math.min(waveEchoPaths.length, Math.round(params.echo.count)));
+          document.documentElement.style.setProperty('--volume-wave-echo-count', String(echoCount));
+          waveEchoPaths.forEach(function (waveEcho, index) {
+            waveEcho.hidden = index >= echoCount;
+          });
+          document.documentElement.style.setProperty('--volume-wave-echo-duration', params.echo.duration + 's');
+          document.documentElement.style.setProperty('--volume-wave-echo-delay', params.echo.delay + 's');
+          document.documentElement.style.setProperty('--volume-wave-echo-scale', String(params.echo.scale));
+          document.documentElement.style.setProperty('--volume-wave-echo-start-scale', String(params.echo.startScale));
+          document.documentElement.style.setProperty('--volume-wave-echo-opacity', String(params.echo.opacity));
+          document.documentElement.style.setProperty('--volume-wave-echo-mid-opacity', String(params.echo.midOpacity));
+          document.documentElement.style.setProperty('--volume-wave-echo-border-opacity', String(params.echo.borderOpacity));
+          wavePreviewActive = Boolean(params.preview);
+          btn.classList.toggle('is-dialkit-previewing', wavePreviewActive);
+          renderWavePaths();
+          syncWaveAnimation();
+        }
+
+        window.applySoundwaveParams = applySoundwaveParams;
+
         function getPreferredLyricsLanguage() {
           var preferredLanguages = [];
           if (navigator.languages && navigator.languages.length) preferredLanguages = navigator.languages;
@@ -664,8 +805,10 @@
           var shouldAnimateSound = !shouldShowSoundOff && !audio.paused;
           btn.classList.toggle('is-muted', shouldShowSoundOff);
           btn.classList.toggle('is-playing', shouldAnimateSound);
+          wavePlaybackActive = shouldAnimateSound;
           btn.setAttribute('aria-pressed', String(muted));
           btn.setAttribute('aria-label', muted ? 'Unmute' : shouldShowSoundOff ? 'Play anthem' : 'Mute');
+          syncWaveAnimation();
         }
 
         function play() {
@@ -849,6 +992,7 @@
           render();
         });
 
+        renderWavePaths();
         renderLyricsControls();
         render();
       })();
@@ -921,44 +1065,24 @@
           var dialkit = await import('dialkit');
           var DialRoot = dialkit.DialRoot;
           var useDialKit = dialkit.useDialKit;
-          var waveEchoes = Array.prototype.slice.call(muteBtn.querySelectorAll('.wave-echo'));
           var mount = document.createElement('div');
           mount.id = 'dialkitSoundwaveRoot';
           document.body.appendChild(mount);
 
           function applySoundwaveParams(params) {
-            document.documentElement.style.setProperty('--volume-wave-duration', params.duration + 's');
-            document.documentElement.style.setProperty('--volume-wave-border-opacity', String(params.ring.borderOpacity));
-            document.documentElement.style.setProperty('--volume-wave-glow-opacity', String(params.ring.glowOpacity));
-            document.documentElement.style.setProperty('--volume-wave-glow-peak-opacity', String(params.ring.glowPeakOpacity));
-            document.documentElement.style.setProperty('--volume-wave-glow-fade-opacity', String(params.ring.glowFadeOpacity));
-            document.documentElement.style.setProperty('--volume-wave-glow-size', params.ring.glowSize + 'px');
-            document.documentElement.style.setProperty('--volume-wave-glow-peak-size', params.ring.glowPeakSize + 'px');
-            document.documentElement.style.setProperty('--volume-wave-wobble', params.shape.wobble + '%');
-            document.documentElement.style.setProperty('--volume-wave-wobble-soft', params.shape.wobbleSoft + '%');
-            var echoCount = Math.max(0, Math.min(waveEchoes.length, Math.round(params.echo.count)));
-            document.documentElement.style.setProperty('--volume-wave-echo-count', String(echoCount));
-            waveEchoes.forEach(function (waveEcho, index) {
-              waveEcho.hidden = index >= echoCount;
-            });
-            document.documentElement.style.setProperty('--volume-wave-echo-duration', params.echo.duration + 's');
-            document.documentElement.style.setProperty('--volume-wave-echo-delay', params.echo.delay + 's');
-            document.documentElement.style.setProperty('--volume-wave-echo-scale', String(params.echo.scale));
-            document.documentElement.style.setProperty('--volume-wave-echo-start-scale', String(params.echo.startScale));
-            document.documentElement.style.setProperty('--volume-wave-echo-opacity', String(params.echo.opacity));
-            document.documentElement.style.setProperty('--volume-wave-echo-mid-opacity', String(params.echo.midOpacity));
-            document.documentElement.style.setProperty('--volume-wave-echo-border-opacity', String(params.echo.borderOpacity));
-            muteBtn.classList.toggle('is-dialkit-previewing', params.preview);
+            if (window.applySoundwaveParams) window.applySoundwaveParams(params);
           }
 
           function SoundwaveControls() {
             var params = useDialKit('Soundwave', {
               preview: true,
               duration: [1.4, 0.4, 3.5, 0.05],
-              shape: {
+              wave: {
                 _collapsed: false,
-                wobble: [4, 0, 14, 0.5],
-                wobbleSoft: [2, 0, 10, 0.5]
+                peakCount: [14, 3, 48, 1],
+                amplitude: [3.4, 0, 8, 0.25],
+                softness: [0.64, 0.1, 1, 0.05],
+                rotationSpeed: [1.15, -3, 3, 0.05]
               },
               ring: {
                 _collapsed: false,
@@ -983,11 +1107,12 @@
             }, {
               id: 'wallonie-soundwave',
               persist: {
-                key: 'wallonie:soundwave-dialkit'
+                key: 'wallonie:soundwave-dialkit-v2'
               },
               shortcuts: {
                 duration: { key: 'd', mode: 'fine' },
-                'shape.wobble': { key: 'w', mode: 'fine' },
+                'wave.peakCount': { key: 'p', mode: 'fine' },
+                'wave.amplitude': { key: 'a', mode: 'fine' },
                 'echo.scale': { key: 's', mode: 'fine' }
               }
             });
@@ -997,8 +1122,10 @@
             }, [
               params.preview,
               params.duration,
-              params.shape.wobble,
-              params.shape.wobbleSoft,
+              params.wave.peakCount,
+              params.wave.amplitude,
+              params.wave.softness,
+              params.wave.rotationSpeed,
               params.ring.borderOpacity,
               params.ring.glowOpacity,
               params.ring.glowPeakOpacity,
