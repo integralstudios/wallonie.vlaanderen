@@ -386,6 +386,8 @@ test('lyrics control uses normal and selected Sketch icons', () => {
   assert.match(html, /data-sketch-icon="lyrics-selected"/);
   assert.match(html, /class="icon icon-lyrics"/);
   assert.match(html, /class="icon icon-lyrics-selected"/);
+  assert.match(html, /data-sketch-icon="lyrics" viewBox="-0\.5 0 24 24"/);
+  assert.match(html, /data-sketch-icon="lyrics-selected" viewBox="-0\.5 0 24 24"/);
   assert.match(html, /\.lyrics-btn \.icon-lyrics-selected[\s\S]*opacity:\s*0/);
   assert.match(html, /\.lyrics-btn\.is-active \.icon-lyrics[\s\S]*opacity:\s*0/);
   assert.match(html, /\.lyrics-btn\.is-active \.icon-lyrics-selected[\s\S]*opacity:\s*1/);
