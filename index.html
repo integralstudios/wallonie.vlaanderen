@@ -93,9 +93,9 @@
         box-sizing: border-box;
         padding: 72px 24px 116px;
         color: #ffffff;
-        background: #090809;
-        overflow: hidden;
-        isolation: isolate;
+        background: rgba(0, 0, 0, 0.42);
+        backdrop-filter: blur(28px) saturate(1.2);
+        -webkit-backdrop-filter: blur(28px) saturate(1.2);
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.32s cubic-bezier(0.33, 1, 0.68, 1);
@@ -104,98 +104,9 @@
         opacity: 1;
         pointer-events: auto;
       }
-      .lyrics-artwork-backdrop {
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        overflow: hidden;
-        pointer-events: none;
-        background: #090809;
-      }
-      .lyrics-artwork-backdrop::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background:
-          linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.46) 54%, rgba(0, 0, 0, 0.74)),
-          linear-gradient(90deg, rgba(0, 0, 0, 0.44), rgba(0, 0, 0, 0.08) 42%, rgba(0, 0, 0, 0.34));
-      }
-      .lyrics-artwork-base,
-      .lyrics-artwork-slice {
-        position: absolute;
-        background:
-          linear-gradient(115deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 38%),
-          linear-gradient(90deg, #030303 0 33.333%, #fdda24 33.333% 66.666%, #ef3340 66.666% 100%);
-        will-change: transform, opacity;
-      }
-      .lyrics-artwork-base {
-        inset: -34%;
-        filter: blur(56px) saturate(1.7) contrast(1.08);
-        opacity: 0.86;
-        transform: translate3d(-2%, 1%, 0) rotate(-8deg) skew(-11deg, 4deg) scale(1.24);
-        animation: artworkDrift 18s ease-in-out infinite alternate;
-      }
-      .lyrics-artwork-slice {
-        inset: -28%;
-        filter: blur(42px) saturate(1.85);
-        opacity: 0.68;
-        mix-blend-mode: plus-lighter;
-        animation: artworkDrift 24s ease-in-out infinite alternate;
-      }
-      .lyrics-artwork-slice-1 {
-        clip-path: polygon(0 6%, 46% 0, 30% 100%, 0 92%);
-        transform: translate3d(-17%, -7%, 0) rotate(-17deg) skew(-18deg, 6deg) scale(1.18);
-      }
-      .lyrics-artwork-slice-2 {
-        clip-path: polygon(22% 0, 72% 3%, 56% 100%, 0 96%);
-        transform: translate3d(10%, -13%, 0) rotate(10deg) skew(12deg, -8deg) scale(1.08);
-        animation-duration: 21s;
-        animation-direction: alternate-reverse;
-      }
-      .lyrics-artwork-slice-3 {
-        clip-path: polygon(54% 0, 100% 2%, 100% 90%, 36% 100%);
-        transform: translate3d(20%, 1%, 0) rotate(19deg) skew(-8deg, 13deg) scale(1.16);
-        animation-duration: 27s;
-      }
-      .lyrics-artwork-slice-4 {
-        clip-path: polygon(0 34%, 100% 8%, 88% 64%, 10% 100%);
-        transform: translate3d(-8%, 17%, 0) rotate(-10deg) skew(17deg, -7deg) scale(1.1);
-        opacity: 0.52;
-        animation-duration: 30s;
-        animation-direction: alternate-reverse;
-      }
-      .lyrics-artwork-slice-5 {
-        clip-path: polygon(34% 0, 100% 20%, 66% 100%, 6% 74%);
-        transform: translate3d(6%, 10%, 0) rotate(31deg) skew(-16deg, 10deg) scale(1.2);
-        opacity: 0.48;
-        animation-duration: 25s;
-      }
-      .lyrics-artwork-slice-6 {
-        clip-path: polygon(0 0, 80% 22%, 100% 100%, 18% 72%);
-        transform: translate3d(-24%, 34%, 0) rotate(23deg) skew(9deg, -18deg) scale(1.06);
-        opacity: 0.58;
-        animation-duration: 33s;
-        animation-direction: alternate-reverse;
-      }
-      .lyrics-vibrant-wash {
-        position: absolute;
-        inset: -12%;
-        background:
-          linear-gradient(110deg, rgba(0, 0, 0, 0.18), rgba(255, 221, 55, 0.22) 43%, rgba(255, 69, 75, 0.38)),
-          linear-gradient(245deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 50%);
-        mix-blend-mode: screen;
-        filter: blur(18px);
-        opacity: 0.76;
-      }
-      @keyframes artworkDrift {
-        0% {
-          transform: translate3d(-3%, -1%, 0) rotate(-13deg) skew(-14deg, 4deg) scale(1.12);
-        }
-        50% {
-          transform: translate3d(4%, 3%, 0) rotate(7deg) skew(10deg, -9deg) scale(1.22);
-        }
-        100% {
-          transform: translate3d(9%, -4%, 0) rotate(17deg) skew(-7deg, 13deg) scale(1.15);
+      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .lyrics-overlay {
+          background: rgba(0, 0, 0, 0.76);
         }
       }
       .lyrics-language-switcher {
@@ -223,8 +134,6 @@
         background: rgba(255, 255, 255, 0.94);
       }
       .lyrics-viewport {
-        position: relative;
-        z-index: 1;
         width: min(1000px, 100%);
         max-height: min(76vh, 640px);
         overflow-y: auto;
@@ -286,11 +195,8 @@
       @media (prefers-reduced-motion: reduce) {
         .control-btn .ring,
         .lyrics-overlay,
-        .lyrics-artwork-base,
-        .lyrics-artwork-slice,
         .lyrics-line {
           transition: none;
-          animation: none;
         }
         .control-btn:hover .ring,
         .control-btn:focus-visible .ring,
@@ -334,16 +240,6 @@
       </svg>
     </button>
     <section id="lyricsOverlay" class="lyrics-overlay" aria-hidden="true" aria-label="Lyrics" inert>
-      <div class="lyrics-artwork-backdrop" aria-hidden="true">
-        <div class="lyrics-artwork-base"></div>
-        <div class="lyrics-artwork-slice lyrics-artwork-slice-1"></div>
-        <div class="lyrics-artwork-slice lyrics-artwork-slice-2"></div>
-        <div class="lyrics-artwork-slice lyrics-artwork-slice-3"></div>
-        <div class="lyrics-artwork-slice lyrics-artwork-slice-4"></div>
-        <div class="lyrics-artwork-slice lyrics-artwork-slice-5"></div>
-        <div class="lyrics-artwork-slice lyrics-artwork-slice-6"></div>
-        <div class="lyrics-vibrant-wash"></div>
-      </div>
       <div class="lyrics-language-switcher" role="group" aria-label="Lyrics language">
         <button class="lyrics-language is-selected" type="button" data-language="nl" aria-pressed="true">NL</button>
         <button class="lyrics-language" type="button" data-language="fr" aria-pressed="false">FR</button>
