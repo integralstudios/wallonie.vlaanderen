@@ -24,11 +24,8 @@
     <style media="screen">
       :root {
         --volume-wave-duration: 1.4s;
-        --volume-wave-count: 10;
-        --volume-wave-amplitude: 2.4;
-        --volume-wave-rotation-speed: 1.15;
         --volume-wave-stroke-opacity: 0.72;
-        --volume-wave-stroke-width: 1.1px;
+        --volume-wave-base-opacity: 0.5;
         --volume-wave-glow-opacity: 0.18;
         --volume-wave-glow-size: 1px;
       }
@@ -126,23 +123,31 @@
         transform-origin: center;
         transition: transform 0.2s ease;
       }
-      .mute-btn .wave-path {
+      .mute-btn .wave-base,
+      .mute-btn .wave-sample {
         fill: none;
         stroke: currentColor;
         stroke-linecap: round;
         stroke-linejoin: round;
-        stroke-width: var(--volume-wave-stroke-width);
-        transform-box: fill-box;
-        transform-origin: center;
         vector-effect: non-scaling-stroke;
+      }
+      .mute-btn .wave-base {
+        stroke-width: 1;
         opacity: 0.5;
-        stroke-opacity: 0.5;
         transition: opacity 0.2s ease, stroke-opacity 0.2s ease, filter 0.2s ease;
       }
-      .mute-btn.is-playing .wave-path,
-      .mute-btn.is-dialkit-previewing .wave-path {
+      .mute-btn .wave-samples {
+        transition: filter 0.2s ease;
+      }
+      .mute-btn .wave-sample {
+        opacity: 0;
+      }
+      .mute-btn.is-playing .wave-base,
+      .mute-btn.is-dialkit-previewing .wave-base {
         opacity: 1;
-        stroke-opacity: var(--volume-wave-stroke-opacity);
+      }
+      .mute-btn.is-playing .wave-samples,
+      .mute-btn.is-dialkit-previewing .wave-samples {
         filter: drop-shadow(0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity)));
       }
       .control-btn:hover .ring,
@@ -428,10 +433,9 @@
         .mute-btn:focus-visible .wave-ring {
           transform: none;
         }
-        .mute-btn.is-playing .wave-path,
-        .mute-btn.is-dialkit-previewing .wave-path {
+        .mute-btn.is-playing .wave-samples,
+        .mute-btn.is-dialkit-previewing .wave-samples {
           filter: none;
-          opacity: 0.72;
         }
         .control-btn .icon {
           transition: opacity 0.15s linear;
@@ -468,7 +472,8 @@
     <button id="dialkitLauncher" class="dialkit-launcher" type="button" hidden>DialKit</button>
     <button id="muteBtn" class="mute-btn control-btn" type="button" aria-label="Mute" aria-pressed="false">
       <svg class="wave-ring" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
-        <path id="muteWavePath" class="wave-path"></path>
+        <circle class="wave-base" cx="22" cy="22" r="18"></circle>
+        <g id="muteWaveSamples" class="wave-samples"></g>
       </svg>
       <svg class="icon icon-on" data-sketch-icon="volume-on" viewBox="0 0 24 24" aria-hidden="true">
         <g fill="none" stroke="currentColor" stroke-width="2">
@@ -527,14 +532,17 @@
         var languageSwitcher = document.querySelector('.lyrics-language-switcher');
         var languageUnderline = document.querySelector('.lyrics-language-underline');
         var languageButtons = Array.prototype.slice.call(document.querySelectorAll('.lyrics-language'));
-        var wavePath = document.getElementById('muteWavePath');
+        var waveBase = document.querySelector('.mute-btn .wave-base');
+        var waveSamples = document.getElementById('muteWaveSamples');
+        var waveSampleLines = [];
         var waveParams = {
           duration: 1.4,
-          waveCount: 10,
-          amplitude: 2.4,
-          rotationSpeed: 1.15
+          variant: 'a',
+          strokeOpacity: 0.72,
+          glowOpacity: 0.18,
+          glowSize: 1
         };
-        var wavePhase = 0;
+        var waveTime = 0;
         var waveLastTimestamp = 0;
         var waveAnimationFrame = null;
         var wavePlaybackActive = false;
@@ -604,33 +612,174 @@
             "Gesetz und König und die Freiheit hoch!"
           ]
         };
-
-        function buildWavePath(waveCount, amplitude, phase) {
-          var center = 22;
-          var radius = 17.1;
-          var clampedWaveCount = Math.max(1, Math.round(waveCount));
-          var steps = Math.max(168, clampedWaveCount * 24);
-          var clampedAmplitude = Math.max(0, amplitude);
-          var path = '';
-
-          for (var i = 0; i <= steps; i += 1) {
-            var progress = i / steps;
-            var angle = -Math.PI / 2 + progress * Math.PI * 2;
-            var wave = Math.sin(angle * clampedWaveCount + phase);
-            var localRadius = radius + clampedAmplitude * wave;
-            var x = center + Math.cos(angle) * localRadius;
-            var y = center + Math.sin(angle) * localRadius;
-            path += (i === 0 ? 'M ' : ' L ') + x.toFixed(2) + ' ' + y.toFixed(2);
+        var WAVE_PRESETS = {
+          a: {
+            label: 'A - Sparse asymmetry',
+            count: 36,
+            inner: 18,
+            speed: 0.72,
+            seed: 2.4,
+            width: 0.56,
+            width2: 0.42,
+            offset: 1.1,
+            drift: 0.56,
+            second: 0.56,
+            wake: 0.05,
+            lineWidth: 0.88,
+            baseAlpha: 0.16,
+            minHeight: 0.48,
+            maxHeight: 5.5,
+            threshold: 0.28,
+            inward: 0.18,
+            alphaBase: 0.13,
+            alphaEnvelope: 0.42,
+            alphaTexture: 0.36,
+            breath: 1.3,
+            breathOffset: 0.11
+          },
+          b: {
+            label: 'B - Taller asymmetry',
+            count: 34,
+            inner: 18,
+            speed: 0.68,
+            seed: 3.1,
+            width: 0.58,
+            width2: 0.4,
+            offset: 1.02,
+            drift: 0.45,
+            second: 0.46,
+            wake: 0,
+            lineWidth: 0.9,
+            baseAlpha: 0.13,
+            minHeight: 0.58,
+            maxHeight: 6.4,
+            threshold: 0.36,
+            inward: 0.2,
+            alphaBase: 0.12,
+            alphaEnvelope: 0.43,
+            alphaTexture: 0.43,
+            breath: 1.5,
+            breathOffset: 0.12
+          },
+          c: {
+            label: 'C - Very sparse duo',
+            count: 28,
+            inner: 18,
+            speed: 0.76,
+            seed: 4.7,
+            width: 0.62,
+            width2: 0.46,
+            offset: 1.16,
+            drift: 0.5,
+            second: 0.5,
+            wake: 0.05,
+            lineWidth: 0.92,
+            baseAlpha: 0.11,
+            minHeight: 0.66,
+            maxHeight: 6.1,
+            threshold: 0.46,
+            inward: 0.2,
+            alphaBase: 0.1,
+            alphaEnvelope: 0.46,
+            alphaTexture: 0.42,
+            breath: 1.42,
+            breathOffset: 0.13
           }
+        };
 
-          return path + ' Z';
+        function ensureWaveSampleLines(count) {
+          if (!waveSamples || !document.createElementNS) return;
+          while (waveSampleLines.length < count) {
+            var sample = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            sample.setAttribute('class', 'wave-sample');
+            waveSamples.appendChild(sample);
+            waveSampleLines.push(sample);
+          }
         }
 
-        function renderWavePaths() {
-          if (!wavePath) return;
-          var visibleAmplitude = shouldAnimateWave() ? waveParams.amplitude : 0;
-          var pathData = buildWavePath(waveParams.waveCount, visibleAmplitude, wavePhase);
-          wavePath.setAttribute('d', pathData);
+        function point(center, angle, radius) {
+          return {
+            x: center + Math.cos(angle) * radius,
+            y: center + Math.sin(angle) * radius
+          };
+        }
+
+        function angularDistance(a, b) {
+          return Math.atan2(Math.sin(a - b), Math.cos(a - b));
+        }
+
+        function lobe(angle, center, width) {
+          var distance = angularDistance(angle, center);
+          return Math.exp(-(distance * distance) / (2 * width * width));
+        }
+
+        function phase(time, speed, seed) {
+          return time * speed +
+            Math.sin(time * 0.43 + seed) * 0.4 +
+            Math.sin(time * 1.11 + seed * 0.6) * 0.14 +
+            Math.sin(time * 1.87 + seed * 1.4) * 0.08;
+        }
+
+        function texture(index, time, seed) {
+          var a = Math.sin(index * 1.73 + time * 4.8 + seed);
+          var b = Math.sin(index * 0.47 - time * 2.1 + seed * 1.7);
+          var c = Math.sin(index * 2.91 + time * 1.1 + seed * 0.37);
+          return Math.max(0, Math.min(1, (a * 0.48 + b * 0.34 + c * 0.18 + 1) / 2));
+        }
+
+        function renderWaveSamples() {
+          if (!waveSamples) return;
+          var activePreset = WAVE_PRESETS[waveParams.variant] || WAVE_PRESETS.a;
+          var isActive = shouldAnimateWave() && !prefersReducedMotion();
+          ensureWaveSampleLines(activePreset.count);
+
+          if (waveBase) {
+            waveBase.setAttribute('stroke-opacity', String(isActive ? activePreset.baseAlpha : 0.5));
+          }
+
+          for (var hiddenIndex = 0; hiddenIndex < waveSampleLines.length; hiddenIndex += 1) {
+            if (hiddenIndex >= activePreset.count || !isActive) {
+              waveSampleLines[hiddenIndex].setAttribute('opacity', '0');
+            }
+          }
+
+          if (!isActive) return;
+
+          var center = 22;
+          var primaryPhase = phase(waveTime, activePreset.speed, activePreset.seed);
+          var secondaryPhase = primaryPhase + Math.PI * activePreset.offset +
+            Math.sin(waveTime * 0.52 + activePreset.seed) * activePreset.drift;
+          var wakePhase = primaryPhase - Math.PI * 0.38 +
+            Math.sin(waveTime * 0.78 + activePreset.seed * 2) * 0.52;
+
+          for (var i = 0; i < activePreset.count; i += 1) {
+            var angle = -Math.PI / 2 + (i / activePreset.count) * Math.PI * 2;
+            var envelope = lobe(angle, primaryPhase, activePreset.width);
+            envelope += lobe(angle, secondaryPhase, activePreset.width2) * activePreset.second;
+            envelope += lobe(angle, wakePhase, activePreset.width * 1.4) * activePreset.wake;
+            envelope = Math.min(1, envelope);
+
+            var granular = texture(i, waveTime, activePreset.seed);
+            var breath = 0.74 + Math.sin(waveTime * activePreset.breath + i * activePreset.breathOffset) * 0.2;
+            var height = envelope * (activePreset.minHeight + granular * activePreset.maxHeight * breath);
+            var line = waveSampleLines[i];
+
+            if (height < activePreset.threshold) {
+              line.setAttribute('opacity', '0');
+              continue;
+            }
+
+            var from = point(center, angle, activePreset.inner - height * activePreset.inward);
+            var to = point(center, angle, activePreset.inner + height);
+            var opacity = activePreset.alphaBase + envelope * (activePreset.alphaEnvelope + granular * activePreset.alphaTexture);
+            line.setAttribute('x1', from.x.toFixed(2));
+            line.setAttribute('y1', from.y.toFixed(2));
+            line.setAttribute('x2', to.x.toFixed(2));
+            line.setAttribute('y2', to.y.toFixed(2));
+            line.setAttribute('stroke-width', activePreset.lineWidth.toFixed(2));
+            line.setAttribute('stroke-opacity', String(waveParams.strokeOpacity));
+            line.setAttribute('opacity', Math.min(1, opacity).toFixed(3));
+          }
         }
 
         function shouldAnimateWave() {
@@ -646,15 +795,15 @@
           if (!shouldMove) {
             waveAnimationFrame = null;
             waveLastTimestamp = 0;
-            renderWavePaths();
+            renderWaveSamples();
             return;
           }
 
           if (!waveLastTimestamp) waveLastTimestamp = timestamp;
           var delta = Math.min(64, timestamp - waveLastTimestamp) / 1000;
           waveLastTimestamp = timestamp;
-          wavePhase += delta * (waveParams.rotationSpeed / Math.max(0.2, waveParams.duration)) * Math.PI * 2;
-          renderWavePaths();
+          waveTime += delta / Math.max(0.2, waveParams.duration);
+          renderWaveSamples();
           waveAnimationFrame = window.requestAnimationFrame(updateWaveAnimation);
         }
 
@@ -663,7 +812,7 @@
           if (!window.requestAnimationFrame || !window.cancelAnimationFrame) {
             waveAnimationFrame = null;
             waveLastTimestamp = 0;
-            renderWavePaths();
+            renderWaveSamples();
             return;
           }
 
@@ -673,26 +822,23 @@
             window.cancelAnimationFrame(waveAnimationFrame);
             waveAnimationFrame = null;
             waveLastTimestamp = 0;
-            renderWavePaths();
+            renderWaveSamples();
           }
         }
 
         function applySoundwaveParams(params) {
           document.documentElement.style.setProperty('--volume-wave-duration', params.duration + 's');
           waveParams.duration = params.duration;
-          waveParams.waveCount = Math.round(params.wave.waveCount);
-          waveParams.amplitude = params.wave.amplitude;
-          waveParams.rotationSpeed = params.wave.rotationSpeed;
-          document.documentElement.style.setProperty('--volume-wave-count', String(waveParams.waveCount));
-          document.documentElement.style.setProperty('--volume-wave-amplitude', String(waveParams.amplitude));
-          document.documentElement.style.setProperty('--volume-wave-rotation-speed', String(waveParams.rotationSpeed));
+          waveParams.variant = WAVE_PRESETS[params.variant] ? params.variant : 'a';
+          waveParams.strokeOpacity = params.line.strokeOpacity;
+          waveParams.glowOpacity = params.line.glowOpacity;
+          waveParams.glowSize = params.line.glowSize;
           document.documentElement.style.setProperty('--volume-wave-stroke-opacity', String(params.line.strokeOpacity));
-          document.documentElement.style.setProperty('--volume-wave-stroke-width', params.line.strokeWidth + 'px');
           document.documentElement.style.setProperty('--volume-wave-glow-opacity', String(params.line.glowOpacity));
           document.documentElement.style.setProperty('--volume-wave-glow-size', params.line.glowSize + 'px');
           wavePreviewActive = Boolean(params.preview);
           btn.classList.toggle('is-dialkit-previewing', wavePreviewActive);
-          renderWavePaths();
+          renderWaveSamples();
           syncWaveAnimation();
         }
 
@@ -903,7 +1049,7 @@
           render();
         });
 
-        renderWavePaths();
+        renderWaveSamples();
         renderLyricsControls();
         render();
       })();
@@ -987,30 +1133,30 @@
           function SoundwaveControls() {
             var params = useDialKit('Soundwave', {
               preview: true,
-              duration: [1.4, 0.4, 3.5, 0.05],
-              wave: {
-                _collapsed: false,
-                waveCount: [10, 1, 32, 1],
-                amplitude: [2.4, 0, 6, 0.1],
-                rotationSpeed: [1.15, -3, 3, 0.05]
+              variant: {
+                type: 'select',
+                options: [
+                  { value: 'a', label: 'A - Sparse asymmetry' },
+                  { value: 'b', label: 'B - Taller asymmetry' },
+                  { value: 'c', label: 'C - Very sparse duo' }
+                ],
+                default: 'a'
               },
+              duration: [1.4, 0.4, 3.5, 0.05],
               line: {
                 _collapsed: false,
                 strokeOpacity: [0.72, 0, 1, 0.01],
-                strokeWidth: [1.1, 0.5, 2.5, 0.05],
                 glowOpacity: [0.18, 0, 0.8, 0.01],
                 glowSize: [1, 0, 6, 0.5]
               }
             }, {
               id: 'wallonie-soundwave',
               persist: {
-                key: 'wallonie:soundwave-dialkit-v3'
+                key: 'wallonie:soundwave-dialkit-v4'
               },
               shortcuts: {
                 duration: { key: 'd', mode: 'fine' },
-                'wave.waveCount': { key: 'w', mode: 'fine' },
-                'wave.amplitude': { key: 'a', mode: 'fine' },
-                'line.strokeWidth': { key: 's', mode: 'fine' }
+                'line.glowSize': { key: 'g', mode: 'fine' }
               }
             });
 
@@ -1018,12 +1164,9 @@
               applySoundwaveParams(params);
             }, [
               params.preview,
+              params.variant,
               params.duration,
-              params.wave.waveCount,
-              params.wave.amplitude,
-              params.wave.rotationSpeed,
               params.line.strokeOpacity,
-              params.line.strokeWidth,
               params.line.glowOpacity,
               params.line.glowSize
             ]);
