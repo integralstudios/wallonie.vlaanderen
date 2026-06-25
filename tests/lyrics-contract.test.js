@@ -491,15 +491,38 @@ test('audio control reflects autoplay blocking and retries playback on click', (
 
 test('volume ring animates only while anthem playback is active', () => {
   assert.match(html, /@keyframes volumeRingWave/);
-  assert.match(html, /\.mute-btn\.is-playing \.ring\s*\{[\s\S]*animation:\s*volumeRingWave 1\.4s cubic-bezier\(0\.45, 0, 0\.55, 1\) infinite/);
-  assert.match(html, /\.mute-btn\.is-playing \.ring\s*\{[\s\S]*box-shadow:\s*0 0 0 1px rgba\(255, 255, 255, 0\.18\)/);
+  assert.match(html, /--volume-wave-duration:\s*1\.4s/);
+  assert.match(html, /--volume-wave-wobble:\s*4%/);
+  assert.match(html, /--volume-wave-echo-scale:\s*1\.24/);
+  assert.match(html, /\.mute-btn\.is-playing \.ring,\s*\.mute-btn\.is-dialkit-previewing \.ring\s*\{[\s\S]*animation:\s*volumeRingWave var\(--volume-wave-duration\) cubic-bezier\(0\.45, 0, 0\.55, 1\) infinite/);
+  assert.match(html, /\.mute-btn\.is-playing \.ring,\s*\.mute-btn\.is-dialkit-previewing \.ring\s*\{[\s\S]*box-shadow:\s*0 0 0 var\(--volume-wave-glow-size\) rgba\(255, 255, 255, var\(--volume-wave-glow-opacity\)\)/);
   assert.match(html, /\.mute-btn\.is-playing \.ring::before/);
   assert.match(html, /\.mute-btn\.is-playing \.ring::after/);
-  assert.match(html, /\.mute-btn\.is-playing \.ring::before,\s*\.mute-btn\.is-playing \.ring::after\s*\{[\s\S]*animation:\s*volumeRingEcho 1\.8s ease-out infinite/);
+  assert.match(html, /\.mute-btn\.is-playing \.ring::before,\s*\.mute-btn\.is-playing \.ring::after,\s*\.mute-btn\.is-dialkit-previewing \.ring::before,\s*\.mute-btn\.is-dialkit-previewing \.ring::after\s*\{[\s\S]*animation:\s*volumeRingEcho var\(--volume-wave-echo-duration\) ease-out infinite/);
+  assert.match(html, /transform:\s*scale\(var\(--volume-wave-echo-scale\)\)/);
   assert.match(html, /var shouldAnimateSound = !shouldShowSoundOff && !audio\.paused/);
   assert.match(html, /btn\.classList\.toggle\('is-playing', shouldAnimateSound\)/);
   assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.ring[\s\S]*animation:\s*none/);
-  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.ring::before,\s*\.mute-btn\.is-playing \.ring::after[\s\S]*display:\s*none/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.ring::before,\s*\.mute-btn\.is-playing \.ring::after,\s*\.mute-btn\.is-dialkit-previewing \.ring::before,\s*\.mute-btn\.is-dialkit-previewing \.ring::after[\s\S]*display:\s*none/);
+});
+
+test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters', () => {
+  assert.match(html, /<script type="importmap">/);
+  assert.match(html, /"dialkit":\s*"https:\/\/esm\.sh\/dialkit@1\.3\.0\?external=react,react-dom,motion"/);
+  assert.match(html, /href="https:\/\/esm\.sh\/dialkit@1\.3\.0\/styles\.css"/);
+  assert.match(html, /new URLSearchParams\(window\.location\.search\)\.has\('dialkit'\)/);
+  assert.match(html, /function setupSoundwaveDialKit\(\)/);
+  assert.match(html, /import\('dialkit'\)/);
+  assert.match(html, /useDialKit\('Soundwave'/);
+  assert.match(html, /preview:\s*true/);
+  assert.match(html, /duration:\s*\[1\.4, 0\.4, 3\.5, 0\.05\]/);
+  assert.match(html, /wobble:\s*\[4, 0, 14, 0\.5\]/);
+  assert.match(html, /glowOpacity:\s*\[0\.18, 0, 0\.8, 0\.01\]/);
+  assert.match(html, /scale:\s*\[1\.24, 1, 1\.8, 0\.01\]/);
+  assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-duration', params\.duration \+ 's'\)/);
+  assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-wobble', params\.shape\.wobble \+ '%'\)/);
+  assert.match(html, /muteBtn\.classList\.toggle\('is-dialkit-previewing', params\.preview\)/);
+  assert.match(html, /React\.createElement\(DialRoot,\s*\{ position: 'top-left', theme: 'dark', defaultOpen: true, productionEnabled: true \}\)/);
 });
 
 test('lyrics data includes full Dutch, French, and German lyric sheets', () => {

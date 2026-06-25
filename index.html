@@ -8,7 +8,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css">
     <link rel="stylesheet" href="https://use.typekit.net/qsr7tur.css">
+    <script type="importmap">
+      {
+        "imports": {
+          "dialkit": "https://esm.sh/dialkit@1.3.0?external=react,react-dom,motion",
+          "motion": "https://esm.sh/motion@12.42.0",
+          "motion/react": "https://esm.sh/motion@12.42.0/react",
+          "react": "https://esm.sh/react@18.3.1",
+          "react-dom": "https://esm.sh/react-dom@18.3.1",
+          "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+          "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime"
+        }
+      }
+    </script>
     <style media="screen">
+      :root {
+        --volume-wave-duration: 1.4s;
+        --volume-wave-border-opacity: 0.72;
+        --volume-wave-glow-opacity: 0.18;
+        --volume-wave-glow-peak-opacity: 0.24;
+        --volume-wave-glow-fade-opacity: 0.14;
+        --volume-wave-glow-size: 1px;
+        --volume-wave-glow-peak-size: 2px;
+        --volume-wave-wobble: 4%;
+        --volume-wave-wobble-soft: 2%;
+        --volume-wave-echo-duration: 1.8s;
+        --volume-wave-echo-delay: 0.9s;
+        --volume-wave-echo-scale: 1.24;
+        --volume-wave-echo-start-scale: 0.94;
+        --volume-wave-echo-opacity: 0.5;
+        --volume-wave-echo-mid-opacity: 0.16;
+        --volume-wave-echo-border-opacity: 0.36;
+      }
       html, body, table {
         height: 100%;
         width: 100%;
@@ -73,18 +104,22 @@
         opacity: 0;
         pointer-events: none;
       }
-      .mute-btn.is-playing .ring {
-        border-color: rgba(255, 255, 255, 0.72);
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
-        animation: volumeRingWave 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+      .mute-btn.is-playing .ring,
+      .mute-btn.is-dialkit-previewing .ring {
+        border-color: rgba(255, 255, 255, var(--volume-wave-border-opacity));
+        box-shadow: 0 0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity));
+        animation: volumeRingWave var(--volume-wave-duration) cubic-bezier(0.45, 0, 0.55, 1) infinite;
       }
       .mute-btn.is-playing .ring::before,
-      .mute-btn.is-playing .ring::after {
-        border-color: rgba(255, 255, 255, 0.36);
-        animation: volumeRingEcho 1.8s ease-out infinite;
+      .mute-btn.is-playing .ring::after,
+      .mute-btn.is-dialkit-previewing .ring::before,
+      .mute-btn.is-dialkit-previewing .ring::after {
+        border-color: rgba(255, 255, 255, var(--volume-wave-echo-border-opacity));
+        animation: volumeRingEcho var(--volume-wave-echo-duration) ease-out infinite;
       }
-      .mute-btn.is-playing .ring::after {
-        animation-delay: 0.9s;
+      .mute-btn.is-playing .ring::after,
+      .mute-btn.is-dialkit-previewing .ring::after {
+        animation-delay: var(--volume-wave-echo-delay);
       }
       .control-btn:hover .ring,
       .control-btn:focus-visible .ring {
@@ -282,32 +317,38 @@
         0%,
         100% {
           border-radius: 50%;
-          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+          box-shadow: 0 0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity));
         }
         28% {
-          border-radius: 48% 52% 54% 46% / 46% 52% 48% 54%;
-          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.24);
+          border-radius:
+            calc(50% - var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble))
+            / calc(50% - var(--volume-wave-wobble)) calc(50% + var(--volume-wave-wobble-soft)) calc(50% - var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble));
+          box-shadow: 0 0 0 var(--volume-wave-glow-peak-size) rgba(255, 255, 255, var(--volume-wave-glow-peak-opacity));
         }
         56% {
-          border-radius: 54% 46% 48% 52% / 52% 47% 53% 48%;
-          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14);
+          border-radius:
+            calc(50% + var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble-soft))
+            / calc(50% + var(--volume-wave-wobble-soft)) calc(50% - var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble));
+          box-shadow: 0 0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-fade-opacity));
         }
         78% {
-          border-radius: 47% 53% 49% 51% / 51% 54% 46% 49%;
-          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+          border-radius:
+            calc(50% - var(--volume-wave-wobble)) calc(50% + var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble-soft))
+            / calc(50% + var(--volume-wave-wobble-soft)) calc(50% + var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble)) calc(50% - var(--volume-wave-wobble-soft));
+          box-shadow: 0 0 0 var(--volume-wave-glow-peak-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity));
         }
       }
       @keyframes volumeRingEcho {
         0% {
-          opacity: 0.5;
-          transform: scale(0.94);
+          opacity: var(--volume-wave-echo-opacity);
+          transform: scale(var(--volume-wave-echo-start-scale));
         }
         62% {
-          opacity: 0.16;
+          opacity: var(--volume-wave-echo-mid-opacity);
         }
         100% {
           opacity: 0;
-          transform: scale(1.24);
+          transform: scale(var(--volume-wave-echo-scale));
         }
       }
       .mute-btn .icon-on {
@@ -390,13 +431,16 @@
         .control-btn:focus-visible .ring {
           transform: none;
         }
-        .mute-btn.is-playing .ring {
+        .mute-btn.is-playing .ring,
+        .mute-btn.is-dialkit-previewing .ring {
           animation: none;
           border-radius: 50%;
           box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
         }
         .mute-btn.is-playing .ring::before,
-        .mute-btn.is-playing .ring::after {
+        .mute-btn.is-playing .ring::after,
+        .mute-btn.is-dialkit-previewing .ring::before,
+        .mute-btn.is-dialkit-previewing .ring::after {
           display: none;
           animation: none;
         }
@@ -429,6 +473,9 @@
       <source src="belgium.mp3" type="audio/mpeg">
       <source src="belgium.ogg" type="audio/ogg">
     </audio>
+    <template id="dialkitStyles">
+      <link rel="stylesheet" href="https://esm.sh/dialkit@1.3.0/styles.css">
+    </template>
     <button id="muteBtn" class="mute-btn control-btn" type="button" aria-label="Mute" aria-pressed="false">
       <span class="ring"></span>
       <svg class="icon icon-on" data-sketch-icon="volume-on" viewBox="0 0 24 24" aria-hidden="true">
@@ -760,6 +807,117 @@
         renderLyricsControls();
         render();
       })();
+    </script>
+    <script type="module">
+      async function setupSoundwaveDialKit() {
+        if (!new URLSearchParams(window.location.search).has('dialkit')) return;
+
+        var muteBtn = document.getElementById('muteBtn');
+        var stylesTemplate = document.getElementById('dialkitStyles');
+        if (!muteBtn || !stylesTemplate) return;
+
+        document.head.appendChild(stylesTemplate.content.cloneNode(true));
+
+        try {
+          var React = await import('react');
+          var ReactDOM = await import('react-dom/client');
+          var dialkit = await import('dialkit');
+          var DialRoot = dialkit.DialRoot;
+          var useDialKit = dialkit.useDialKit;
+          var mount = document.createElement('div');
+          mount.id = 'dialkitSoundwaveRoot';
+          document.body.appendChild(mount);
+
+          function applySoundwaveParams(params) {
+            document.documentElement.style.setProperty('--volume-wave-duration', params.duration + 's');
+            document.documentElement.style.setProperty('--volume-wave-border-opacity', String(params.ring.borderOpacity));
+            document.documentElement.style.setProperty('--volume-wave-glow-opacity', String(params.ring.glowOpacity));
+            document.documentElement.style.setProperty('--volume-wave-glow-peak-opacity', String(params.ring.glowPeakOpacity));
+            document.documentElement.style.setProperty('--volume-wave-glow-fade-opacity', String(params.ring.glowFadeOpacity));
+            document.documentElement.style.setProperty('--volume-wave-glow-size', params.ring.glowSize + 'px');
+            document.documentElement.style.setProperty('--volume-wave-glow-peak-size', params.ring.glowPeakSize + 'px');
+            document.documentElement.style.setProperty('--volume-wave-wobble', params.shape.wobble + '%');
+            document.documentElement.style.setProperty('--volume-wave-wobble-soft', params.shape.wobbleSoft + '%');
+            document.documentElement.style.setProperty('--volume-wave-echo-duration', params.echo.duration + 's');
+            document.documentElement.style.setProperty('--volume-wave-echo-delay', params.echo.delay + 's');
+            document.documentElement.style.setProperty('--volume-wave-echo-scale', String(params.echo.scale));
+            document.documentElement.style.setProperty('--volume-wave-echo-start-scale', String(params.echo.startScale));
+            document.documentElement.style.setProperty('--volume-wave-echo-opacity', String(params.echo.opacity));
+            document.documentElement.style.setProperty('--volume-wave-echo-mid-opacity', String(params.echo.midOpacity));
+            document.documentElement.style.setProperty('--volume-wave-echo-border-opacity', String(params.echo.borderOpacity));
+            muteBtn.classList.toggle('is-dialkit-previewing', params.preview);
+          }
+
+          function SoundwaveDialKit() {
+            var params = useDialKit('Soundwave', {
+              preview: true,
+              duration: [1.4, 0.4, 3.5, 0.05],
+              shape: {
+                _collapsed: false,
+                wobble: [4, 0, 14, 0.5],
+                wobbleSoft: [2, 0, 10, 0.5]
+              },
+              ring: {
+                _collapsed: false,
+                borderOpacity: [0.72, 0, 1, 0.01],
+                glowOpacity: [0.18, 0, 0.8, 0.01],
+                glowPeakOpacity: [0.24, 0, 0.8, 0.01],
+                glowFadeOpacity: [0.14, 0, 0.8, 0.01],
+                glowSize: [1, 0, 6, 0.5],
+                glowPeakSize: [2, 0, 8, 0.5]
+              },
+              echo: {
+                _collapsed: false,
+                duration: [1.8, 0.4, 5, 0.05],
+                delay: [0.9, 0, 3, 0.05],
+                scale: [1.24, 1, 1.8, 0.01],
+                startScale: [0.94, 0.6, 1.2, 0.01],
+                opacity: [0.5, 0, 1, 0.01],
+                midOpacity: [0.16, 0, 0.8, 0.01],
+                borderOpacity: [0.36, 0, 1, 0.01]
+              }
+            }, {
+              shortcuts: {
+                duration: { key: 'd', mode: 'fine' },
+                'shape.wobble': { key: 'w', mode: 'fine' },
+                'echo.scale': { key: 's', mode: 'fine' }
+              }
+            });
+
+            React.useEffect(function () {
+              applySoundwaveParams(params);
+            }, [
+              params.preview,
+              params.duration,
+              params.shape.wobble,
+              params.shape.wobbleSoft,
+              params.ring.borderOpacity,
+              params.ring.glowOpacity,
+              params.ring.glowPeakOpacity,
+              params.ring.glowFadeOpacity,
+              params.ring.glowSize,
+              params.ring.glowPeakSize,
+              params.echo.duration,
+              params.echo.delay,
+              params.echo.scale,
+              params.echo.startScale,
+              params.echo.opacity,
+              params.echo.midOpacity,
+              params.echo.borderOpacity
+            ]);
+
+            return React.createElement(React.Fragment, null,
+              React.createElement(DialRoot, { position: 'top-left', theme: 'dark', defaultOpen: true, productionEnabled: true })
+            );
+          }
+
+          ReactDOM.createRoot(mount).render(React.createElement(SoundwaveDialKit));
+        } catch (err) {
+          console.warn('DialKit soundwave controls failed to load', err);
+        }
+      }
+
+      setupSoundwaveDialKit();
     </script>
     <script> (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){ (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o), m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m) })(window,document,'script','//www.google-analytics.com/analytics.js','ga'); ga('create', 'UA-20134293-8', 'auto'); ga('send', 'pageview'); </script>
   </body>
