@@ -88,6 +88,26 @@ test('first-interaction audio guard safely ignores shared controls', () => {
   );
 });
 
+test('audio control reflects autoplay blocking and retries playback on click', () => {
+  assert.match(html, /var playbackBlocked = false/);
+  assert.match(html, /var isPlaying = true/);
+  assert.match(html, /var shouldShowSoundOff = muted \|\| playbackBlocked \|\| !isPlaying/);
+  assert.match(html, /btn\.classList\.toggle\('is-muted', shouldShowSoundOff\)/);
+  assert.match(html, /btn\.setAttribute\('aria-label', muted \? 'Unmute' : shouldShowSoundOff \? 'Play anthem' : 'Mute'\)/);
+
+  const playMatch = html.match(/function play\(\) \{([\s\S]*?)\n        \}/);
+  assert.ok(playMatch, 'Expected play function body');
+  assert.match(playMatch[1], /p\.then\(function \(\) \{/);
+  assert.match(playMatch[1], /playbackBlocked = false;\s*isPlaying = true;\s*render\(\);/);
+  assert.match(playMatch[1], /catch\(function \(\) \{/);
+  assert.match(playMatch[1], /playbackBlocked = true;\s*isPlaying = false;\s*render\(\);/);
+
+  const muteClickMatch = html.match(/btn\.addEventListener\('click', function \(\) \{([\s\S]*?)\n        \}\);/);
+  assert.ok(muteClickMatch, 'Expected mute button click handler');
+  assert.match(muteClickMatch[1], /if \(playbackBlocked \|\| !isPlaying \|\| audio\.paused\) \{/);
+  assert.match(muteClickMatch[1], /muted = false;\s*audio\.muted = false;\s*play\(\);\s*render\(\);\s*return;/);
+});
+
 test('lyrics data includes full Dutch, French, and German lyric sheets', () => {
   assert.match(html, /var LYRICS = \{/);
   assert.match(html, /nl:\s*\[/);

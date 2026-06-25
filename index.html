@@ -259,6 +259,8 @@
         var lyricsTrack = document.getElementById('lyricsTrack');
         var languageButtons = Array.prototype.slice.call(document.querySelectorAll('.lyrics-language'));
         var muted = false;
+        var playbackBlocked = false;
+        var isPlaying = true;
         var lyricsOpen = false;
         var selectedLanguage = 'nl';
         var LYRICS = {
@@ -298,15 +300,38 @@
         };
 
         function render() {
-          btn.classList.toggle('is-muted', muted);
+          var shouldShowSoundOff = muted || playbackBlocked || !isPlaying;
+          btn.classList.toggle('is-muted', shouldShowSoundOff);
           btn.setAttribute('aria-pressed', String(muted));
-          btn.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+          btn.setAttribute('aria-label', muted ? 'Unmute' : shouldShowSoundOff ? 'Play anthem' : 'Mute');
         }
 
         function play() {
           if (muted) return;
-          var p = audio.play();
-          if (p && typeof p.then === 'function') p.catch(function () {});
+          var p;
+          try {
+            p = audio.play();
+          } catch (err) {
+            playbackBlocked = true;
+            isPlaying = false;
+            render();
+            return;
+          }
+          if (p && typeof p.then === 'function') {
+            p.then(function () {
+              playbackBlocked = false;
+              isPlaying = true;
+              render();
+            }).catch(function () {
+              playbackBlocked = true;
+              isPlaying = false;
+              render();
+            });
+          } else {
+            playbackBlocked = false;
+            isPlaying = true;
+            render();
+          }
         }
 
         function renderLyrics() {
@@ -389,6 +414,13 @@
 
         // Mute / unmute, resuming playback when unmuted.
         btn.addEventListener('click', function () {
+          if (playbackBlocked || !isPlaying || audio.paused) {
+            muted = false;
+            audio.muted = false;
+            play();
+            render();
+            return;
+          }
           muted = !muted;
           audio.muted = muted;
           play();
