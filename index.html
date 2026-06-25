@@ -178,13 +178,16 @@
         display: inline-block;
       }
       .lyrics-overlay.is-open .lyrics-word {
-        animation: lyricWordIn 0.3s ease both;
+        animation: lyricWordIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
         animation-delay: calc(var(--word-index) * 15ms);
       }
       @keyframes lyricWordIn {
         from {
           opacity: 0;
-          transform: translate3d(0, 10px, 0);
+          transform: translate3d(0, 12px, 0);
+        }
+        72% {
+          opacity: 1;
         }
         to {
           opacity: 1;

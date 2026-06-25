@@ -93,9 +93,10 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
 test('lyrics words stagger animate in when the overlay opens', () => {
   assert.match(html, /@keyframes lyricWordIn/);
   assert.match(html, /\.lyrics-word[\s\S]*display:\s*inline-block/);
-  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation:\s*lyricWordIn 0\.3s ease both/);
+  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation:\s*lyricWordIn 0\.42s cubic-bezier\(0\.16, 1, 0\.3, 1\) both/);
   assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation-delay:\s*calc\(var\(--word-index\) \* 15ms\)/);
-  assert.match(html, /from\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translate3d\(0, 10px, 0\)/);
+  assert.match(html, /from\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translate3d\(0, 12px, 0\)/);
+  assert.match(html, /72%\s*\{[\s\S]*opacity:\s*1/);
   assert.match(html, /to\s*\{[\s\S]*opacity:\s*1;[\s\S]*transform:\s*translate3d\(0, 0, 0\)/);
   assert.match(html, /var wordIndex = 0/);
   assert.match(html, /var tokens = line\.split\(\s*\/\(\\s\+\)\/\s*\)/);
