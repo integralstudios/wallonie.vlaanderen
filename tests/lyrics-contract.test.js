@@ -93,6 +93,9 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
 test('lyrics words stagger animate in when the overlay opens', () => {
   assert.match(html, /@keyframes lyricsTrackRise/);
   assert.match(html, /@keyframes lyricWordIn/);
+  assert.match(html, /\.lyrics-line[\s\S]*font:\s*800 24px\/1\.18 Arial, Helvetica, sans-serif/);
+  assert.doesNotMatch(html, /font:\s*800 clamp/);
+  assert.doesNotMatch(html, /font-size:\s*clamp\(19px, 6\.6vw, 28px\)/);
   assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-track[\s\S]*animation:\s*lyricsTrackRise 0\.82s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
   assert.match(html, /\.lyrics-word[\s\S]*display:\s*inline-block/);
   assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation:\s*lyricWordIn 0\.68s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
