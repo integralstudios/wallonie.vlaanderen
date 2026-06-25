@@ -150,7 +150,7 @@
         background: transparent;
         font: 400 12px/1 "mendl-sans-dusk", sans-serif;
         font-style: normal;
-        letter-spacing: 0;
+        letter-spacing: 1px;
         cursor: pointer;
         mix-blend-mode: plus-lighter;
         -webkit-font-smoothing: antialiased;
@@ -161,6 +161,9 @@
         outline: none;
       }
       .lyrics-language:focus-visible {
+        color: #ffffff;
+      }
+      .lyrics-language:not(.is-selected):hover {
         color: #ffffff;
       }
       .lyrics-language.is-selected {

@@ -94,7 +94,9 @@ test('lyrics language picker is a bottom-aligned underline control', () => {
   assert.match(html, /\.lyrics-language[\s\S]*background:\s*transparent/);
   assert.match(html, /\.lyrics-language[\s\S]*color:\s*rgba\(255, 255, 255, 0\.6\)/);
   assert.match(html, /\.lyrics-language[\s\S]*font:\s*400 12px\/1 "mendl-sans-dusk", sans-serif/);
+  assert.match(html, /\.lyrics-language[\s\S]*letter-spacing:\s*1px/);
   assert.match(html, /\.lyrics-language[\s\S]*mix-blend-mode:\s*plus-lighter/);
+  assert.match(html, /\.lyrics-language:not\(\.is-selected\):hover[\s\S]*color:\s*#ffffff/);
   assert.match(html, /\.lyrics-language:focus[\s\S]*outline:\s*none/);
   assert.match(html, /\.lyrics-language:focus-visible[\s\S]*color:\s*#ffffff/);
   assert.match(html, /\.lyrics-language\.is-selected[\s\S]*color:\s*#ffffff/);
