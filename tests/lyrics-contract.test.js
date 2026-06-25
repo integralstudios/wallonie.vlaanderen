@@ -77,3 +77,17 @@ test('first-interaction audio guard safely ignores shared controls', () => {
     /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);\s*if \(isControl\) return;\s*play\(\);\s*events\.forEach/s,
   );
 });
+
+test('lyrics data includes timed Dutch, French, and German lines', () => {
+  assert.match(html, /var LYRICS = \{/);
+  assert.match(html, /nl:\s*\[/);
+  assert.match(html, /fr:\s*\[/);
+  assert.match(html, /de:\s*\[/);
+  assert.match(html, /O dierbaar België/);
+  assert.match(html, /O Belgique/);
+  assert.match(html, /O liebes Land/);
+  assert.match(html, /Liberté/);
+  assert.match(html, /König/);
+  assert.match(html, /time:\s*0/);
+  assert.match(html, /time:\s*49\.2/);
+});
