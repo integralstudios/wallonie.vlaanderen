@@ -48,7 +48,7 @@
         right: 32px;
       }
       .lyrics-btn {
-        right: 80px;
+        right: 92px;
       }
       .control-btn .ring {
         position: absolute;
@@ -59,13 +59,11 @@
         margin: -18px 0 0 -18px;
         border: 1px solid rgba(255, 255, 255, 0.5);
         border-radius: 50%;
-        transition: transform 0.2s ease, background 0.2s ease;
+        transition: transform 0.2s ease;
       }
       .control-btn:hover .ring,
-      .control-btn:focus-visible .ring,
-      .lyrics-btn.is-active .ring {
+      .control-btn:focus-visible .ring {
         transform: scale(1.1);
-        background: rgba(255, 255, 255, 0.12);
       }
       .control-btn:focus {
         outline: none;
@@ -134,7 +132,7 @@
         --language-underline-x: 0px;
         --language-underline-width: 0px;
         position: fixed;
-        bottom: 64px;
+        bottom: 50px;
         left: 50%;
         z-index: 21;
         display: flex;
@@ -298,13 +296,13 @@
           right: 20px;
         }
         .lyrics-btn {
-          right: 68px;
+          right: 80px;
         }
         .lyrics-overlay {
           padding: 76px 18px 104px;
         }
         .lyrics-language-switcher {
-          bottom: 52px;
+          bottom: 38px;
           gap: 28px;
         }
         .lyrics-track {
@@ -332,8 +330,7 @@
           transform: none;
         }
         .control-btn:hover .ring,
-        .control-btn:focus-visible .ring,
-        .lyrics-btn.is-active .ring {
+        .control-btn:focus-visible .ring {
           transform: none;
         }
         .control-btn .icon {

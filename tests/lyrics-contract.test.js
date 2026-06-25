@@ -316,8 +316,8 @@ test('lyrics controls and overlay shell are present', () => {
   assert.match(html, /class="lyrics-language-underline"/);
 });
 
-test('lyrics language picker is a bottom-aligned underline control', () => {
-  assert.match(html, /\.lyrics-language-switcher[\s\S]*bottom:\s*64px/);
+test('lyrics language picker is center-aligned with the control buttons', () => {
+  assert.match(html, /\.lyrics-language-switcher[\s\S]*bottom:\s*50px/);
   assert.match(html, /\.lyrics-language-switcher[\s\S]*transform:\s*translate\(-50%, 50%\)/);
   assert.doesNotMatch(html, /\.lyrics-language-switcher[\s\S]*top:\s*28px/);
   assert.match(html, /\.lyrics-language-switcher[\s\S]*--language-underline-x:\s*0px/);
@@ -340,7 +340,7 @@ test('lyrics language picker is a bottom-aligned underline control', () => {
   assert.match(html, /\.lyrics-language-underline[\s\S]*width:\s*var\(--language-underline-width\)/);
   assert.match(html, /\.lyrics-language-underline[\s\S]*transform:\s*translate3d\(var\(--language-underline-x\), 0, 0\)/);
   assert.match(html, /\.lyrics-language-underline[\s\S]*transition:\s*transform 0\.34s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\),\s*width 0\.34s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\)/);
-  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-language-switcher[\s\S]*bottom:\s*52px/);
+  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-language-switcher[\s\S]*bottom:\s*38px/);
   assert.match(html, /function updateLanguageUnderline\(\)/);
   assert.match(html, /document\.createRange\(\)/);
   assert.match(html, /range\.selectNodeContents\(selectedButton\)/);
@@ -370,12 +370,19 @@ test('control buttons use compact Sketch icon sizing', () => {
   assert.match(html, /\.control-btn \.ring[\s\S]*width:\s*36px/);
   assert.match(html, /\.control-btn \.ring[\s\S]*height:\s*36px/);
   assert.match(html, /\.control-btn \.ring[\s\S]*margin:\s*-18px 0 0 -18px/);
+  assert.match(html, /\.control-btn \.ring[\s\S]*transition:\s*transform 0\.2s ease;/);
+  assert.match(
+    html,
+    /\.control-btn:hover \.ring,\s*\.control-btn:focus-visible \.ring\s*\{\s*transform:\s*scale\(1\.1\);\s*\}/,
+  );
   assert.match(html, /\.control-btn \.icon[\s\S]*width:\s*16px/);
   assert.match(html, /\.control-btn \.icon[\s\S]*height:\s*16px/);
   assert.match(html, /\.control-btn \.icon[\s\S]*margin:\s*-8px 0 0 -8px/);
   assert.match(html, /\.control-btn \.icon[\s\S]*color:\s*#ffffff/);
-  assert.match(html, /\.lyrics-btn[\s\S]*right:\s*80px/);
-  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-btn[\s\S]*right:\s*68px/);
+  assert.match(html, /\.lyrics-btn[\s\S]*right:\s*92px/);
+  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-btn[\s\S]*right:\s*80px/);
+  assert.doesNotMatch(html, /background:\s*rgba\(255, 255, 255, 0\.12\)/);
+  assert.doesNotMatch(html, /\.lyrics-btn\.is-active \.ring/);
   assert.doesNotMatch(html, /\.control-btn[\s\S]*width:\s*64px/);
   assert.doesNotMatch(html, /\.control-btn \.ring[\s\S]*width:\s*48px/);
   assert.doesNotMatch(html, /\.control-btn \.icon[\s\S]*width:\s*20px/);
