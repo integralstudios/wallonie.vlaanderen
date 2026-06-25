@@ -32,8 +32,8 @@
       .control-btn {
         position: fixed;
         bottom: 32px;
-        width: 64px;
-        height: 64px;
+        width: 36px;
+        height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -48,15 +48,15 @@
         right: 32px;
       }
       .lyrics-btn {
-        right: 108px;
+        right: 80px;
       }
       .control-btn .ring {
         position: absolute;
         top: 50%;
         left: 50%;
-        width: 48px;
-        height: 48px;
-        margin: -24px 0 0 -24px;
+        width: 36px;
+        height: 36px;
+        margin: -18px 0 0 -18px;
         border: 1px solid rgba(255, 255, 255, 0.5);
         border-radius: 50%;
         transition: transform 0.2s ease, background 0.2s ease;
@@ -74,10 +74,10 @@
         position: absolute;
         top: 50%;
         left: 50%;
-        width: 20px;
-        height: 20px;
-        margin: -10px 0 0 -10px;
-        fill: #ffffff;
+        width: 16px;
+        height: 16px;
+        margin: -8px 0 0 -8px;
+        color: #ffffff;
         transform-origin: center;
         transition: opacity 0.24s cubic-bezier(0.33, 1, 0.68, 1),
           transform 0.24s cubic-bezier(0.33, 1, 0.68, 1),
@@ -275,6 +275,21 @@
         transform: scale(1) rotate(0deg);
         filter: blur(0);
       }
+      .lyrics-btn .icon-lyrics-selected {
+        opacity: 0;
+        transform: scale(0.9) rotate(-10deg);
+        filter: blur(3px);
+      }
+      .lyrics-btn.is-active .icon-lyrics {
+        opacity: 0;
+        transform: scale(0.9) rotate(10deg);
+        filter: blur(3px);
+      }
+      .lyrics-btn.is-active .icon-lyrics-selected {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        filter: blur(0);
+      }
       @media (max-width: 520px) {
         .control-btn {
           bottom: 20px;
@@ -283,7 +298,7 @@
           right: 20px;
         }
         .lyrics-btn {
-          right: 88px;
+          right: 68px;
         }
         .lyrics-overlay {
           padding: 76px 18px 104px;
@@ -321,13 +336,17 @@
         .lyrics-btn.is-active .ring {
           transform: none;
         }
-        .mute-btn .icon {
+        .control-btn .icon {
           transition: opacity 0.15s linear;
         }
         .mute-btn .icon-on,
         .mute-btn .icon-off,
         .mute-btn.is-muted .icon-on,
-        .mute-btn.is-muted .icon-off {
+        .mute-btn.is-muted .icon-off,
+        .lyrics-btn .icon-lyrics,
+        .lyrics-btn .icon-lyrics-selected,
+        .lyrics-btn.is-active .icon-lyrics,
+        .lyrics-btn.is-active .icon-lyrics-selected {
           transform: none;
           filter: none;
         }
@@ -348,13 +367,35 @@
     </audio>
     <button id="muteBtn" class="mute-btn control-btn" type="button" aria-label="Mute" aria-pressed="false">
       <span class="ring"></span>
-      <svg class="icon icon-on" viewBox="-0.58 -1.2 24 24" aria-hidden="true"><g transform="translate(4, 3)"><path d="M11.6100569,0.092080459 C11.8504906,0.223661289 12,0.475917369 12,0.750000596 L12,17.25 C12,17.5240841 11.8504906,17.7763386 11.6100569,17.9079208 C11.3696241,18.0395012 11.0765619,18.0294495 10.8457098,17.8817043 L4.7805481,14 L0.75,14 C0.335786432,14 0,13.6642141 0,13.250001 L0,4.75000048 C0,4.33578682 0.335786432,4 0.75,4 L4.7805481,4 L10.8457098,0.118297026 C11.0765619,-0.0294485241 11.3696241,-0.0395003706 11.6100569,0.092080459 Z"></path><path d="M15.4193678,4.58099794 C15.1264753,4.28810501 14.6516008,4.28810501 14.3587084,4.58099794 C14.065815,4.87389135 14.065815,5.3487649 14.3587084,5.64165831 C15.2191105,6.50206041 15.7499504,7.68853188 15.7499504,9.0004158 C15.7499504,10.3122997 15.2191095,11.4987717 14.3587084,12.3591728 C14.065815,12.6520662 14.065815,13.1269398 14.3587084,13.4198332 C14.6516008,13.7127266 15.1264753,13.7127266 15.4193678,13.4198332 C16.5495739,12.2896271 17.2499504,10.7260971 17.2499504,9.0004158 C17.2499504,7.27473259 16.5495739,5.71120453 15.4193678,4.58099794 Z"></path></g></svg>
-      <svg class="icon icon-off" viewBox="-1.64 -1.12 24 24" aria-hidden="true"><g transform="translate(2.5, 3)"><path d="M14,2.9393394 L14,0.750000596 C14,0.475917399 13.8504906,0.223661289 13.6100569,0.092080459 C13.3696241,-0.0395003706 13.0765619,-0.0294485241 12.8457098,0.118297026 L6.7805481,4 L2.75,4 C2.33578634,4 2,4.33578682 2,4.75000048 L2,13.250001 C2,13.6642141 2.33578634,14 2.75,14 L2.93933845,14 L0.219669923,16.7196693 C-0.0732233077,17.0125637 -0.0732233077,17.4874363 0.219669923,17.7803307 C0.512563094,18.0732231 0.987436891,18.0732231 1.28033018,17.7803307 L17.7803307,1.28033018 C18.0732231,0.987436891 18.0732231,0.512563094 17.7803307,0.219669923 C17.4874363,-0.0732233077 17.0125637,-0.0732233077 16.7196693,0.219669923 L14,2.9393394 Z"></path><path d="M12.8457098,17.8817043 L7.02432346,14.1560173 L14,7.18034029 L14,17.25 C14,17.5240841 13.8504906,17.7763386 13.6100569,17.9079208 C13.3696241,18.0395012 13.0765619,18.0294495 12.8457098,17.8817043 Z"></path></g></svg>
+      <svg class="icon icon-on" data-sketch-icon="volume-on" viewBox="0 0 24 24" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="9 8 5 8 5 16 9 16 15 19.25 15 4.75"></polygon>
+          <path d="M17.828125,9.17156982 C18.5519826,9.89542741 18.9996977,10.8954275 18.9996977,11.9999971 C18.9996977,13.1045668 18.5519826,14.1045671 17.828125,14.8284245"></path>
+        </g>
+      </svg>
+      <svg class="icon icon-off" data-sketch-icon="volume-off" viewBox="0 0 24 24" aria-hidden="true">
+        <g fill="currentColor" transform="translate(2.5859, 2.5859)">
+          <path d="M1.41421354,18.8284264 L18.8284264,1.41421354 L17.4142132,0 L14.4140625,3.00015068 L14.4140625,0.485351563 L7.16062498,4.4142971 L2.4140625,4.4142971 L2.4140625,14.4142971 L2.99991608,14.4142971 L0,17.4142132 L1.41421354,18.8284264 Z M4.99991608,12.4142971 L4.4140625,12.4142971 L4.4140625,6.4142971 L7.66750002,6.4142971 L12.4140625,3.84324217 L12.4140625,5.00015068 L4.99991608,12.4142971 Z"></path>
+          <polygon fill-rule="nonzero" points="12.4140625 14.9853525 9.60676003 13.4647303 8.13137245 14.9401178 14.4140625 18.3432426 14.4140625 8.65742779 12.4140625 10.6574278"></polygon>
+        </g>
+      </svg>
     </button>
     <button id="lyricsBtn" class="lyrics-btn control-btn" type="button" aria-label="Show lyrics" aria-pressed="false" aria-controls="lyricsOverlay">
       <span class="ring"></span>
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M5 4.75C5 3.78 5.78 3 6.75 3h10.5c.97 0 1.75.78 1.75 1.75v14.5c0 .67-.38 1.28-.98 1.57-.6.3-1.31.22-1.83-.19L12 17.34l-4.19 3.29c-.52.41-1.23.49-1.83.19A1.75 1.75 0 0 1 5 19.25V4.75Zm2 0v14.06l4.07-3.2a1.5 1.5 0 0 1 1.86 0L17 18.81V4.75H7Zm2.25 3h5.5a.75.75 0 0 1 0 1.5h-5.5a.75.75 0 0 1 0-1.5Zm0 3h5.5a.75.75 0 0 1 0 1.5h-5.5a.75.75 0 0 1 0-1.5Z"></path>
+      <svg class="icon icon-lyrics" data-sketch-icon="lyrics" viewBox="0 0 24 24" aria-hidden="true">
+        <g fill="none" stroke="currentColor" transform="translate(12, 12) scale(-1, 1) translate(-12, -12)">
+          <path d="M7.00000381,15.500042 L7.00000381,5.99680793 C7.00000381,5.46689218 7.21052572,4.95886445 7.58617806,4.58446747 C7.9610478,4.21007049 8.46974349,4.00040817 9.00035238,4.00040817 L18.9562998,4.00040817" stroke-width="2" fill-rule="nonzero"></path>
+          <g stroke-linecap="square" fill-rule="evenodd" transform="translate(4, 9)">
+            <path d="M9.99739933,11 L2.03289533,11 C1.49368453,11 0.976579309,10.7858785 0.595263362,10.4047022 C0.213947415,10.0235259 0,9.50634873 0,8.96752548 L0,7 L9,7" stroke-width="2" fill-rule="nonzero"></path>
+            <path d="M13,0 L13,9.00199795 C13,10.104998 12.1049999,11 11.0019999,11 L10.9980001,11 C9.8950001,11 9,10.104998 9,9.00199795 L9,7" stroke-width="2" fill-rule="nonzero"></path>
+          </g>
+          <path d="M18.9999561,4 C19.5303903,4 20.0392598,4.21076898 20.4142162,4.58584554 C20.7891726,4.9609221 20.9999561,5.46953707 20.9999561,6 L20.9999561,9 L16.9999561,9 L16.9999561,6 C16.9999561,5.46953707 17.2107387,4.9609221 17.5856951,4.58584554 C17.9606515,4.21076898 18.469521,4 18.9999561,4 Z" stroke-width="2" stroke-linecap="round" fill-rule="nonzero"></path>
+        </g>
+      </svg>
+      <svg class="icon icon-lyrics-selected" data-sketch-icon="lyrics-selected" viewBox="0 0 24 24" aria-hidden="true">
+        <g fill="currentColor" transform="translate(12, 12) scale(-1, 1) translate(-12, -12)">
+          <path d="M18.9996662,3 L9.00034857,3 C8.20623875,3 7.44316339,3.31377488 6.87990451,3.87611639 C6.31592321,4.43839705 6,5.20125508 6,5.99639988 L6,15 L3,15 L3,17.9675283 C3,18.7713051 3.31912351,19.5429859 3.88828611,20.1119404 C4.4571538,20.6805992 5.22856808,21 6.03289533,21 L15,21 L15.0019999,20.9996338 C16.6572838,20.9996338 18,19.6569214 18,18.0016346 L18,10 L22,10 L22,6 C22,5.20420599 21.6837826,4.44133544 21.121479,3.87885207 C20.5589085,3.31610072 19.7952747,3 18.9996662,3 Z M18,6 C18,5.73486805 18.1053495,5.4805088 18.2929592,5.29283905 C18.4802408,5.10549736 18.7345762,5.00006771 18.9997444,5 C19.2650032,5 19.5196991,5.10543728 19.7070408,5.29283905 C19.8946495,5.4805088 20,5.73486805 20,6 L20,8 L18,8 L18,6 Z M5,17 L12,17 L12,18.0016346 C12,18.3516445 12.0600348,18.6876783 12.1703634,19 L6.03289533,19 C5.75880098,19 5.49600482,18.891161 5.30224061,18.6974678 C5.10877132,18.5040703 5,18.2413988 5,17.9675283 L5,17 Z"></path>
+        </g>
       </svg>
     </button>
     <section id="lyricsOverlay" class="lyrics-overlay" aria-hidden="true" aria-label="Lyrics" inert>

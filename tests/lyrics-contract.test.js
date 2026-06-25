@@ -358,8 +358,37 @@ test('mute control hooks are preserved', () => {
   assertTagHasAttribute(muteButton, 'aria-pressed', 'false');
   assert.match(html, /class="icon icon-on"/);
   assert.match(html, /class="icon icon-off"/);
+  assert.match(html, /data-sketch-icon="volume-on"/);
+  assert.match(html, /data-sketch-icon="volume-off"/);
   assert.match(html, /\.mute-btn\.is-muted \.icon-on/);
   assert.match(html, /\.mute-btn\.is-muted \.icon-off/);
+});
+
+test('control buttons use compact Sketch icon sizing', () => {
+  assert.match(html, /\.control-btn[\s\S]*width:\s*36px/);
+  assert.match(html, /\.control-btn[\s\S]*height:\s*36px/);
+  assert.match(html, /\.control-btn \.ring[\s\S]*width:\s*36px/);
+  assert.match(html, /\.control-btn \.ring[\s\S]*height:\s*36px/);
+  assert.match(html, /\.control-btn \.ring[\s\S]*margin:\s*-18px 0 0 -18px/);
+  assert.match(html, /\.control-btn \.icon[\s\S]*width:\s*16px/);
+  assert.match(html, /\.control-btn \.icon[\s\S]*height:\s*16px/);
+  assert.match(html, /\.control-btn \.icon[\s\S]*margin:\s*-8px 0 0 -8px/);
+  assert.match(html, /\.control-btn \.icon[\s\S]*color:\s*#ffffff/);
+  assert.match(html, /\.lyrics-btn[\s\S]*right:\s*80px/);
+  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-btn[\s\S]*right:\s*68px/);
+  assert.doesNotMatch(html, /\.control-btn[\s\S]*width:\s*64px/);
+  assert.doesNotMatch(html, /\.control-btn \.ring[\s\S]*width:\s*48px/);
+  assert.doesNotMatch(html, /\.control-btn \.icon[\s\S]*width:\s*20px/);
+});
+
+test('lyrics control uses normal and selected Sketch icons', () => {
+  assert.match(html, /data-sketch-icon="lyrics"/);
+  assert.match(html, /data-sketch-icon="lyrics-selected"/);
+  assert.match(html, /class="icon icon-lyrics"/);
+  assert.match(html, /class="icon icon-lyrics-selected"/);
+  assert.match(html, /\.lyrics-btn \.icon-lyrics-selected[\s\S]*opacity:\s*0/);
+  assert.match(html, /\.lyrics-btn\.is-active \.icon-lyrics[\s\S]*opacity:\s*0/);
+  assert.match(html, /\.lyrics-btn\.is-active \.icon-lyrics-selected[\s\S]*opacity:\s*1/);
 });
 
 test('lyrics overlay uses the provided image as a blurred background', () => {
