@@ -158,7 +158,7 @@
         position: relative;
         z-index: 1;
         width: min(1000px, 100%);
-        max-height: min(76vh, 640px);
+        max-height: min(84vh, 760px);
         overflow-y: auto;
         overscroll-behavior: contain;
         scrollbar-width: thin;
@@ -178,6 +178,9 @@
         font-style: normal;
         letter-spacing: 0;
         text-align: center;
+      }
+      .lyrics-line.is-spacer {
+        height: 32px;
       }
       .lyrics-word {
         display: inline-block;
@@ -331,17 +334,23 @@
         var selectedLanguage = 'nl';
         var LYRICS = {
           nl: [
-            "O dierbaar België",
-            "O heilig land der vaad'ren",
+            "O dierbaar België, o heilig land der vaad'ren",
             "Onze ziel en ons hart zijn u gewijd.",
+            "",
             "Aanvaard ons kracht en het bloed van onze adren,",
             "Wees ons doel in arbeid en in strijd.",
+            "",
             "Bloei, o land, in eendracht niet te breken;",
             "Wees immer u zelf en ongeknecht,",
+            "",
             "Het woord getrouw, dat ge onbevreesd moogt spreken:",
             "Voor Vorst, voor Vrijheid en voor Recht.",
+            "",
             "Het woord getrouw, dat ge onbevreesd moogt spreken:",
-            "Voor Vorst, voor Vrijheid en voor Recht. (x3)"
+            "Voor Vorst, voor Vrijheid en voor Recht!",
+            "",
+            "Voor Vorst, voor Vrijheid en voor Recht!",
+            "Voor Vorst, voor Vrijheid en voor Recht!"
           ],
           fr: [
             "O Belgique, ô mère chérie,",
@@ -408,6 +417,11 @@
             var lineNode = document.createElement('p');
             lineNode.className = 'lyrics-line';
             lineNode.setAttribute('data-index', String(index));
+            if (!line.trim()) {
+              lineNode.className += ' is-spacer';
+              lyricsTrack.appendChild(lineNode);
+              return;
+            }
             var tokens = line.split(/(\s+)/);
             tokens.forEach(function (part) {
               if (!part.trim()) {

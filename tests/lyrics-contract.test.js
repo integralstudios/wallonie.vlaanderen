@@ -6,6 +6,25 @@ const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const lyricsBackgroundPath = path.join(__dirname, '..', 'lyrics-bg.jpg');
+const expectedDutchLyrics = [
+  "O dierbaar België, o heilig land der vaad'ren",
+  'Onze ziel en ons hart zijn u gewijd.',
+  '',
+  'Aanvaard ons kracht en het bloed van onze adren,',
+  'Wees ons doel in arbeid en in strijd.',
+  '',
+  'Bloei, o land, in eendracht niet te breken;',
+  'Wees immer u zelf en ongeknecht,',
+  '',
+  'Het woord getrouw, dat ge onbevreesd moogt spreken:',
+  'Voor Vorst, voor Vrijheid en voor Recht.',
+  '',
+  'Het woord getrouw, dat ge onbevreesd moogt spreken:',
+  'Voor Vorst, voor Vrijheid en voor Recht!',
+  '',
+  'Voor Vorst, voor Vrijheid en voor Recht!',
+  'Voor Vorst, voor Vrijheid en voor Recht!',
+];
 
 function tagWithAttribute(tagName, attributeName, value) {
   const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -86,6 +105,7 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.doesNotMatch(html, /-webkit-backdrop-filter:\s*blur\(/);
   assert.match(html, /prefers-reduced-motion:\s*reduce/);
   assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-background-image/);
+  assert.match(html, /\.lyrics-viewport[\s\S]*max-height:\s*min\(84vh, 760px\)/);
   assert.match(html, /\.lyrics-viewport[\s\S]*overflow-y:\s*auto/);
   assert.doesNotMatch(html, /\.lyrics-line\.is-active/);
 });
@@ -96,6 +116,7 @@ test('lyrics words stagger animate in when the overlay opens', () => {
   assert.match(html, /<link rel="stylesheet" href="https:\/\/use\.typekit\.net\/qsr7tur\.css">/);
   assert.match(html, /\.lyrics-line[\s\S]*font:\s*400 24px\/1\.18 "mendl-serif-dawn", sans-serif/);
   assert.match(html, /\.lyrics-line[\s\S]*font-style:\s*normal/);
+  assert.match(html, /\.lyrics-line\.is-spacer[\s\S]*height:\s*32px/);
   assert.doesNotMatch(html, /font:\s*800 clamp/);
   assert.doesNotMatch(html, /font-size:\s*clamp\(19px, 6\.6vw, 28px\)/);
   assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-track[\s\S]*animation:\s*lyricsTrackRise 0\.82s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
@@ -157,7 +178,7 @@ test('lyrics data includes full Dutch, French, and German lyric sheets', () => {
   assert.match(html, /O liebes Land/);
   assert.match(html, /Liberté/);
   assert.match(html, /König/);
-  assert.match(html, /\(x3\)/);
+  assert.doesNotMatch(html, /\(x3\)/);
   assert.match(html, /\(ter\)/);
   assert.doesNotMatch(html, /time:\s*\d/);
 });
@@ -166,14 +187,23 @@ test('lyrics data has static sheet structure without timing metadata', () => {
   const lyrics = extractLyricsData();
   assert.deepEqual(Object.keys(lyrics), ['nl', 'fr', 'de']);
 
-  assert.equal(lyrics.nl.length, 11);
+  assert.deepEqual(Array.from(lyrics.nl), expectedDutchLyrics);
+  assert.deepEqual(
+    lyrics.nl.reduce((indexes, line, index) => (line === '' ? indexes.concat(index) : indexes), []),
+    [2, 5, 8, 11, 14],
+  );
+  assert.equal(lyrics.nl.length, 17);
   assert.equal(lyrics.fr.length, 8);
   assert.equal(lyrics.de.length, 8);
 
-  Object.values(lyrics).forEach((lines) => {
+  Object.entries(lyrics).forEach(([language, lines]) => {
     lines.forEach((line, index) => {
       assert.equal(typeof line, 'string');
-      assert.notEqual(line.trim(), '', `Expected non-empty lyric at index ${index}`);
+      if (language === 'nl' && expectedDutchLyrics[index] === '') {
+        assert.equal(line, '', `Expected Dutch spacer at index ${index}`);
+        return;
+      }
+      assert.notEqual(line.trim(), '', `Expected non-empty ${language} lyric at index ${index}`);
     });
   });
 });
@@ -197,6 +227,7 @@ test('lyrics runtime renders text safely and restores focus before inert close',
   assert.match(renderLyricsMatch[1], /while \(lyricsTrack\.firstChild\) lyricsTrack\.removeChild\(lyricsTrack\.firstChild\);/);
   assert.match(renderLyricsMatch[1], /document\.createElement\('p'\)/);
   assert.match(renderLyricsMatch[1], /document\.createElement\('span'\)/);
+  assert.match(renderLyricsMatch[1], /lineNode\.className \+= ' is-spacer'/);
   assert.match(renderLyricsMatch[1], /document\.createTextNode\(part\)/);
   assert.match(renderLyricsMatch[1], /wordNode\.textContent = part/);
   assert.match(renderLyricsMatch[1], /lyricsTrack\.appendChild\(lineNode\)/);
