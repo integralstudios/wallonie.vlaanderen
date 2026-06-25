@@ -531,7 +531,8 @@
           variant: 'a',
           strokeOpacity: 0.72,
           glowOpacity: 0.18,
-          glowSize: 1
+          glowSize: 1,
+          tuning: {}
         };
         var waveTime = 0;
         var waveLastTimestamp = 0;
@@ -718,9 +719,35 @@
           return Math.max(0, Math.min(1, (a * 0.48 + b * 0.34 + c * 0.18 + 1) / 2));
         }
 
+        function clampNumber(value, min, max, fallback) {
+          var number = Number(value);
+          if (!isFinite(number)) return fallback;
+          return Math.max(min, Math.min(max, number));
+        }
+
+        function tunedWavePreset(basePreset, variant) {
+          var tuning = waveParams.tuning && waveParams.tuning[variant] ? waveParams.tuning[variant] : {};
+          var preset = {};
+          var key;
+          for (key in basePreset) {
+            if (Object.prototype.hasOwnProperty.call(basePreset, key)) preset[key] = basePreset[key];
+          }
+
+          var amplitude = clampNumber(tuning.amplitude, 0.2, 2.4, 1);
+          preset.count = Math.round(clampNumber(tuning.samples, 12, 72, basePreset.count));
+          preset.minHeight = basePreset.minHeight * amplitude;
+          preset.maxHeight = basePreset.maxHeight * amplitude;
+          preset.threshold = clampNumber(tuning.threshold, 0, 1, basePreset.threshold);
+          preset.lineWidth = clampNumber(tuning.lineWidth, 0.2, 2, basePreset.lineWidth);
+          preset.speed = clampNumber(tuning.speed, 0.1, 2, basePreset.speed);
+          return preset;
+        }
+
         function renderWaveSamples() {
           if (!waveSamples) return;
-          var activePreset = WAVE_PRESETS[waveParams.variant] || WAVE_PRESETS.a;
+          var activeVariant = WAVE_PRESETS[waveParams.variant] ? waveParams.variant : 'a';
+          var basePreset = WAVE_PRESETS[activeVariant] || WAVE_PRESETS.a;
+          var activePreset = tunedWavePreset(basePreset, activeVariant);
           var isActive = shouldAnimateWave() && !prefersReducedMotion();
           ensureWaveSampleLines(activePreset.count);
 
@@ -820,6 +847,11 @@
           waveParams.strokeOpacity = params.line.strokeOpacity;
           waveParams.glowOpacity = params.line.glowOpacity;
           waveParams.glowSize = params.line.glowSize;
+          waveParams.tuning = {
+            a: params.waveA,
+            b: params.waveB,
+            c: params.waveC
+          };
           document.documentElement.style.setProperty('--volume-wave-stroke-opacity', String(params.line.strokeOpacity));
           document.documentElement.style.setProperty('--volume-wave-glow-opacity', String(params.line.glowOpacity));
           document.documentElement.style.setProperty('--volume-wave-glow-size', params.line.glowSize + 'px');
@@ -1136,11 +1168,35 @@
                 strokeOpacity: [0.72, 0, 1, 0.01],
                 glowOpacity: [0.18, 0, 0.8, 0.01],
                 glowSize: [1, 0, 6, 0.5]
+              },
+              waveA: {
+                _collapsed: true,
+                samples: [36, 18, 56, 1],
+                amplitude: [1, 0.4, 1.8, 0.05],
+                threshold: [0.28, 0.05, 0.8, 0.01],
+                lineWidth: [0.88, 0.4, 1.4, 0.01],
+                speed: [0.72, 0.25, 1.4, 0.01]
+              },
+              waveB: {
+                _collapsed: true,
+                samples: [34, 18, 56, 1],
+                amplitude: [1, 0.4, 1.8, 0.05],
+                threshold: [0.36, 0.05, 0.8, 0.01],
+                lineWidth: [0.9, 0.4, 1.4, 0.01],
+                speed: [0.68, 0.25, 1.4, 0.01]
+              },
+              waveC: {
+                _collapsed: true,
+                samples: [28, 18, 56, 1],
+                amplitude: [1, 0.4, 1.8, 0.05],
+                threshold: [0.46, 0.05, 0.8, 0.01],
+                lineWidth: [0.92, 0.4, 1.4, 0.01],
+                speed: [0.76, 0.25, 1.4, 0.01]
               }
             }, {
               id: 'wallonie-soundwave',
               persist: {
-                key: 'wallonie:soundwave-dialkit-v4'
+                key: 'wallonie:soundwave-dialkit-v5'
               },
               shortcuts: {
                 duration: { key: 'd', mode: 'fine' },
@@ -1156,7 +1212,22 @@
               params.duration,
               params.line.strokeOpacity,
               params.line.glowOpacity,
-              params.line.glowSize
+              params.line.glowSize,
+              params.waveA.samples,
+              params.waveA.amplitude,
+              params.waveA.threshold,
+              params.waveA.lineWidth,
+              params.waveA.speed,
+              params.waveB.samples,
+              params.waveB.amplitude,
+              params.waveB.threshold,
+              params.waveB.lineWidth,
+              params.waveB.speed,
+              params.waveC.samples,
+              params.waveC.amplitude,
+              params.waveC.threshold,
+              params.waveC.lineWidth,
+              params.waveC.speed
             ]);
 
             return null;
