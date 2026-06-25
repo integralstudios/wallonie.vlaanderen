@@ -511,7 +511,7 @@ test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters',
   assert.match(html, /"dialkit":\s*"https:\/\/esm\.sh\/dialkit@1\.3\.0\?external=react,react-dom,motion"/);
   assert.match(html, /href="https:\/\/esm\.sh\/dialkit@1\.3\.0\/styles\.css"/);
   assert.match(html, /new URLSearchParams\(window\.location\.search\)\.has\('dialkit'\)/);
-  assert.match(html, /function setupSoundwaveDialKit\(\)/);
+  assert.match(html, /function setupSoundwaveDialKit\(forceOpen\)/);
   assert.match(html, /import\('dialkit'\)/);
   assert.match(html, /useDialKit\('Soundwave'/);
   assert.match(html, /preview:\s*true/);
@@ -523,6 +523,26 @@ test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters',
   assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-wobble', params\.shape\.wobble \+ '%'\)/);
   assert.match(html, /muteBtn\.classList\.toggle\('is-dialkit-previewing', params\.preview\)/);
   assert.match(html, /React\.createElement\(DialRoot,\s*\{ position: 'top-left', theme: 'dark', defaultOpen: true, productionEnabled: true \}\)/);
+});
+
+test('DialKit has a visible local launcher when the URL flag is absent', () => {
+  const launcher = tagWithAttribute('button', 'id', 'dialkitLauncher');
+  assertTagHasClass(launcher, 'dialkit-launcher');
+  assertTagHasAttribute(launcher, 'type', 'button');
+  assertTagHasBooleanAttribute(launcher, 'hidden');
+  assert.match(html, /<button id="dialkitLauncher" class="dialkit-launcher" type="button" hidden>DialKit<\/button>/);
+  assert.match(html, /\.dialkit-launcher[\s\S]*position:\s*fixed/);
+  assert.match(html, /\.dialkit-launcher[\s\S]*bottom:\s*32px/);
+  assert.match(html, /\.dialkit-launcher[\s\S]*left:\s*32px/);
+  assert.match(html, /\.dialkit-launcher\[hidden\][\s\S]*display:\s*none/);
+  assert.match(html, /function isLocalDialKitHost\(\)/);
+  assert.match(html, /function showDialKitLauncher\(\)/);
+  assert.match(html, /launcher\.hidden = false/);
+  assert.match(html, /launcher\.addEventListener\('click', function \(\) \{/);
+  assert.match(html, /params\.set\('dialkit', '1'\)/);
+  assert.match(html, /window\.history\.replaceState\(null, '', nextUrl\)/);
+  assert.match(html, /setupSoundwaveDialKit\(true\)/);
+  assert.match(html, /showDialKitLauncher\(\);\s*setupSoundwaveDialKit\(\);/);
 });
 
 test('lyrics data includes full Dutch, French, and German lyric sheets', () => {

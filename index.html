@@ -81,6 +81,34 @@
       .lyrics-btn {
         right: 92px;
       }
+      .dialkit-launcher {
+        position: fixed;
+        bottom: 32px;
+        left: 32px;
+        z-index: 22;
+        padding: 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 18px;
+        color: #ffffff;
+        background: rgba(0, 0, 0, 0.3);
+        font: 400 12px/1 "mendl-sans-dusk", sans-serif;
+        letter-spacing: 0.6px;
+        cursor: pointer;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+      }
+      .dialkit-launcher:hover,
+      .dialkit-launcher:focus-visible {
+        border-color: rgba(255, 255, 255, 0.85);
+        transform: scale(1.05);
+      }
+      .dialkit-launcher:focus {
+        outline: none;
+      }
+      .dialkit-launcher[hidden] {
+        display: none;
+      }
       .control-btn .ring {
         position: absolute;
         top: 50%;
@@ -396,6 +424,10 @@
         .lyrics-btn {
           right: 80px;
         }
+        .dialkit-launcher {
+          bottom: 20px;
+          left: 20px;
+        }
         .lyrics-overlay {
           padding: 76px 18px 104px;
         }
@@ -413,7 +445,8 @@
         .lyrics-background-image,
         .lyrics-line,
         .lyrics-language,
-        .lyrics-language-underline {
+        .lyrics-language-underline,
+        .dialkit-launcher {
           transition: none;
         }
         .lyrics-overlay.is-open.is-lyrics-entering .lyrics-track,
@@ -476,6 +509,7 @@
     <template id="dialkitStyles">
       <link rel="stylesheet" href="https://esm.sh/dialkit@1.3.0/styles.css">
     </template>
+    <button id="dialkitLauncher" class="dialkit-launcher" type="button" hidden>DialKit</button>
     <button id="muteBtn" class="mute-btn control-btn" type="button" aria-label="Mute" aria-pressed="false">
       <span class="ring"></span>
       <svg class="icon icon-on" data-sketch-icon="volume-on" viewBox="0 0 24 24" aria-hidden="true">
@@ -809,13 +843,35 @@
       })();
     </script>
     <script type="module">
-      async function setupSoundwaveDialKit() {
-        if (!new URLSearchParams(window.location.search).has('dialkit')) return;
+      function isLocalDialKitHost() {
+        return window.location.protocol === 'file:' ||
+          ['localhost', '127.0.0.1', '0.0.0.0', '::1'].indexOf(window.location.hostname) !== -1;
+      }
+
+      function showDialKitLauncher() {
+        var launcher = document.getElementById('dialkitLauncher');
+        if (!launcher || !isLocalDialKitHost() || new URLSearchParams(window.location.search).has('dialkit')) return;
+        launcher.hidden = false;
+        launcher.addEventListener('click', function () {
+          var params = new URLSearchParams(window.location.search);
+          params.set('dialkit', '1');
+          var nextUrl = window.location.pathname + '?' + params.toString() + window.location.hash;
+          window.history.replaceState(null, '', nextUrl);
+          launcher.hidden = true;
+          setupSoundwaveDialKit(true);
+        });
+      }
+
+      async function setupSoundwaveDialKit(forceOpen) {
+        if (!forceOpen && !new URLSearchParams(window.location.search).has('dialkit')) return;
+        if (document.getElementById('dialkitSoundwaveRoot')) return;
 
         var muteBtn = document.getElementById('muteBtn');
         var stylesTemplate = document.getElementById('dialkitStyles');
+        var launcher = document.getElementById('dialkitLauncher');
         if (!muteBtn || !stylesTemplate) return;
 
+        if (launcher) launcher.hidden = true;
         document.head.appendChild(stylesTemplate.content.cloneNode(true));
 
         try {
@@ -917,6 +973,7 @@
         }
       }
 
+      showDialKitLauncher();
       setupSoundwaveDialKit();
     </script>
     <script> (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){ (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o), m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m) })(window,document,'script','//www.google-analytics.com/analytics.js','ga'); ga('create', 'UA-20134293-8', 'auto'); ga('send', 'pageview'); </script>
