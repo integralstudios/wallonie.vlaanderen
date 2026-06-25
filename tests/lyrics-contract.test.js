@@ -487,6 +487,19 @@ test('audio control reflects autoplay blocking and retries playback on click', (
   assert.match(muteClickMatch[1], /muted = false;\s*audio\.muted = false;\s*play\(\);\s*render\(\);\s*return;/);
 });
 
+test('volume ring animates only while anthem playback is active', () => {
+  assert.match(html, /@keyframes volumeRingWave/);
+  assert.match(html, /\.mute-btn\.is-playing \.ring\s*\{[\s\S]*animation:\s*volumeRingWave 1\.4s cubic-bezier\(0\.45, 0, 0\.55, 1\) infinite/);
+  assert.match(html, /\.mute-btn\.is-playing \.ring\s*\{[\s\S]*box-shadow:\s*0 0 0 1px rgba\(255, 255, 255, 0\.18\)/);
+  assert.match(html, /\.mute-btn\.is-playing \.ring::before/);
+  assert.match(html, /\.mute-btn\.is-playing \.ring::after/);
+  assert.match(html, /\.mute-btn\.is-playing \.ring::before,\s*\.mute-btn\.is-playing \.ring::after\s*\{[\s\S]*animation:\s*volumeRingEcho 1\.8s ease-out infinite/);
+  assert.match(html, /var shouldAnimateSound = !shouldShowSoundOff && !audio\.paused/);
+  assert.match(html, /btn\.classList\.toggle\('is-playing', shouldAnimateSound\)/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.ring[\s\S]*animation:\s*none/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.ring::before,\s*\.mute-btn\.is-playing \.ring::after[\s\S]*display:\s*none/);
+});
+
 test('lyrics data includes full Dutch, French, and German lyric sheets', () => {
   assert.match(html, /var LYRICS = \{/);
   assert.match(html, /nl:\s*\[/);
