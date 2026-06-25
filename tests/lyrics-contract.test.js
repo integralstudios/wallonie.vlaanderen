@@ -494,16 +494,18 @@ test('volume ring animates only while anthem playback is active', () => {
   assert.match(html, /--volume-wave-duration:\s*1\.4s/);
   assert.match(html, /--volume-wave-wobble:\s*4%/);
   assert.match(html, /--volume-wave-echo-scale:\s*1\.24/);
+  assert.match(html, /--volume-wave-echo-count:\s*2/);
   assert.match(html, /\.mute-btn\.is-playing \.ring,\s*\.mute-btn\.is-dialkit-previewing \.ring\s*\{[\s\S]*animation:\s*volumeRingWave var\(--volume-wave-duration\) cubic-bezier\(0\.45, 0, 0\.55, 1\) infinite/);
   assert.match(html, /\.mute-btn\.is-playing \.ring,\s*\.mute-btn\.is-dialkit-previewing \.ring\s*\{[\s\S]*box-shadow:\s*0 0 0 var\(--volume-wave-glow-size\) rgba\(255, 255, 255, var\(--volume-wave-glow-opacity\)\)/);
-  assert.match(html, /\.mute-btn\.is-playing \.ring::before/);
-  assert.match(html, /\.mute-btn\.is-playing \.ring::after/);
-  assert.match(html, /\.mute-btn\.is-playing \.ring::before,\s*\.mute-btn\.is-playing \.ring::after,\s*\.mute-btn\.is-dialkit-previewing \.ring::before,\s*\.mute-btn\.is-dialkit-previewing \.ring::after\s*\{[\s\S]*animation:\s*volumeRingEcho var\(--volume-wave-echo-duration\) ease-out infinite/);
+  assert.match(html, /class="wave-echo" style="--wave-index: 0"/);
+  assert.match(html, /class="wave-echo" style="--wave-index: 5" hidden/);
+  assert.match(html, /\.mute-btn\.is-playing \.wave-echo,\s*\.mute-btn\.is-dialkit-previewing \.wave-echo\s*\{[\s\S]*animation:\s*volumeRingEcho var\(--volume-wave-echo-duration\) ease-out infinite/);
+  assert.match(html, /animation-delay:\s*calc\(var\(--wave-index\) \* var\(--volume-wave-echo-delay\)\)/);
   assert.match(html, /transform:\s*scale\(var\(--volume-wave-echo-scale\)\)/);
   assert.match(html, /var shouldAnimateSound = !shouldShowSoundOff && !audio\.paused/);
   assert.match(html, /btn\.classList\.toggle\('is-playing', shouldAnimateSound\)/);
   assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.ring[\s\S]*animation:\s*none/);
-  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.ring::before,\s*\.mute-btn\.is-playing \.ring::after,\s*\.mute-btn\.is-dialkit-previewing \.ring::before,\s*\.mute-btn\.is-dialkit-previewing \.ring::after[\s\S]*display:\s*none/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.wave-echo,\s*\.mute-btn\.is-dialkit-previewing \.wave-echo[\s\S]*display:\s*none/);
 });
 
 test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters', () => {
@@ -522,9 +524,13 @@ test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters',
   assert.match(html, /duration:\s*\[1\.4, 0\.4, 3\.5, 0\.05\]/);
   assert.match(html, /wobble:\s*\[4, 0, 14, 0\.5\]/);
   assert.match(html, /glowOpacity:\s*\[0\.18, 0, 0\.8, 0\.01\]/);
+  assert.match(html, /count:\s*\[2, 0, 6, 1\]/);
   assert.match(html, /scale:\s*\[1\.24, 1, 1\.8, 0\.01\]/);
   assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-duration', params\.duration \+ 's'\)/);
+  assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-echo-count', String\(echoCount\)\)/);
   assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-wobble', params\.shape\.wobble \+ '%'\)/);
+  assert.match(html, /waveEchoes\.forEach\(function \(waveEcho, index\) \{/);
+  assert.match(html, /waveEcho\.hidden = index >= echoCount/);
   assert.match(html, /muteBtn\.classList\.toggle\('is-dialkit-previewing', params\.preview\)/);
   assert.match(html, /function waitForDialKitPanel\(\)/);
   assert.match(html, /if \(!didMount\) throw new Error\('DialKit panel did not mount'\)/);

@@ -32,6 +32,7 @@
         --volume-wave-glow-peak-size: 2px;
         --volume-wave-wobble: 4%;
         --volume-wave-wobble-soft: 2%;
+        --volume-wave-echo-count: 2;
         --volume-wave-echo-duration: 1.8s;
         --volume-wave-echo-delay: 0.9s;
         --volume-wave-echo-scale: 1.24;
@@ -121,16 +122,21 @@
         border-radius: 50%;
         transition: transform 0.2s ease;
       }
-      .control-btn .ring::before,
-      .control-btn .ring::after {
-        content: "";
+      .control-btn .wave-echo {
         position: absolute;
-        inset: -1px;
+        top: 50%;
+        left: 50%;
+        width: 36px;
+        height: 36px;
         box-sizing: border-box;
+        margin: -18px 0 0 -18px;
         border: 1px solid transparent;
-        border-radius: inherit;
+        border-radius: 50%;
         opacity: 0;
         pointer-events: none;
+      }
+      .control-btn .wave-echo[hidden] {
+        display: none;
       }
       .mute-btn.is-playing .ring,
       .mute-btn.is-dialkit-previewing .ring {
@@ -138,16 +144,11 @@
         box-shadow: 0 0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity));
         animation: volumeRingWave var(--volume-wave-duration) cubic-bezier(0.45, 0, 0.55, 1) infinite;
       }
-      .mute-btn.is-playing .ring::before,
-      .mute-btn.is-playing .ring::after,
-      .mute-btn.is-dialkit-previewing .ring::before,
-      .mute-btn.is-dialkit-previewing .ring::after {
+      .mute-btn.is-playing .wave-echo,
+      .mute-btn.is-dialkit-previewing .wave-echo {
         border-color: rgba(255, 255, 255, var(--volume-wave-echo-border-opacity));
         animation: volumeRingEcho var(--volume-wave-echo-duration) ease-out infinite;
-      }
-      .mute-btn.is-playing .ring::after,
-      .mute-btn.is-dialkit-previewing .ring::after {
-        animation-delay: var(--volume-wave-echo-delay);
+        animation-delay: calc(var(--wave-index) * var(--volume-wave-echo-delay));
       }
       .control-btn:hover .ring,
       .control-btn:focus-visible .ring {
@@ -470,10 +471,8 @@
           border-radius: 50%;
           box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
         }
-        .mute-btn.is-playing .ring::before,
-        .mute-btn.is-playing .ring::after,
-        .mute-btn.is-dialkit-previewing .ring::before,
-        .mute-btn.is-dialkit-previewing .ring::after {
+        .mute-btn.is-playing .wave-echo,
+        .mute-btn.is-dialkit-previewing .wave-echo {
           display: none;
           animation: none;
         }
@@ -512,6 +511,12 @@
     <button id="dialkitLauncher" class="dialkit-launcher" type="button" hidden>DialKit</button>
     <button id="muteBtn" class="mute-btn control-btn" type="button" aria-label="Mute" aria-pressed="false">
       <span class="ring"></span>
+      <span class="wave-echo" style="--wave-index: 0" aria-hidden="true"></span>
+      <span class="wave-echo" style="--wave-index: 1" aria-hidden="true"></span>
+      <span class="wave-echo" style="--wave-index: 2" hidden aria-hidden="true"></span>
+      <span class="wave-echo" style="--wave-index: 3" hidden aria-hidden="true"></span>
+      <span class="wave-echo" style="--wave-index: 4" hidden aria-hidden="true"></span>
+      <span class="wave-echo" style="--wave-index: 5" hidden aria-hidden="true"></span>
       <svg class="icon icon-on" data-sketch-icon="volume-on" viewBox="0 0 24 24" aria-hidden="true">
         <g fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="9 8 5 8 5 16 9 16 15 19.25 15 4.75"></polygon>
@@ -910,6 +915,7 @@
           var dialkit = await import('dialkit');
           var DialRoot = dialkit.DialRoot;
           var useDialKit = dialkit.useDialKit;
+          var waveEchoes = Array.prototype.slice.call(muteBtn.querySelectorAll('.wave-echo'));
           var mount = document.createElement('div');
           mount.id = 'dialkitSoundwaveRoot';
           document.body.appendChild(mount);
@@ -924,6 +930,11 @@
             document.documentElement.style.setProperty('--volume-wave-glow-peak-size', params.ring.glowPeakSize + 'px');
             document.documentElement.style.setProperty('--volume-wave-wobble', params.shape.wobble + '%');
             document.documentElement.style.setProperty('--volume-wave-wobble-soft', params.shape.wobbleSoft + '%');
+            var echoCount = Math.max(0, Math.min(waveEchoes.length, Math.round(params.echo.count)));
+            document.documentElement.style.setProperty('--volume-wave-echo-count', String(echoCount));
+            waveEchoes.forEach(function (waveEcho, index) {
+              waveEcho.hidden = index >= echoCount;
+            });
             document.documentElement.style.setProperty('--volume-wave-echo-duration', params.echo.duration + 's');
             document.documentElement.style.setProperty('--volume-wave-echo-delay', params.echo.delay + 's');
             document.documentElement.style.setProperty('--volume-wave-echo-scale', String(params.echo.scale));
@@ -954,6 +965,7 @@
               },
               echo: {
                 _collapsed: false,
+                count: [2, 0, 6, 1],
                 duration: [1.8, 0.4, 5, 0.05],
                 delay: [0.9, 0, 3, 0.05],
                 scale: [1.24, 1, 1.8, 0.01],
@@ -987,6 +999,7 @@
               params.ring.glowFadeOpacity,
               params.ring.glowSize,
               params.ring.glowPeakSize,
+              params.echo.count,
               params.echo.duration,
               params.echo.delay,
               params.echo.scale,
