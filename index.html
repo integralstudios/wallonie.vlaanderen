@@ -1144,6 +1144,31 @@
       })();
     </script>
     <script type="module">
+      var SOUNDWAVE_DIALKIT_KEY = 'wallonie:soundwave-dialkit-v6';
+
+      function resetSoundwaveDialKit() {
+        try {
+          if (window.localStorage) {
+            var keysToRemove = [
+              SOUNDWAVE_DIALKIT_KEY,
+              'dialkit:' + SOUNDWAVE_DIALKIT_KEY
+            ];
+            keysToRemove.forEach(function (key) {
+              window.localStorage.removeItem(key);
+            });
+
+            for (var i = window.localStorage.length - 1; i >= 0; i -= 1) {
+              var key = window.localStorage.key(i);
+              if (key && key.indexOf(SOUNDWAVE_DIALKIT_KEY) !== -1) {
+                window.localStorage.removeItem(key);
+              }
+            }
+          }
+        } catch (err) {}
+
+        window.location.reload();
+      }
+
       function isLocalDialKitHost() {
         return window.location.protocol === 'file:' ||
           ['localhost', '127.0.0.1', '0.0.0.0', '::1'].indexOf(window.location.hostname) !== -1;
@@ -1222,6 +1247,7 @@
           function SoundwaveControls() {
             var params = useDialKit('Soundwave', {
               preview: true,
+              reset: { type: 'action' },
               variant: {
                 type: 'select',
                 options: [
@@ -1277,6 +1303,9 @@
               shortcuts: {
                 duration: { key: 'd', mode: 'fine' },
                 'line.glowSize': { key: 'g', mode: 'fine' }
+              },
+              onAction: function (action) {
+                if (action === 'reset') resetSoundwaveDialKit();
               }
             });
 

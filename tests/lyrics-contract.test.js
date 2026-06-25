@@ -560,11 +560,16 @@ test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters',
   assert.match(html, /href="https:\/\/esm\.sh\/dialkit@1\.3\.0\/styles\.css"/);
   assert.match(html, /new URLSearchParams\(window\.location\.search\)\.has\('dialkit'\)/);
   assert.match(html, /function setupSoundwaveDialKit\(forceOpen\)/);
+  assert.match(html, /var SOUNDWAVE_DIALKIT_KEY = 'wallonie:soundwave-dialkit-v6'/);
+  assert.match(html, /function resetSoundwaveDialKit\(\)/);
+  assert.match(html, /window\.localStorage\.removeItem\(key\)/);
+  assert.match(html, /window\.location\.reload\(\)/);
   assert.match(html, /import\('dialkit'\)/);
   assert.match(html, /useDialKit\('Soundwave'/);
   assert.match(html, /id:\s*'wallonie-soundwave'/);
   assert.match(html, /key:\s*'wallonie:soundwave-dialkit-v6'/);
   assert.match(html, /preview:\s*true/);
+  assert.match(html, /reset:\s*\{ type:\s*'action' \}/);
   assert.match(html, /duration:\s*\[1\.4, 0\.4, 3\.5, 0\.05\]/);
   assert.match(html, /song:\s*\{[\s\S]*reactive:\s*true[\s\S]*sensitivity:\s*\[1, 0, 2\.5, 0\.05\][\s\S]*floor:\s*\[0\.55, 0, 1\.4, 0\.05\][\s\S]*smoothing:\s*\[0\.18, 0\.02, 0\.7, 0\.01\]/);
   assert.match(html, /variant:\s*\{[\s\S]*type:\s*'select'[\s\S]*default:\s*'a'/);
@@ -587,6 +592,7 @@ test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters',
   assert.match(html, /params\.waveB\.threshold/);
   assert.match(html, /params\.waveC\.speed/);
   assert.doesNotMatch(html, /btn\.classList\.toggle\('is-dialkit-previewing', wavePreviewActive\)/);
+  assert.match(html, /onAction:\s*function \(action\) \{[\s\S]*if \(action === 'reset'\) resetSoundwaveDialKit\(\)/);
   assert.match(html, /function waitForDialKitPanel\(\)/);
   assert.match(html, /if \(!didMount\) throw new Error\('DialKit panel did not mount'\)/);
   assert.match(html, /React\.createElement\(DialRoot,\s*\{ position: 'top-left', theme: 'dark', defaultOpen: true, productionEnabled: true \}\)/);
