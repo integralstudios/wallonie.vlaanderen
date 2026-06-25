@@ -77,6 +77,41 @@ test('lyrics controls and overlay shell are present', () => {
     assertTagHasClass(languageButton, 'lyrics-language');
     assertTagHasAttribute(languageButton, 'type', 'button');
   });
+  assert.match(
+    html,
+    /data-language="de"[\s\S]*>DE<\/button>\s*<button[\s\S]*data-language="fr"[\s\S]*>FR<\/button>\s*<button[\s\S]*data-language="nl"[\s\S]*>NL<\/button>/,
+  );
+  assert.match(html, /class="lyrics-language-underline"/);
+});
+
+test('lyrics language picker is a bottom-aligned underline control', () => {
+  assert.match(html, /\.lyrics-language-switcher[\s\S]*bottom:\s*64px/);
+  assert.match(html, /\.lyrics-language-switcher[\s\S]*transform:\s*translate\(-50%, 50%\)/);
+  assert.doesNotMatch(html, /\.lyrics-language-switcher[\s\S]*top:\s*28px/);
+  assert.match(html, /\.lyrics-language-switcher[\s\S]*--language-underline-x:\s*0px/);
+  assert.match(html, /\.lyrics-language-switcher[\s\S]*--language-underline-width:\s*0px/);
+  assert.match(html, /\.lyrics-language[\s\S]*border:\s*0/);
+  assert.match(html, /\.lyrics-language[\s\S]*background:\s*transparent/);
+  assert.match(html, /\.lyrics-language[\s\S]*color:\s*rgba\(255, 255, 255, 0\.6\)/);
+  assert.match(html, /\.lyrics-language[\s\S]*font:\s*400 12px\/1 "mendl-sans-dusk", sans-serif/);
+  assert.match(html, /\.lyrics-language[\s\S]*mix-blend-mode:\s*plus-lighter/);
+  assert.match(html, /\.lyrics-language:focus[\s\S]*outline:\s*none/);
+  assert.match(html, /\.lyrics-language:focus-visible[\s\S]*color:\s*#ffffff/);
+  assert.match(html, /\.lyrics-language\.is-selected[\s\S]*color:\s*#ffffff/);
+  assert.match(html, /\.lyrics-language\.is-selected[\s\S]*mix-blend-mode:\s*normal/);
+  assert.match(html, /\.lyrics-language-underline[\s\S]*position:\s*absolute/);
+  assert.match(html, /\.lyrics-language-underline[\s\S]*bottom:\s*0/);
+  assert.match(html, /\.lyrics-language-underline[\s\S]*height:\s*2px/);
+  assert.match(html, /\.lyrics-language-underline[\s\S]*background:\s*#ffffff/);
+  assert.match(html, /\.lyrics-language-underline[\s\S]*width:\s*var\(--language-underline-width\)/);
+  assert.match(html, /\.lyrics-language-underline[\s\S]*transform:\s*translate3d\(var\(--language-underline-x\), 0, 0\)/);
+  assert.match(html, /\.lyrics-language-underline[\s\S]*transition:\s*transform 0\.34s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\),\s*width 0\.34s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\)/);
+  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-language-switcher[\s\S]*bottom:\s*52px/);
+  assert.match(html, /function updateLanguageUnderline\(\)/);
+  assert.match(html, /languageSwitcher\.style\.setProperty\('--language-underline-x'/);
+  assert.match(html, /languageSwitcher\.style\.setProperty\('--language-underline-width'/);
+  assert.match(html, /window\.addEventListener\('resize', updateLanguageUnderline\)/);
+  assert.match(html, /document\.fonts\.ready\.then\(updateLanguageUnderline\)/);
 });
 
 test('mute control hooks are preserved', () => {

@@ -131,28 +131,54 @@
           radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.08) 44%, rgba(0, 0, 0, 0.46) 100%);
       }
       .lyrics-language-switcher {
+        --language-underline-x: 0px;
+        --language-underline-width: 0px;
         position: fixed;
-        top: 28px;
+        bottom: 64px;
         left: 50%;
         z-index: 21;
         display: flex;
-        gap: 8px;
-        transform: translateX(-50%);
+        align-items: flex-start;
+        gap: 38px;
+        transform: translate(-50%, 50%);
       }
       .lyrics-language {
-        min-width: 48px;
-        min-height: 36px;
-        border: 1px solid rgba(255, 255, 255, 0.34);
-        border-radius: 999px;
-        color: rgba(255, 255, 255, 0.68);
-        background: rgba(255, 255, 255, 0.08);
-        font: 700 13px/1 Arial, Helvetica, sans-serif;
+        padding: 0 2px 6px;
+        border: 0;
+        border-radius: 0;
+        color: rgba(255, 255, 255, 0.6);
+        background: transparent;
+        font: 400 12px/1 "mendl-sans-dusk", sans-serif;
+        font-style: normal;
         letter-spacing: 0;
         cursor: pointer;
+        mix-blend-mode: plus-lighter;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transition: color 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+      }
+      .lyrics-language:focus {
+        outline: none;
+      }
+      .lyrics-language:focus-visible {
+        color: #ffffff;
       }
       .lyrics-language.is-selected {
-        color: #111111;
-        background: rgba(255, 255, 255, 0.94);
+        color: #ffffff;
+        mix-blend-mode: normal;
+      }
+      .lyrics-language-underline {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: var(--language-underline-width);
+        height: 2px;
+        background: #ffffff;
+        pointer-events: none;
+        transform: translate3d(var(--language-underline-x), 0, 0);
+        transform-origin: left center;
+        transition: transform 0.34s cubic-bezier(0.22, 0.61, 0.36, 1),
+          width 0.34s cubic-bezier(0.22, 0.61, 0.36, 1);
       }
       .lyrics-viewport {
         position: relative;
@@ -246,6 +272,10 @@
         .lyrics-overlay {
           padding: 76px 18px 104px;
         }
+        .lyrics-language-switcher {
+          bottom: 52px;
+          gap: 28px;
+        }
         .lyrics-track {
           gap: 8px;
         }
@@ -254,7 +284,9 @@
         .control-btn .ring,
         .lyrics-overlay,
         .lyrics-background-image,
-        .lyrics-line {
+        .lyrics-line,
+        .lyrics-language,
+        .lyrics-language-underline {
           transition: none;
         }
         .lyrics-overlay.is-open .lyrics-track {
@@ -313,9 +345,10 @@
         <div class="lyrics-background-wash"></div>
       </div>
       <div class="lyrics-language-switcher" role="group" aria-label="Lyrics language">
-        <button class="lyrics-language is-selected" type="button" data-language="nl" aria-pressed="true">NL</button>
-        <button class="lyrics-language" type="button" data-language="fr" aria-pressed="false">FR</button>
         <button class="lyrics-language" type="button" data-language="de" aria-pressed="false">DE</button>
+        <button class="lyrics-language" type="button" data-language="fr" aria-pressed="false">FR</button>
+        <button class="lyrics-language is-selected" type="button" data-language="nl" aria-pressed="true">NL</button>
+        <span class="lyrics-language-underline" aria-hidden="true"></span>
       </div>
       <div class="lyrics-viewport" aria-live="polite" tabindex="0">
         <div id="lyricsTrack" class="lyrics-track"></div>
@@ -329,6 +362,8 @@
         var lyricsBtn = document.getElementById('lyricsBtn');
         var lyricsOverlay = document.getElementById('lyricsOverlay');
         var lyricsTrack = document.getElementById('lyricsTrack');
+        var languageSwitcher = document.querySelector('.lyrics-language-switcher');
+        var languageUnderline = document.querySelector('.lyrics-language-underline');
         var languageButtons = Array.prototype.slice.call(document.querySelectorAll('.lyrics-language'));
         var muted = false;
         var playbackBlocked = false;
@@ -443,6 +478,19 @@
           lyricsTrack.parentNode.scrollTop = 0;
         }
 
+        function updateLanguageUnderline() {
+          if (!languageSwitcher || !languageUnderline) return;
+          var selectedButton = null;
+          languageButtons.forEach(function (languageButton) {
+            if (languageButton.getAttribute('data-language') === selectedLanguage) selectedButton = languageButton;
+          });
+          if (!selectedButton) return;
+          var switcherRect = languageSwitcher.getBoundingClientRect();
+          var selectedRect = selectedButton.getBoundingClientRect();
+          languageSwitcher.style.setProperty('--language-underline-x', (selectedRect.left - switcherRect.left) + 'px');
+          languageSwitcher.style.setProperty('--language-underline-width', selectedRect.width + 'px');
+        }
+
         function renderLyricsControls() {
           lyricsBtn.classList.toggle('is-active', lyricsOpen);
           lyricsBtn.setAttribute('aria-pressed', String(lyricsOpen));
@@ -457,6 +505,7 @@
             languageButton.classList.toggle('is-selected', isSelected);
             languageButton.setAttribute('aria-pressed', String(isSelected));
           });
+          updateLanguageUnderline();
         }
 
         function setLyricsOpen(open) {
@@ -507,6 +556,11 @@
         document.addEventListener('keydown', function (evt) {
           if (evt.key === 'Escape' && lyricsOpen) setLyricsOpen(false);
         });
+
+        window.addEventListener('resize', updateLanguageUnderline);
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(updateLanguageUnderline);
+        }
 
         // Mute / unmute, resuming playback when unmuted.
         btn.addEventListener('click', function () {
