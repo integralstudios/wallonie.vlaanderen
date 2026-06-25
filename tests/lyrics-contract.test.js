@@ -70,12 +70,25 @@ test('mute control hooks are preserved', () => {
   assert.match(html, /\.mute-btn\.is-muted \.icon-off/);
 });
 
-test('lyrics overlay has blur, readable fallback, and reduced-motion styling', () => {
-  assert.match(html, /backdrop-filter:\s*blur\(/);
-  assert.match(html, /-webkit-backdrop-filter:\s*blur\(/);
-  assert.match(html, /@supports not \(\(backdrop-filter:\s*blur\(1px\)\)/);
+test('lyrics overlay has a static flag-derived blur bloom and reduced-motion styling', () => {
+  assert.match(html, /class="lyrics-flag-blur-backdrop"/);
+  assert.match(html, /class="lyrics-flag-blur-layer lyrics-flag-blur-color"/);
+  assert.match(html, /class="lyrics-flag-blur-layer lyrics-flag-blur-shadow"/);
+  assert.match(html, /class="lyrics-flag-blur-layer lyrics-flag-blur-glow"/);
+  assert.match(html, /class="lyrics-flag-blur-vignette"/);
+  assert.match(html, /\.lyrics-flag-blur-layer[\s\S]*border-radius:\s*9999px/);
+  assert.match(html, /\.lyrics-flag-blur-layer[\s\S]*linear-gradient\(90deg, #030303 0 33\.333%, #fdda24 33\.333% 66\.666%, #ef3340 66\.666% 100%\)/);
+  assert.match(html, /\.lyrics-flag-blur-color[\s\S]*filter:\s*blur\(58px\) saturate\(1\.55\) contrast\(1\.08\)/);
+  assert.match(html, /\.lyrics-flag-blur-color[\s\S]*mix-blend-mode:\s*screen/);
+  assert.match(html, /\.lyrics-flag-blur-shadow[\s\S]*filter:\s*blur\(64px\) saturate\(1\.2\)/);
+  assert.match(html, /\.lyrics-flag-blur-shadow[\s\S]*mix-blend-mode:\s*multiply/);
+  assert.match(html, /\.lyrics-flag-blur-glow[\s\S]*filter:\s*blur\(44px\) saturate\(1\.85\)/);
+  assert.match(html, /\.lyrics-flag-blur-color[\s\S]*transform:\s*translate3d\([^)]*\) rotate\([^)]*\) scale\(/);
+  assert.match(html, /\.lyrics-flag-blur-vignette[\s\S]*linear-gradient\(180deg/);
+  assert.doesNotMatch(html, /@keyframes/);
+  assert.doesNotMatch(html, /animation:\s*[a-zA-Z]/);
   assert.match(html, /prefers-reduced-motion:\s*reduce/);
-  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.control-btn \.ring/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-flag-blur-layer/);
   assert.match(html, /\.lyrics-viewport[\s\S]*overflow-y:\s*auto/);
   assert.doesNotMatch(html, /\.lyrics-line\.is-active/);
 });
