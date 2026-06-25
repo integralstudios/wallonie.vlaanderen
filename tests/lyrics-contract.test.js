@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const EXPECTED_TIMINGS = [0, 4.1, 8.7, 14.2, 20.6, 22.6, 28.6, 32.6, 36.7, 41.6, 44.6, 47.1];
 
 function tagWithAttribute(tagName, attributeName, value) {
   const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -100,17 +101,16 @@ test('lyrics data includes timed Dutch, French, and German lines', () => {
   assert.match(html, /Liberté/);
   assert.match(html, /König/);
   assert.match(html, /time:\s*0/);
-  assert.match(html, /time:\s*49\.2/);
+  assert.match(html, /time:\s*47\.1/);
 });
 
-test('lyrics data has the expected language structure and timings', () => {
+test('lyrics data has the expected language structure and audio-aligned timings', () => {
   const lyrics = extractLyricsData();
   assert.deepEqual(Object.keys(lyrics), ['nl', 'fr', 'de']);
 
   Object.values(lyrics).forEach((lines) => {
     assert.equal(lines.length, 12);
-    assert.equal(lines[0].time, 0);
-    assert.equal(lines[lines.length - 1].time, 49.2);
+    assert.deepEqual(Array.from(lines, (line) => line.time), EXPECTED_TIMINGS);
 
     lines.forEach((line, index) => {
       assert.equal(typeof line.time, 'number');

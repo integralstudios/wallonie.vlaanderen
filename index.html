@@ -272,48 +272,49 @@
         var selectedLanguage = 'nl';
         var activeLineIndex = -1;
         var lyricsSyncFrame = null;
+        // Line starts are tuned to this 54.079s instrumental and lead phrase attacks slightly.
         var LYRICS = {
           nl: [
             { time: 0, text: "O dierbaar België" },
-            { time: 4.2, text: "O heilig land der vaad'ren" },
-            { time: 8.8, text: "Onze ziel en ons hart zijn u gewijd." },
-            { time: 13.5, text: "Aanvaard ons kracht en het bloed van onze adren," },
-            { time: 18.2, text: "Wees ons doel in arbeid en in strijd." },
-            { time: 22.9, text: "Bloei, o land, in eendracht niet te breken;" },
-            { time: 27.6, text: "Wees immer u zelf en ongeknecht," },
-            { time: 32.3, text: "Het woord getrouw, dat ge onbevreesd moogt spreken:" },
-            { time: 37, text: "Voor Vorst, voor Vrijheid en voor Recht." },
-            { time: 41.7, text: "Het woord getrouw, dat ge onbevreesd moogt spreken:" },
-            { time: 46.4, text: "Voor Vorst, voor Vrijheid en voor Recht." },
-            { time: 49.2, text: "Voor Vorst, voor Vrijheid en voor Recht." }
+            { time: 4.1, text: "O heilig land der vaad'ren" },
+            { time: 8.7, text: "Onze ziel en ons hart zijn u gewijd." },
+            { time: 14.2, text: "Aanvaard ons kracht en het bloed van onze adren," },
+            { time: 20.6, text: "Wees ons doel in arbeid en in strijd." },
+            { time: 22.6, text: "Bloei, o land, in eendracht niet te breken;" },
+            { time: 28.6, text: "Wees immer u zelf en ongeknecht," },
+            { time: 32.6, text: "Het woord getrouw, dat ge onbevreesd moogt spreken:" },
+            { time: 36.7, text: "Voor Vorst, voor Vrijheid en voor Recht." },
+            { time: 41.6, text: "Het woord getrouw, dat ge onbevreesd moogt spreken:" },
+            { time: 44.6, text: "Voor Vorst, voor Vrijheid en voor Recht." },
+            { time: 47.1, text: "Voor Vorst, voor Vrijheid en voor Recht." }
           ],
           fr: [
             { time: 0, text: "O Belgique, ô mère chérie," },
-            { time: 4.2, text: "À toi nos cœurs, à toi nos bras," },
-            { time: 8.8, text: "À toi notre sang, ô Patrie !" },
-            { time: 13.5, text: "Nous le jurons tous, tu vivras !" },
-            { time: 18.2, text: "Tu vivras toujours grande et belle" },
-            { time: 22.9, text: "Et ton invincible unité" },
-            { time: 27.6, text: "Aura pour devise immortelle :" },
-            { time: 32.3, text: "Le Roi, la Loi, la Liberté !" },
-            { time: 37, text: "Le Roi, la Loi, la Liberté !" },
-            { time: 41.7, text: "Le Roi, la Loi, la Liberté !" },
-            { time: 46.4, text: "Le Roi, la Loi, la Liberté !" },
-            { time: 49.2, text: "Le Roi, la Loi, la Liberté !" }
+            { time: 4.1, text: "À toi nos cœurs, à toi nos bras," },
+            { time: 8.7, text: "À toi notre sang, ô Patrie !" },
+            { time: 14.2, text: "Nous le jurons tous, tu vivras !" },
+            { time: 20.6, text: "Tu vivras toujours grande et belle" },
+            { time: 22.6, text: "Et ton invincible unité" },
+            { time: 28.6, text: "Aura pour devise immortelle :" },
+            { time: 32.6, text: "Le Roi, la Loi, la Liberté !" },
+            { time: 36.7, text: "Le Roi, la Loi, la Liberté !" },
+            { time: 41.6, text: "Le Roi, la Loi, la Liberté !" },
+            { time: 44.6, text: "Le Roi, la Loi, la Liberté !" },
+            { time: 47.1, text: "Le Roi, la Loi, la Liberté !" }
           ],
           de: [
             { time: 0, text: "O liebes Land, o Belgiens Erde," },
-            { time: 4.2, text: "Dir unser Herz, Dir unsere Hand," },
-            { time: 8.8, text: "Dir unser Blut, dem Heimatherde," },
-            { time: 13.5, text: "wir schwören's Dir, o Vaterland!" },
-            { time: 18.2, text: "So blühe froh in voller Schöne," },
-            { time: 22.9, text: "zu der die Freiheit Dich erzog," },
-            { time: 27.6, text: "und fortan singen Deine Söhne:" },
-            { time: 32.3, text: "Gesetz und König und die Freiheit hoch!" },
-            { time: 37, text: "Gesetz und König und die Freiheit hoch!" },
-            { time: 41.7, text: "Gesetz und König und die Freiheit hoch!" },
-            { time: 46.4, text: "Gesetz und König und die Freiheit hoch!" },
-            { time: 49.2, text: "Gesetz und König und die Freiheit hoch!" }
+            { time: 4.1, text: "Dir unser Herz, Dir unsere Hand," },
+            { time: 8.7, text: "Dir unser Blut, dem Heimatherde," },
+            { time: 14.2, text: "wir schwören's Dir, o Vaterland!" },
+            { time: 20.6, text: "So blühe froh in voller Schöne," },
+            { time: 22.6, text: "zu der die Freiheit Dich erzog," },
+            { time: 28.6, text: "und fortan singen Deine Söhne:" },
+            { time: 32.6, text: "Gesetz und König und die Freiheit hoch!" },
+            { time: 36.7, text: "Gesetz und König und die Freiheit hoch!" },
+            { time: 41.6, text: "Gesetz und König und die Freiheit hoch!" },
+            { time: 44.6, text: "Gesetz und König und die Freiheit hoch!" },
+            { time: 47.1, text: "Gesetz und König und die Freiheit hoch!" }
           ]
         };
 
