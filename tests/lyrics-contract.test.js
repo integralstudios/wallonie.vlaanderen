@@ -75,6 +75,7 @@ test('lyrics overlay has blur, readable fallback, and reduced-motion styling', (
   assert.match(html, /-webkit-backdrop-filter:\s*blur\(/);
   assert.match(html, /@supports not \(\(backdrop-filter:\s*blur\(1px\)\)/);
   assert.match(html, /prefers-reduced-motion:\s*reduce/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.control-btn \.ring/);
   assert.match(html, /\.lyrics-line\.is-active/);
 });
 
