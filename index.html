@@ -11,13 +11,13 @@
     <script type="importmap">
       {
         "imports": {
-          "dialkit": "https://esm.sh/dialkit@1.3.0?external=react,react-dom,motion",
-          "motion": "https://esm.sh/motion@12.42.0",
-          "motion/react": "https://esm.sh/motion@12.42.0/react",
-          "react": "https://esm.sh/react@18.3.1",
-          "react-dom": "https://esm.sh/react-dom@18.3.1",
-          "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-          "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime"
+          "dialkit": "https://esm.sh/dialkit@1.3.0?external=react,react-dom,react/jsx-runtime,motion,motion/react",
+          "motion": "https://esm.sh/motion@12.42.0?external=react,react-dom",
+          "motion/react": "https://esm.sh/motion@12.42.0/react?external=react,react-dom",
+          "react": "https://esm.sh/react@18.2.0",
+          "react-dom": "https://esm.sh/react-dom@18.2.0?external=react",
+          "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?external=react",
+          "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime"
         }
       }
     </script>
@@ -507,7 +507,7 @@
       <source src="belgium.ogg" type="audio/ogg">
     </audio>
     <template id="dialkitStyles">
-      <link rel="stylesheet" href="https://esm.sh/dialkit@1.3.0/styles.css">
+      <link id="dialkitRuntimeStyles" rel="stylesheet" href="https://esm.sh/dialkit@1.3.0/styles.css">
     </template>
     <button id="dialkitLauncher" class="dialkit-launcher" type="button" hidden>DialKit</button>
     <button id="muteBtn" class="mute-btn control-btn" type="button" aria-label="Mute" aria-pressed="false">
@@ -857,8 +857,36 @@
           params.set('dialkit', '1');
           var nextUrl = window.location.pathname + '?' + params.toString() + window.location.hash;
           window.history.replaceState(null, '', nextUrl);
-          launcher.hidden = true;
           setupSoundwaveDialKit(true);
+        });
+      }
+
+      function setDialKitLauncherLoading(launcher, isLoading) {
+        if (!launcher) return;
+        launcher.disabled = isLoading;
+        launcher.setAttribute('aria-busy', String(isLoading));
+      }
+
+      function waitForDialKitPanel() {
+        return new Promise(function (resolve) {
+          var started = Date.now();
+          var timeout = 2500;
+
+          function check() {
+            if (document.querySelector('.dialkit-root')) {
+              resolve(true);
+              return;
+            }
+
+            if (Date.now() - started >= timeout) {
+              resolve(false);
+              return;
+            }
+
+            window.setTimeout(check, 50);
+          }
+
+          check();
         });
       }
 
@@ -871,12 +899,14 @@
         var launcher = document.getElementById('dialkitLauncher');
         if (!muteBtn || !stylesTemplate) return;
 
-        if (launcher) launcher.hidden = true;
-        document.head.appendChild(stylesTemplate.content.cloneNode(true));
+        setDialKitLauncherLoading(launcher, true);
+        if (!document.getElementById('dialkitRuntimeStyles')) {
+          document.head.appendChild(stylesTemplate.content.cloneNode(true));
+        }
 
         try {
           var React = await import('react');
-          var ReactDOM = await import('react-dom/client');
+          var ReactDOMClient = await import('react-dom/client');
           var dialkit = await import('dialkit');
           var DialRoot = dialkit.DialRoot;
           var useDialKit = dialkit.useDialKit;
@@ -904,7 +934,7 @@
             muteBtn.classList.toggle('is-dialkit-previewing', params.preview);
           }
 
-          function SoundwaveDialKit() {
+          function SoundwaveControls() {
             var params = useDialKit('Soundwave', {
               preview: true,
               duration: [1.4, 0.4, 3.5, 0.05],
@@ -933,6 +963,10 @@
                 borderOpacity: [0.36, 0, 1, 0.01]
               }
             }, {
+              id: 'wallonie-soundwave',
+              persist: {
+                key: 'wallonie:soundwave-dialkit'
+              },
               shortcuts: {
                 duration: { key: 'd', mode: 'fine' },
                 'shape.wobble': { key: 'w', mode: 'fine' },
@@ -962,14 +996,27 @@
               params.echo.borderOpacity
             ]);
 
+            return null;
+          }
+
+          function SoundwaveDialKit() {
             return React.createElement(React.Fragment, null,
+              React.createElement(SoundwaveControls),
               React.createElement(DialRoot, { position: 'top-left', theme: 'dark', defaultOpen: true, productionEnabled: true })
             );
           }
 
-          ReactDOM.createRoot(mount).render(React.createElement(SoundwaveDialKit));
+          ReactDOMClient.createRoot(mount).render(React.createElement(SoundwaveDialKit));
+          var didMount = await waitForDialKitPanel();
+          if (!didMount) throw new Error('DialKit panel did not mount');
+          if (launcher) launcher.hidden = true;
         } catch (err) {
+          var existingMount = document.getElementById('dialkitSoundwaveRoot');
+          if (existingMount) existingMount.remove();
+          if (launcher && isLocalDialKitHost()) launcher.hidden = false;
           console.warn('DialKit soundwave controls failed to load', err);
+        } finally {
+          setDialKitLauncherLoading(launcher, false);
         }
       }
 

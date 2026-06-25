@@ -508,12 +508,16 @@ test('volume ring animates only while anthem playback is active', () => {
 
 test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters', () => {
   assert.match(html, /<script type="importmap">/);
-  assert.match(html, /"dialkit":\s*"https:\/\/esm\.sh\/dialkit@1\.3\.0\?external=react,react-dom,motion"/);
+  assert.match(html, /"dialkit":\s*"https:\/\/esm\.sh\/dialkit@1\.3\.0\?external=react,react-dom,react\/jsx-runtime,motion,motion\/react"/);
+  assert.match(html, /"motion\/react":\s*"https:\/\/esm\.sh\/motion@12\.42\.0\/react\?external=react,react-dom"/);
+  assert.match(html, /"react-dom\/client":\s*"https:\/\/esm\.sh\/react-dom@18\.2\.0\/client\?external=react"/);
   assert.match(html, /href="https:\/\/esm\.sh\/dialkit@1\.3\.0\/styles\.css"/);
   assert.match(html, /new URLSearchParams\(window\.location\.search\)\.has\('dialkit'\)/);
   assert.match(html, /function setupSoundwaveDialKit\(forceOpen\)/);
   assert.match(html, /import\('dialkit'\)/);
   assert.match(html, /useDialKit\('Soundwave'/);
+  assert.match(html, /id:\s*'wallonie-soundwave'/);
+  assert.match(html, /key:\s*'wallonie:soundwave-dialkit'/);
   assert.match(html, /preview:\s*true/);
   assert.match(html, /duration:\s*\[1\.4, 0\.4, 3\.5, 0\.05\]/);
   assert.match(html, /wobble:\s*\[4, 0, 14, 0\.5\]/);
@@ -522,6 +526,8 @@ test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters',
   assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-duration', params\.duration \+ 's'\)/);
   assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-wobble', params\.shape\.wobble \+ '%'\)/);
   assert.match(html, /muteBtn\.classList\.toggle\('is-dialkit-previewing', params\.preview\)/);
+  assert.match(html, /function waitForDialKitPanel\(\)/);
+  assert.match(html, /if \(!didMount\) throw new Error\('DialKit panel did not mount'\)/);
   assert.match(html, /React\.createElement\(DialRoot,\s*\{ position: 'top-left', theme: 'dark', defaultOpen: true, productionEnabled: true \}\)/);
 });
 
@@ -541,6 +547,7 @@ test('DialKit has a visible local launcher when the URL flag is absent', () => {
   assert.match(html, /launcher\.addEventListener\('click', function \(\) \{/);
   assert.match(html, /params\.set\('dialkit', '1'\)/);
   assert.match(html, /window\.history\.replaceState\(null, '', nextUrl\)/);
+  assert.doesNotMatch(html, /window\.history\.replaceState\(null, '', nextUrl\);\s*launcher\.hidden = true;\s*setupSoundwaveDialKit\(true\)/);
   assert.match(html, /setupSoundwaveDialKit\(true\)/);
   assert.match(html, /showDialKitLauncher\(\);\s*setupSoundwaveDialKit\(\);/);
 });
