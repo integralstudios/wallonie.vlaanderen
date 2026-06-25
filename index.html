@@ -175,7 +175,7 @@
         bottom: 0;
         left: 0;
         width: var(--language-underline-width);
-        height: 2px;
+        height: 1px;
         background: #ffffff;
         pointer-events: none;
         transform: translate3d(var(--language-underline-x), 0, 0);
@@ -490,8 +490,13 @@
           if (!selectedButton) return;
           var switcherRect = languageSwitcher.getBoundingClientRect();
           var selectedRect = selectedButton.getBoundingClientRect();
-          languageSwitcher.style.setProperty('--language-underline-x', (selectedRect.left - switcherRect.left) + 'px');
-          languageSwitcher.style.setProperty('--language-underline-width', selectedRect.width + 'px');
+          var range = document.createRange();
+          range.selectNodeContents(selectedButton);
+          var textRect = range.getBoundingClientRect();
+          var underlineRect = textRect.width ? textRect : selectedRect;
+          if (range.detach) range.detach();
+          languageSwitcher.style.setProperty('--language-underline-x', (underlineRect.left - switcherRect.left) + 'px');
+          languageSwitcher.style.setProperty('--language-underline-width', underlineRect.width + 'px');
         }
 
         function renderLyricsControls() {

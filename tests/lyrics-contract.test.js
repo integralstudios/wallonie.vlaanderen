@@ -103,13 +103,16 @@ test('lyrics language picker is a bottom-aligned underline control', () => {
   assert.match(html, /\.lyrics-language\.is-selected[\s\S]*mix-blend-mode:\s*normal/);
   assert.match(html, /\.lyrics-language-underline[\s\S]*position:\s*absolute/);
   assert.match(html, /\.lyrics-language-underline[\s\S]*bottom:\s*0/);
-  assert.match(html, /\.lyrics-language-underline[\s\S]*height:\s*2px/);
+  assert.match(html, /\.lyrics-language-underline[\s\S]*height:\s*1px/);
   assert.match(html, /\.lyrics-language-underline[\s\S]*background:\s*#ffffff/);
   assert.match(html, /\.lyrics-language-underline[\s\S]*width:\s*var\(--language-underline-width\)/);
   assert.match(html, /\.lyrics-language-underline[\s\S]*transform:\s*translate3d\(var\(--language-underline-x\), 0, 0\)/);
   assert.match(html, /\.lyrics-language-underline[\s\S]*transition:\s*transform 0\.34s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\),\s*width 0\.34s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\)/);
   assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-language-switcher[\s\S]*bottom:\s*52px/);
   assert.match(html, /function updateLanguageUnderline\(\)/);
+  assert.match(html, /document\.createRange\(\)/);
+  assert.match(html, /range\.selectNodeContents\(selectedButton\)/);
+  assert.match(html, /range\.getBoundingClientRect\(\)/);
   assert.match(html, /languageSwitcher\.style\.setProperty\('--language-underline-x'/);
   assert.match(html, /languageSwitcher\.style\.setProperty\('--language-underline-width'/);
   assert.match(html, /window\.addEventListener\('resize', updateLanguageUnderline\)/);
