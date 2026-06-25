@@ -129,6 +129,7 @@
         stroke-linecap: round;
         stroke-linejoin: round;
         vector-effect: non-scaling-stroke;
+        transition: opacity 0.2s ease;
       }
       .mute-btn .wave-samples {
         transition: filter 0.2s ease;
@@ -769,7 +770,7 @@
         }
 
         function shouldAnimateWave() {
-          return wavePlaybackActive || wavePreviewActive;
+          return !muted && !playbackBlocked && isPlaying && (wavePlaybackActive || wavePreviewActive);
         }
 
         function prefersReducedMotion() {
@@ -823,7 +824,7 @@
           document.documentElement.style.setProperty('--volume-wave-glow-opacity', String(params.line.glowOpacity));
           document.documentElement.style.setProperty('--volume-wave-glow-size', params.line.glowSize + 'px');
           wavePreviewActive = Boolean(params.preview);
-          btn.classList.toggle('is-dialkit-previewing', wavePreviewActive);
+          btn.classList.toggle('is-dialkit-previewing', wavePreviewActive && !muted && !playbackBlocked && isPlaying);
           renderWaveSamples();
           syncWaveAnimation();
         }
@@ -848,6 +849,7 @@
           var shouldAnimateSound = !shouldShowSoundOff && !audio.paused;
           btn.classList.toggle('is-muted', shouldShowSoundOff);
           btn.classList.toggle('is-playing', shouldAnimateSound);
+          btn.classList.toggle('is-dialkit-previewing', wavePreviewActive && !shouldShowSoundOff);
           wavePlaybackActive = shouldAnimateSound;
           btn.setAttribute('aria-pressed', String(muted));
           btn.setAttribute('aria-label', muted ? 'Unmute' : shouldShowSoundOff ? 'Play anthem' : 'Mute');

@@ -200,6 +200,9 @@ function createLyricsRuntime({ languages, language }) {
   });
   const documentHandlers = {};
   const windowHandlers = {};
+  let animationFrameId = 0;
+  const requestedAnimationFrames = [];
+  const cancelledAnimationFrames = [];
 
   lyricsViewport.appendChild(lyricsTrack);
   audio.paused = false;
@@ -215,6 +218,7 @@ function createLyricsRuntime({ languages, language }) {
     addEventListener(name, handler) {
       documentHandlers[name] = handler;
     },
+    documentElement: createFakeElement(),
     createElement() {
       return createFakeElement();
     },
@@ -253,24 +257,41 @@ function createLyricsRuntime({ languages, language }) {
       return selector === '.lyrics-language' ? languageButtons : [];
     },
   };
+  const window = {
+    addEventListener(name, handler) {
+      windowHandlers[name] = handler;
+    },
+    cancelAnimationFrame(id) {
+      cancelledAnimationFrames.push(id);
+    },
+    matchMedia() {
+      return { matches: false };
+    },
+    requestAnimationFrame(callback) {
+      requestedAnimationFrames.push(callback);
+      animationFrameId += 1;
+      return animationFrameId;
+    },
+  };
 
   vm.runInNewContext(extractPageScript(), {
     console: { log() {} },
     document,
     navigator: { language, languages },
-    window: {
-      addEventListener(name, handler) {
-        windowHandlers[name] = handler;
-      },
-    },
+    window,
   });
 
   return {
+    audio,
+    cancelledAnimationFrames,
     documentHandlers,
     languageButtons,
     lyricsBtn,
     lyricsOverlay,
     lyricsTrack,
+    muteBtn,
+    requestedAnimationFrames,
+    window,
     windowHandlers,
   };
 }
@@ -497,6 +518,7 @@ test('volume ring renders the A/B/C sampled finalist waveforms while anthem play
   assert.match(html, /\.control-btn \.ring[\s\S]*transition:\s*transform 0\.2s ease,\s*opacity 0\.2s ease/);
   assert.match(html, /\.mute-btn\.is-playing \.ring,\s*\.mute-btn\.is-dialkit-previewing \.ring\s*\{\s*opacity:\s*var\(--volume-wave-base-opacity\);\s*\}/);
   assert.match(html, /\.mute-btn \.wave-sample[\s\S]*stroke-linecap:\s*round/);
+  assert.match(html, /\.mute-btn \.wave-sample[\s\S]*transition:\s*opacity 0\.2s ease/);
   assert.doesNotMatch(html, /\.mute-btn \.wave-sample\s*\{[^}]*opacity:\s*0/);
   assert.doesNotMatch(html, /class="wave-base"/);
   assert.doesNotMatch(html, /wave-echo/);
@@ -512,7 +534,9 @@ test('volume ring renders the A/B/C sampled finalist waveforms while anthem play
   assert.match(html, /function texture\(index, time, seed\)/);
   assert.match(html, /var activePreset = WAVE_PRESETS\[waveParams\.variant\] \|\| WAVE_PRESETS\.a/);
   assert.match(html, /waveAnimationFrame = window\.requestAnimationFrame\(updateWaveAnimation\)/);
+  assert.match(html, /return !muted && !playbackBlocked && isPlaying && \(wavePlaybackActive \|\| wavePreviewActive\)/);
   assert.match(html, /var shouldAnimateSound = !shouldShowSoundOff && !audio\.paused/);
+  assert.match(html, /btn\.classList\.toggle\('is-dialkit-previewing', wavePreviewActive && !shouldShowSoundOff\)/);
   assert.match(html, /btn\.classList\.toggle\('is-playing', shouldAnimateSound\)/);
   assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.wave-samples[\s\S]*filter:\s*none/);
 });
@@ -538,10 +562,36 @@ test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters',
   assert.doesNotMatch(html, /echo\.scale/);
   assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-duration', params\.duration \+ 's'\)/);
   assert.match(html, /waveParams\.variant = WAVE_PRESETS\[params\.variant\] \? params\.variant : 'a'/);
-  assert.match(html, /btn\.classList\.toggle\('is-dialkit-previewing', wavePreviewActive\)/);
+  assert.doesNotMatch(html, /btn\.classList\.toggle\('is-dialkit-previewing', wavePreviewActive\)/);
   assert.match(html, /function waitForDialKitPanel\(\)/);
   assert.match(html, /if \(!didMount\) throw new Error\('DialKit panel did not mount'\)/);
   assert.match(html, /React\.createElement\(DialRoot,\s*\{ position: 'top-left', theme: 'dark', defaultOpen: true, productionEnabled: true \}\)/);
+});
+
+test('muting stops DialKit waveform preview and restores the idle ring state', () => {
+  const runtime = createLyricsRuntime({
+    languages: ['nl-BE'],
+    language: 'nl-BE',
+  });
+
+  runtime.window.applySoundwaveParams({
+    duration: 1.4,
+    variant: 'a',
+    line: {
+      strokeOpacity: 0.72,
+      glowOpacity: 0.18,
+      glowSize: 1,
+    },
+    preview: true,
+  });
+
+  assert.match(runtime.muteBtn.className, /\bis-dialkit-previewing\b/);
+
+  click(runtime.muteBtn);
+
+  assert.equal(runtime.audio.muted, true);
+  assert.doesNotMatch(runtime.muteBtn.className, /\bis-playing\b/);
+  assert.doesNotMatch(runtime.muteBtn.className, /\bis-dialkit-previewing\b/);
 });
 
 test('DialKit has a visible local launcher when the URL flag is absent', () => {
