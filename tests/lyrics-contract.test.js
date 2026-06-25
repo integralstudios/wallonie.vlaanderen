@@ -114,7 +114,7 @@ test('lyrics words stagger animate in when the overlay opens', () => {
   assert.match(html, /@keyframes lyricsTrackRise/);
   assert.match(html, /@keyframes lyricWordIn/);
   assert.match(html, /<link rel="stylesheet" href="https:\/\/use\.typekit\.net\/qsr7tur\.css">/);
-  assert.match(html, /\.lyrics-line[\s\S]*font:\s*300 24px\/1\.18 "mendl-serif-dawn", sans-serif/);
+  assert.match(html, /\.lyrics-line[\s\S]*font:\s*300 20px\/1\.18 "mendl-serif-dawn", sans-serif/);
   assert.match(html, /\.lyrics-line[\s\S]*font-style:\s*normal/);
   assert.match(html, /\.lyrics-line\.is-spacer[\s\S]*height:\s*32px/);
   assert.doesNotMatch(html, /font:\s*800 clamp/);
