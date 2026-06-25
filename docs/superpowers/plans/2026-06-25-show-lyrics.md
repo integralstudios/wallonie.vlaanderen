@@ -20,6 +20,7 @@ follow the complete text while the anthem plays.
 - Added the bottom-centered language picker with moving underline.
 - Added word-by-word reveal on initial overlay open.
 - Added a lighter move-up transition when switching languages while open.
+- Added a conditional bottom fade when the static lyric sheet overflows.
 - Updated the volume control for autoplay-blocked state handling.
 - Replaced the old volume visuals with the finalized option-B reactive waveform.
 - Removed all temporary DialKit tuning controls from the shipped page.
@@ -74,6 +75,13 @@ The language picker uses `"mendl-sans-dusk", sans-serif`, `12px`, `1px`
 tracking, `20px` item spacing, and a one-pixel underline sized from the rendered
 text bounds.
 
+The lyrics viewport detects overflow after render, resize, and font loading. If
+content is taller than the viewport, it adds `.has-overflow` so CSS can apply a
+short bottom mask fade instead of a hard cutoff. The overlay uses equal `72px`
+top and bottom padding, and the lyrics viewport fills that available height so
+the fade starts close to the bottom language picker instead of hiding the final
+lyrics too early.
+
 The volume and lyrics buttons use 36px circular controls with 16px imported
 Sketch icons.
 
@@ -96,5 +104,5 @@ node --test tests/lyrics-contract.test.js
 ```
 
 The contract tests cover the final static lyrics behavior, the absence of timing
-machinery, the final overlay background settings, the language picker, the audio
-state handling, and the baked-in waveform configuration.
+machinery, the final overlay background settings, the overflow fade, the language
+picker, the audio state handling, and the baked-in waveform configuration.

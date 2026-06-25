@@ -54,6 +54,12 @@ Lyrics use the Adobe Fonts Mendl Serif Dusk family at `20px` with `1.18` line
 height, white text, and antialiased smoothing. The text does not use blend mode
 or reduced opacity in the final version.
 
+When the full lyric sheet is taller than the available viewport, the scrollable
+lyrics area fades out at the bottom edge instead of clipping the next line
+harshly. The fade is applied only when overflow is detected. The lyrics viewport
+fills the overlay between equal top and bottom lyric padding, so the sheet can
+use the space down to just above the bottom language picker before fading.
+
 The language picker is fixed near the bottom center, aligned with the control
 buttons. Active language text is white with a one-pixel underline. Inactive
 languages are white at lower opacity and brighten on hover. The underline moves
@@ -99,5 +105,6 @@ Node test file that checks:
 - Browser-language selection behavior.
 - Static lyric-sheet rendering without timing metadata.
 - Overlay background, typography, language picker, and reveal hooks.
+- Conditional bottom fade for overflowing lyric sheets.
 - Autoplay-blocked audio state and waveform behavior.
 - Absence of shipped DialKit controls.

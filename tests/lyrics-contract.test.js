@@ -370,8 +370,8 @@ test('lyrics language picker is center-aligned with the control buttons', () => 
   assert.match(html, /range\.getBoundingClientRect\(\)/);
   assert.match(html, /languageSwitcher\.style\.setProperty\('--language-underline-x'/);
   assert.match(html, /languageSwitcher\.style\.setProperty\('--language-underline-width'/);
-  assert.match(html, /window\.addEventListener\('resize', updateLanguageUnderline\)/);
-  assert.match(html, /document\.fonts\.ready\.then\(updateLanguageUnderline\)/);
+  assert.match(html, /window\.addEventListener\('resize', function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*updateLyricsViewportOverflow\(\);[\s\S]*\}\)/);
+  assert.match(html, /document\.fonts\.ready\.then\(function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*updateLyricsViewportOverflow\(\);[\s\S]*\}\)/);
 });
 
 test('mute control hooks are preserved', () => {
@@ -443,8 +443,15 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.doesNotMatch(html, /-webkit-backdrop-filter:\s*blur\(/);
   assert.match(html, /prefers-reduced-motion:\s*reduce/);
   assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-background-image/);
-  assert.match(html, /\.lyrics-viewport[\s\S]*max-height:\s*min\(84vh, 760px\)/);
+  assert.match(html, /\.lyrics-overlay[\s\S]*padding:\s*72px 24px 72px/);
+  assert.match(html, /\.lyrics-viewport[\s\S]*height:\s*calc\(100vh - 144px\)/);
   assert.match(html, /\.lyrics-viewport[\s\S]*overflow-y:\s*auto/);
+  assert.match(html, /--lyrics-viewport-fade:\s*24px/);
+  assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\(to bottom, #000 0, #000 calc\(100% - var\(--lyrics-viewport-fade\)\), transparent 100%\)/);
+  assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*mask-image:\s*linear-gradient\(to bottom, #000 0, #000 calc\(100% - var\(--lyrics-viewport-fade\)\), transparent 100%\)/);
+  assert.match(html, /function updateLyricsViewportOverflow\(\)/);
+  assert.match(html, /lyricsViewport\.classList\.toggle\('has-overflow', hasOverflow\)/);
+  assert.match(html, /window\.addEventListener\('resize', function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*updateLyricsViewportOverflow\(\);[\s\S]*\}\)/);
   assert.doesNotMatch(html, /\.lyrics-line\.is-active/);
 });
 
@@ -460,6 +467,8 @@ test('lyrics words stagger animate in when the overlay opens', () => {
   assert.match(html, /\.lyrics-line[\s\S]*-webkit-font-smoothing:\s*antialiased/);
   assert.match(html, /\.lyrics-line[\s\S]*-moz-osx-font-smoothing:\s*grayscale/);
   assert.match(html, /\.lyrics-line\.is-spacer[\s\S]*height:\s*32px/);
+  assert.match(html, /\.lyrics-track[\s\S]*min-height:\s*100%/);
+  assert.match(html, /\.lyrics-track[\s\S]*justify-content:\s*center/);
   assert.doesNotMatch(html, /font:\s*800 clamp/);
   assert.doesNotMatch(html, /font-size:\s*clamp\(19px, 6\.6vw, 28px\)/);
   assert.match(html, /\.lyrics-overlay\.is-open\.is-lyrics-entering \.lyrics-track[\s\S]*animation:\s*lyricsTrackRise 0\.48s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
