@@ -161,6 +161,16 @@ function createFakeElement(text = '') {
     },
   });
   element.classList = {
+    add(...classNames) {
+      const classes = new Set(element.className.split(/\s+/).filter(Boolean));
+      classNames.forEach((className) => classes.add(className));
+      element.className = Array.from(classes).join(' ');
+    },
+    remove(...classNames) {
+      const classes = new Set(element.className.split(/\s+/).filter(Boolean));
+      classNames.forEach((className) => classes.delete(className));
+      element.className = Array.from(classes).join(' ');
+    },
     toggle(className, force) {
       const classes = new Set(element.className.split(/\s+/).filter(Boolean));
       const shouldAdd = force === undefined ? !classes.has(className) : Boolean(force);
@@ -259,6 +269,7 @@ function createLyricsRuntime({ languages, language }) {
     documentHandlers,
     languageButtons,
     lyricsBtn,
+    lyricsOverlay,
     lyricsTrack,
     windowHandlers,
   };
@@ -374,6 +385,7 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
 test('lyrics words stagger animate in when the overlay opens', () => {
   assert.match(html, /@keyframes lyricsTrackRise/);
   assert.match(html, /@keyframes lyricWordIn/);
+  assert.match(html, /@keyframes lyricsLanguageSwitch/);
   assert.match(html, /<link rel="stylesheet" href="https:\/\/use\.typekit\.net\/qsr7tur\.css">/);
   assert.match(html, /\.lyrics-line[\s\S]*color:\s*rgba\(255, 255, 255, 0\.8\)/);
   assert.match(html, /\.lyrics-line[\s\S]*font:\s*400 20px\/1\.18 "mendl-serif-dusk", sans-serif/);
@@ -384,11 +396,14 @@ test('lyrics words stagger animate in when the overlay opens', () => {
   assert.match(html, /\.lyrics-line\.is-spacer[\s\S]*height:\s*32px/);
   assert.doesNotMatch(html, /font:\s*800 clamp/);
   assert.doesNotMatch(html, /font-size:\s*clamp\(19px, 6\.6vw, 28px\)/);
-  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-track[\s\S]*animation:\s*lyricsTrackRise 0\.82s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
+  assert.match(html, /\.lyrics-overlay\.is-open\.is-lyrics-entering \.lyrics-track[\s\S]*animation:\s*lyricsTrackRise 0\.82s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
   assert.match(html, /\.lyrics-word[\s\S]*display:\s*inline-block/);
-  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation:\s*lyricWordIn 0\.68s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
-  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation-delay:\s*calc\(var\(--word-index\) \* 15ms\)/);
+  assert.match(html, /\.lyrics-overlay\.is-open\.is-lyrics-entering \.lyrics-word[\s\S]*animation:\s*lyricWordIn 0\.68s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
+  assert.match(html, /\.lyrics-overlay\.is-open\.is-lyrics-entering \.lyrics-word[\s\S]*animation-delay:\s*calc\(var\(--word-index\) \* 15ms\)/);
+  assert.doesNotMatch(html, /\.lyrics-overlay\.is-open\s+\.lyrics-word/);
+  assert.match(html, /\.lyrics-overlay\.is-open\.is-language-switching \.lyrics-track[\s\S]*animation:\s*lyricsLanguageSwitch 0\.32s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
   assert.match(html, /@keyframes lyricsTrackRise[\s\S]*from\s*\{[\s\S]*transform:\s*translate3d\(0, 28px, 0\)/);
+  assert.match(html, /@keyframes lyricsLanguageSwitch[\s\S]*from\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translate3d\(0, 6px, 0\)/);
   assert.match(html, /from\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translate3d\(0, 32px, 0\)/);
   assert.match(html, /64%\s*\{[\s\S]*opacity:\s*1/);
   assert.match(html, /to\s*\{[\s\S]*opacity:\s*1;[\s\S]*transform:\s*translate3d\(0, 0, 0\)/);
@@ -397,8 +412,9 @@ test('lyrics words stagger animate in when the overlay opens', () => {
   assert.match(html, /wordNode\.className = 'lyrics-word'/);
   assert.match(html, /wordNode\.style\.setProperty\('--word-index', String\(wordIndex\)\)/);
   assert.match(html, /wordIndex \+= 1/);
-  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open \.lyrics-track[\s\S]*animation:\s*none/);
-  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation:\s*none/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open\.is-lyrics-entering \.lyrics-track[\s\S]*animation:\s*none/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open\.is-language-switching \.lyrics-track[\s\S]*animation:\s*none/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open\.is-lyrics-entering \.lyrics-word[\s\S]*animation:\s*none/);
   assert.doesNotMatch(html, /lyricLineIn/);
   assert.doesNotMatch(html, /--line-index/);
 });
@@ -479,7 +495,7 @@ test('lyrics runtime exposes open, close, language, and render hooks', () => {
   assert.match(html, /var lyricsOpen = false/);
   assert.match(html, /var selectedLanguage = 'nl'/);
   assert.match(html, /function setLyricsOpen\(open\)/);
-  assert.match(html, /function setLanguage\(language\)/);
+  assert.match(html, /function setLanguage\(language, animateSwitch\)/);
   assert.match(html, /function renderLyrics\(\)/);
   assert.match(html, /lyricsBtn\.addEventListener\('click'/);
   assert.match(html, /document\.addEventListener\('keydown'/);
@@ -544,6 +560,35 @@ test('lyrics runtime keeps a manually selected language when reopened', () => {
 
   assert.equal(selectedLyricsLanguage(runtime), 'de');
   assert.deepEqual(renderedLyrics(runtime), expectedGermanLyrics);
+});
+
+test('lyrics runtime uses a lighter transition for open language switches', () => {
+  const runtime = createLyricsRuntime({
+    language: 'fr-BE',
+    languages: ['fr-BE', 'nl-BE'],
+  });
+
+  click(runtime.lyricsBtn);
+  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-language-switching\b/);
+  assert.equal(selectedLyricsLanguage(runtime), 'fr');
+
+  const germanButton = runtime.languageButtons.find(
+    (button) => button.getAttribute('data-language') === 'de',
+  );
+  click(germanButton);
+  assert.match(runtime.lyricsOverlay.className, /\bis-language-switching\b/);
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  assert.equal(selectedLyricsLanguage(runtime), 'de');
+
+  click(runtime.lyricsBtn);
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-language-switching\b/);
+
+  click(runtime.lyricsBtn);
+  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-language-switching\b/);
+  assert.equal(selectedLyricsLanguage(runtime), 'de');
 });
 
 test('lyrics runtime renders text safely and restores focus before inert close', () => {

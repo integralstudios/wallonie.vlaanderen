@@ -197,8 +197,11 @@
         flex-direction: column;
         gap: 9px;
       }
-      .lyrics-overlay.is-open .lyrics-track {
+      .lyrics-overlay.is-open.is-lyrics-entering .lyrics-track {
         animation: lyricsTrackRise 0.82s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+      }
+      .lyrics-overlay.is-open.is-language-switching .lyrics-track {
+        animation: lyricsLanguageSwitch 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) both;
       }
       .lyrics-line {
         margin: 0;
@@ -217,7 +220,7 @@
       .lyrics-word {
         display: inline-block;
       }
-      .lyrics-overlay.is-open .lyrics-word {
+      .lyrics-overlay.is-open.is-lyrics-entering .lyrics-word {
         animation: lyricWordIn 0.68s cubic-bezier(0.22, 0.61, 0.36, 1) both;
         animation-delay: calc(var(--word-index) * 15ms);
       }
@@ -226,6 +229,16 @@
           transform: translate3d(0, 28px, 0);
         }
         to {
+          transform: translate3d(0, 0, 0);
+        }
+      }
+      @keyframes lyricsLanguageSwitch {
+        from {
+          opacity: 0;
+          transform: translate3d(0, 6px, 0);
+        }
+        to {
+          opacity: 1;
           transform: translate3d(0, 0, 0);
         }
       }
@@ -292,11 +305,13 @@
         .lyrics-language-underline {
           transition: none;
         }
-        .lyrics-overlay.is-open .lyrics-track {
+        .lyrics-overlay.is-open.is-lyrics-entering .lyrics-track,
+        .lyrics-overlay.is-open.is-language-switching .lyrics-track {
           animation: none;
+          opacity: 1;
           transform: none;
         }
-        .lyrics-overlay.is-open .lyrics-word {
+        .lyrics-overlay.is-open.is-lyrics-entering .lyrics-word {
           animation: none;
           opacity: 1;
           transform: none;
@@ -513,6 +528,16 @@
           lyricsTrack.parentNode.scrollTop = 0;
         }
 
+        function restartLyricsTransition(className) {
+          lyricsOverlay.classList.remove('is-lyrics-entering', 'is-language-switching');
+          lyricsTrack.offsetWidth;
+          lyricsOverlay.classList.add(className);
+        }
+
+        function clearLyricsTransitions() {
+          lyricsOverlay.classList.remove('is-lyrics-entering', 'is-language-switching');
+        }
+
         function updateLanguageUnderline() {
           if (!languageSwitcher || !languageUnderline) return;
           var selectedButton = null;
@@ -550,18 +575,24 @@
 
         function setLyricsOpen(open) {
           lyricsOpen = open;
-          if (lyricsOpen && !hasManualLanguageSelection) setLanguage(getPreferredLyricsLanguage());
-          if (lyricsOpen && !lyricsTrack.children.length) renderLyrics();
+          if (lyricsOpen) {
+            restartLyricsTransition('is-lyrics-entering');
+            if (!hasManualLanguageSelection) setLanguage(getPreferredLyricsLanguage(), false);
+            if (!lyricsTrack.children.length) renderLyrics();
+          } else {
+            clearLyricsTransitions();
+          }
           renderLyricsControls();
           if (lyricsOpen) {
             play();
           }
         }
 
-        function setLanguage(language) {
+        function setLanguage(language, animateSwitch) {
           if (!LYRICS[language] || selectedLanguage === language) return;
           selectedLanguage = language;
           renderLyrics();
+          if (lyricsOpen && animateSwitch !== false) restartLyricsTransition('is-language-switching');
           renderLyricsControls();
         }
 
