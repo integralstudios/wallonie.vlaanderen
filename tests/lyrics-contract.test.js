@@ -24,6 +24,7 @@ test('lyrics overlay has blur, readable fallback, and reduced-motion styling', (
   assert.match(html, /\.lyrics-line\.is-active/);
 });
 
-test('first-interaction audio guard ignores shared controls', () => {
-  assert.match(html, /evt\.target\.closest\('\.control-btn'\)/);
+test('first-interaction audio guard safely ignores shared controls', () => {
+  assert.match(html, /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);/);
+  assert.match(html, /if \(!isControl\) play\(\);/);
 });

@@ -281,7 +281,8 @@
           // If this first interaction is a control, let its click handler decide
           // whether to play. Otherwise pointerdown/keydown can start playback a
           // beat before the control click handles the interaction.
-          if (!evt.target.closest('.control-btn')) play();
+          var isControl = evt.target && evt.target.closest && evt.target.closest('.control-btn');
+          if (!isControl) play();
           events.forEach(function (name) {
             document.removeEventListener(name, onFirstInteraction);
           });
