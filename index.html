@@ -244,7 +244,7 @@
         <path d="M5 4.75C5 3.78 5.78 3 6.75 3h10.5c.97 0 1.75.78 1.75 1.75v14.5c0 .67-.38 1.28-.98 1.57-.6.3-1.31.22-1.83-.19L12 17.34l-4.19 3.29c-.52.41-1.23.49-1.83.19A1.75 1.75 0 0 1 5 19.25V4.75Zm2 0v14.06l4.07-3.2a1.5 1.5 0 0 1 1.86 0L17 18.81V4.75H7Zm2.25 3h5.5a.75.75 0 0 1 0 1.5h-5.5a.75.75 0 0 1 0-1.5Zm0 3h5.5a.75.75 0 0 1 0 1.5h-5.5a.75.75 0 0 1 0-1.5Z"></path>
       </svg>
     </button>
-    <section id="lyricsOverlay" class="lyrics-overlay" aria-hidden="true" aria-label="Lyrics">
+    <section id="lyricsOverlay" class="lyrics-overlay" aria-hidden="true" aria-label="Lyrics" inert>
       <div class="lyrics-language-switcher" role="group" aria-label="Lyrics language">
         <button class="lyrics-language is-selected" type="button" data-language="nl" aria-pressed="true">NL</button>
         <button class="lyrics-language" type="button" data-language="fr" aria-pressed="false">FR</button>
@@ -278,10 +278,10 @@
         play();
         var events = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
         function onFirstInteraction(evt) {
-          // If this first interaction is the mute button itself, let its click
-          // handler decide whether to play. Otherwise pointerdown/keydown would
-          // start audible playback a beat before the click mutes it (a blip).
-          if (!btn.contains(evt.target)) play();
+          // If this first interaction is a control, let its click handler decide
+          // whether to play. Otherwise pointerdown/keydown can start playback a
+          // beat before the control click handles the interaction.
+          if (!evt.target.closest('.control-btn')) play();
           events.forEach(function (name) {
             document.removeEventListener(name, onFirstInteraction);
           });
