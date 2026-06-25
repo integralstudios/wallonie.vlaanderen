@@ -149,12 +149,24 @@ test('lyrics runtime renders text safely and restores focus before inert close',
 });
 
 test('lyrics sync uses audio time, active classes, and animation frames', () => {
+  const setLyricsOpenMatch = html.match(/function setLyricsOpen\(open\) \{([\s\S]*?)\n        function setLanguage/);
+  assert.ok(setLyricsOpenMatch, 'Expected setLyricsOpen function body');
+
+  assert.match(html, /var lyricsSyncFrame = null/);
   assert.match(html, /function findActiveLyricIndex\(lines, currentTime\)/);
   assert.match(html, /function updateActiveLyric\(forceScroll\)/);
+  assert.match(html, /function startLyricsSync\(\)/);
+  assert.match(html, /function stopLyricsSync\(\)/);
   assert.match(html, /function syncLyrics\(\)/);
   assert.match(html, /audio\.currentTime/);
   assert.match(html, /requestAnimationFrame\(syncLyrics\)/);
+  assert.match(html, /cancelAnimationFrame\(lyricsSyncFrame\)/);
   assert.match(html, /audio\.addEventListener\('timeupdate'/);
+  assert.match(html, /window\.addEventListener\('resize'/);
+  assert.match(html, /window\.visualViewport/);
   assert.match(html, /classList\.toggle\('is-active'/);
   assert.match(html, /classList\.toggle\('is-past'/);
+  assert.match(setLyricsOpenMatch[1], /startLyricsSync\(\)/);
+  assert.match(setLyricsOpenMatch[1], /stopLyricsSync\(\)/);
+  assert.doesNotMatch(setLyricsOpenMatch[1], /requestAnimationFrame\(syncLyrics\)/);
 });

@@ -267,6 +267,7 @@
         var lyricsOpen = false;
         var selectedLanguage = 'nl';
         var activeLineIndex = -1;
+        var lyricsSyncFrame = null;
         var LYRICS = {
           nl: [
             { time: 0, text: "O dierbaar België" },
@@ -364,7 +365,9 @@
           if (lyricsOpen) {
             play();
             updateActiveLyric(true);
-            requestAnimationFrame(syncLyrics);
+            startLyricsSync();
+          } else {
+            stopLyricsSync();
           }
         }
 
@@ -404,9 +407,20 @@
           lyricsTrack.style.transform = 'translateY(' + offset + 'px)';
         }
 
+        function startLyricsSync() {
+          if (lyricsSyncFrame !== null) return;
+          lyricsSyncFrame = requestAnimationFrame(syncLyrics);
+        }
+
+        function stopLyricsSync() {
+          if (lyricsSyncFrame !== null) cancelAnimationFrame(lyricsSyncFrame);
+          lyricsSyncFrame = null;
+        }
+
         function syncLyrics() {
+          lyricsSyncFrame = null;
           updateActiveLyric(false);
-          if (lyricsOpen) requestAnimationFrame(syncLyrics);
+          if (lyricsOpen) startLyricsSync();
         }
 
         // Start the anthem. Browsers block audible autoplay until the visitor
@@ -453,6 +467,16 @@
         audio.addEventListener('loadedmetadata', function () {
           updateActiveLyric(true);
         });
+
+        window.addEventListener('resize', function () {
+          updateActiveLyric(true);
+        });
+
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', function () {
+            updateActiveLyric(true);
+          });
+        }
 
         // Mute / unmute, resuming playback when unmuted.
         btn.addEventListener('click', function () {
