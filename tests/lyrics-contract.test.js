@@ -96,6 +96,189 @@ function extractLyricsData() {
   return vm.runInNewContext(`(${lyricsMatch[1]})`);
 }
 
+function extractPageScript() {
+  const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
+  assert.ok(scriptMatch, 'Expected page script');
+  return scriptMatch[1];
+}
+
+function createFakeElement(text = '') {
+  let ownText = text;
+  const element = {
+    attributes: {},
+    children: [],
+    className: '',
+    focused: false,
+    handlers: {},
+    parentNode: null,
+    scrollTop: 0,
+    style: {
+      values: {},
+      setProperty(name, value) {
+        this.values[name] = value;
+      },
+    },
+    addEventListener(name, handler) {
+      this.handlers[name] = handler;
+    },
+    appendChild(child) {
+      child.parentNode = this;
+      this.children.push(child);
+      return child;
+    },
+    contains(node) {
+      return node === this || this.children.some((child) => child.contains && child.contains(node));
+    },
+    get firstChild() {
+      return this.children[0] || null;
+    },
+    getAttribute(name) {
+      return Object.prototype.hasOwnProperty.call(this.attributes, name) ? this.attributes[name] : null;
+    },
+    getBoundingClientRect() {
+      return { left: 0, width: Math.max(this.textContent.length * 8, 16) };
+    },
+    removeAttribute(name) {
+      delete this.attributes[name];
+    },
+    removeChild(child) {
+      const index = this.children.indexOf(child);
+      if (index >= 0) this.children.splice(index, 1);
+      child.parentNode = null;
+      return child;
+    },
+    setAttribute(name, value) {
+      this.attributes[name] = String(value);
+    },
+  };
+  Object.defineProperty(element, 'textContent', {
+    get() {
+      return ownText + element.children.map((child) => child.textContent).join('');
+    },
+    set(value) {
+      ownText = String(value);
+      element.children.length = 0;
+    },
+  });
+  element.classList = {
+    toggle(className, force) {
+      const classes = new Set(element.className.split(/\s+/).filter(Boolean));
+      const shouldAdd = force === undefined ? !classes.has(className) : Boolean(force);
+      if (shouldAdd) classes.add(className);
+      else classes.delete(className);
+      element.className = Array.from(classes).join(' ');
+    },
+  };
+  return element;
+}
+
+function createLyricsRuntime({ languages, language }) {
+  const audio = createFakeElement();
+  const muteBtn = createFakeElement();
+  const lyricsBtn = createFakeElement();
+  const lyricsOverlay = createFakeElement();
+  const lyricsTrack = createFakeElement();
+  const lyricsViewport = createFakeElement();
+  const languageSwitcher = createFakeElement();
+  const languageUnderline = createFakeElement();
+  const languageButtons = ['de', 'fr', 'nl'].map((code) => {
+    const button = createFakeElement(code.toUpperCase());
+    button.className = code === 'nl' ? 'lyrics-language is-selected' : 'lyrics-language';
+    button.setAttribute('data-language', code);
+    button.setAttribute('aria-pressed', String(code === 'nl'));
+    return button;
+  });
+  const documentHandlers = {};
+  const windowHandlers = {};
+
+  lyricsViewport.appendChild(lyricsTrack);
+  audio.paused = false;
+  audio.play = () => ({
+    then(callback) {
+      callback();
+      return { catch() {} };
+    },
+  });
+
+  const document = {
+    activeElement: null,
+    addEventListener(name, handler) {
+      documentHandlers[name] = handler;
+    },
+    createElement() {
+      return createFakeElement();
+    },
+    createRange() {
+      let selectedNode = null;
+      return {
+        detach() {},
+        getBoundingClientRect() {
+          return selectedNode ? selectedNode.getBoundingClientRect() : { left: 0, width: 0 };
+        },
+        selectNodeContents(node) {
+          selectedNode = node;
+        },
+      };
+    },
+    createTextNode(text) {
+      return createFakeElement(text);
+    },
+    fonts: null,
+    getElementById(id) {
+      return {
+        anthem: audio,
+        muteBtn,
+        lyricsBtn,
+        lyricsOverlay,
+        lyricsTrack,
+      }[id];
+    },
+    querySelector(selector) {
+      return {
+        '.lyrics-language-switcher': languageSwitcher,
+        '.lyrics-language-underline': languageUnderline,
+      }[selector] || null;
+    },
+    querySelectorAll(selector) {
+      return selector === '.lyrics-language' ? languageButtons : [];
+    },
+  };
+
+  vm.runInNewContext(extractPageScript(), {
+    console: { log() {} },
+    document,
+    navigator: { language, languages },
+    window: {
+      addEventListener(name, handler) {
+        windowHandlers[name] = handler;
+      },
+    },
+  });
+
+  return {
+    documentHandlers,
+    languageButtons,
+    lyricsBtn,
+    lyricsTrack,
+    windowHandlers,
+  };
+}
+
+function click(element) {
+  assert.equal(typeof element.handlers.click, 'function', 'Expected click handler');
+  element.handlers.click();
+}
+
+function selectedLyricsLanguage(runtime) {
+  return runtime.languageButtons
+    .find((button) => button.getAttribute('aria-pressed') === 'true')
+    .getAttribute('data-language');
+}
+
+function renderedLyrics(runtime) {
+  return runtime.lyricsTrack.children.map((line) => line.textContent);
+}
+
 test('lyrics controls and overlay shell are present', () => {
   const lyricsButton = tagWithAttribute('button', 'id', 'lyricsBtn');
   assertTagHasClass(lyricsButton, 'lyrics-btn');
@@ -302,6 +485,65 @@ test('lyrics runtime exposes open, close, language, and render hooks', () => {
   assert.match(html, /document\.addEventListener\('keydown'/);
   assert.match(html, /lyricsOverlay\.removeAttribute\('inert'\)/);
   assert.match(html, /lyricsOverlay\.setAttribute\('inert', ''\)/);
+});
+
+test('lyrics runtime opens with the first supported browser language', () => {
+  [
+    {
+      browserLanguage: 'nl-BE',
+      browserLanguages: ['nl-BE', 'fr-BE'],
+      expectedLanguage: 'nl',
+      expectedLyrics: expectedDutchLyrics,
+    },
+    {
+      browserLanguage: 'en-US',
+      browserLanguages: ['fr-BE', 'nl-BE'],
+      expectedLanguage: 'fr',
+      expectedLyrics: expectedFrenchLyrics,
+    },
+    {
+      browserLanguage: 'de-DE',
+      browserLanguages: [],
+      expectedLanguage: 'de',
+      expectedLyrics: expectedGermanLyrics,
+    },
+    {
+      browserLanguage: 'en-US',
+      browserLanguages: ['en-US', 'es-ES'],
+      expectedLanguage: 'nl',
+      expectedLyrics: expectedDutchLyrics,
+    },
+  ].forEach(({ browserLanguage, browserLanguages, expectedLanguage, expectedLyrics }) => {
+    const runtime = createLyricsRuntime({
+      language: browserLanguage,
+      languages: browserLanguages,
+    });
+
+    click(runtime.lyricsBtn);
+
+    assert.equal(selectedLyricsLanguage(runtime), expectedLanguage);
+    assert.deepEqual(renderedLyrics(runtime), expectedLyrics);
+  });
+});
+
+test('lyrics runtime keeps a manually selected language when reopened', () => {
+  const runtime = createLyricsRuntime({
+    language: 'fr-BE',
+    languages: ['fr-BE', 'nl-BE'],
+  });
+
+  click(runtime.lyricsBtn);
+  assert.equal(selectedLyricsLanguage(runtime), 'fr');
+
+  const germanButton = runtime.languageButtons.find(
+    (button) => button.getAttribute('data-language') === 'de',
+  );
+  click(germanButton);
+  click(runtime.lyricsBtn);
+  click(runtime.lyricsBtn);
+
+  assert.equal(selectedLyricsLanguage(runtime), 'de');
+  assert.deepEqual(renderedLyrics(runtime), expectedGermanLyrics);
 });
 
 test('lyrics runtime renders text safely and restores focus before inert close', () => {
