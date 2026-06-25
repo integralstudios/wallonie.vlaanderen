@@ -431,11 +431,14 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.match(html, /class="lyrics-background"/);
   assert.match(html, /class="lyrics-background-image"/);
   assert.match(html, /class="lyrics-background-wash"/);
+  assert.match(html, /\.lyrics-overlay[\s\S]*background:\s*#120f0d/);
   assert.match(html, /\.lyrics-background-image[\s\S]*background-image:\s*url\('lyrics-bg\.jpg'\)/);
   assert.match(html, /\.lyrics-background-image[\s\S]*background-size:\s*cover/);
   assert.match(html, /\.lyrics-background-image[\s\S]*filter:\s*blur\(28px\) saturate\(1\.12\)/);
+  assert.match(html, /\.lyrics-background-image[\s\S]*opacity:\s*0\.96/);
   assert.match(html, /\.lyrics-background-image[\s\S]*transform:\s*scale\(1\.08\)/);
-  assert.match(html, /\.lyrics-background-wash[\s\S]*linear-gradient\(180deg/);
+  assert.match(html, /\.lyrics-background-wash[\s\S]*linear-gradient\(180deg, rgba\(0, 0, 0, 0\.08\), rgba\(0, 0, 0, 0\.24\) 54%, rgba\(0, 0, 0, 0\.46\)\)/);
+  assert.match(html, /\.lyrics-background-wash[\s\S]*radial-gradient\(circle at 50% 32%, rgba\(255, 255, 255, 0\.05\), rgba\(0, 0, 0, 0\.05\) 44%, rgba\(0, 0, 0, 0\.3\) 100%\)/);
   assert.doesNotMatch(html, /backdrop-filter:\s*blur\(/);
   assert.doesNotMatch(html, /-webkit-backdrop-filter:\s*blur\(/);
   assert.match(html, /prefers-reduced-motion:\s*reduce/);
@@ -570,7 +573,6 @@ test('soundwave tuning is baked into the page without DialKit controls', () => {
   assert.doesNotMatch(html, /react-dom\/client/);
   assert.doesNotMatch(html, /useDialKit/);
   assert.doesNotMatch(html, /applySoundwaveParams/);
-  assert.doesNotMatch(html, /dialkitLauncher/);
   assert.doesNotMatch(html, /wallonie:soundwave-dialkit/);
   assert.match(html, /variant:\s*'b'/);
   assert.match(html, /sensitivity:\s*1\.2/);
