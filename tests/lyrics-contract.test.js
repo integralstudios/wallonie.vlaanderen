@@ -147,3 +147,14 @@ test('lyrics runtime renders text safely and restores focus before inert close',
   assert.match(html, /lyricsOverlay\.contains\(document\.activeElement\)/);
   assert.match(html, /lyricsBtn\.focus\(\)/);
 });
+
+test('lyrics sync uses audio time, active classes, and animation frames', () => {
+  assert.match(html, /function findActiveLyricIndex\(lines, currentTime\)/);
+  assert.match(html, /function updateActiveLyric\(forceScroll\)/);
+  assert.match(html, /function syncLyrics\(\)/);
+  assert.match(html, /audio\.currentTime/);
+  assert.match(html, /requestAnimationFrame\(syncLyrics\)/);
+  assert.match(html, /audio\.addEventListener\('timeupdate'/);
+  assert.match(html, /classList\.toggle\('is-active'/);
+  assert.match(html, /classList\.toggle\('is-past'/);
+});

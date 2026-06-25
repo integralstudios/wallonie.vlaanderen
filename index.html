@@ -363,6 +363,8 @@
           renderLyricsControls();
           if (lyricsOpen) {
             play();
+            updateActiveLyric(true);
+            requestAnimationFrame(syncLyrics);
           }
         }
 
@@ -371,6 +373,40 @@
           selectedLanguage = language;
           renderLyrics();
           renderLyricsControls();
+          updateActiveLyric(true);
+        }
+
+        function findActiveLyricIndex(lines, currentTime) {
+          var index = 0;
+          for (var i = 0; i < lines.length; i += 1) {
+            if (currentTime >= lines[i].time) index = i;
+            else break;
+          }
+          return index;
+        }
+
+        function updateActiveLyric(forceScroll) {
+          if (!lyricsOpen || !lyricsTrack.children.length) return;
+          var lines = LYRICS[selectedLanguage];
+          var nextIndex = findActiveLyricIndex(lines, audio.currentTime || 0);
+          if (nextIndex === activeLineIndex && !forceScroll) return;
+          activeLineIndex = nextIndex;
+
+          Array.prototype.forEach.call(lyricsTrack.children, function (lineNode, index) {
+            lineNode.classList.toggle('is-active', index === activeLineIndex);
+            lineNode.classList.toggle('is-past', index < activeLineIndex);
+          });
+
+          var activeNode = lyricsTrack.children[activeLineIndex];
+          if (!activeNode) return;
+          var viewport = lyricsTrack.parentNode;
+          var offset = (viewport.clientHeight / 2) - activeNode.offsetTop - (activeNode.offsetHeight / 2);
+          lyricsTrack.style.transform = 'translateY(' + offset + 'px)';
+        }
+
+        function syncLyrics() {
+          updateActiveLyric(false);
+          if (lyricsOpen) requestAnimationFrame(syncLyrics);
         }
 
         // Start the anthem. Browsers block audible autoplay until the visitor
@@ -404,6 +440,18 @@
 
         document.addEventListener('keydown', function (evt) {
           if (evt.key === 'Escape' && lyricsOpen) setLyricsOpen(false);
+        });
+
+        audio.addEventListener('timeupdate', function () {
+          updateActiveLyric(false);
+        });
+
+        audio.addEventListener('seeked', function () {
+          updateActiveLyric(true);
+        });
+
+        audio.addEventListener('loadedmetadata', function () {
+          updateActiveLyric(true);
         });
 
         // Mute / unmute, resuming playback when unmuted.
