@@ -167,6 +167,9 @@
         flex-direction: column;
         gap: 9px;
       }
+      .lyrics-overlay.is-open .lyrics-track {
+        animation: lyricsTrackRise 0.82s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+      }
       .lyrics-line {
         margin: 0;
         color: rgba(255, 255, 255, 0.9);
@@ -178,15 +181,23 @@
         display: inline-block;
       }
       .lyrics-overlay.is-open .lyrics-word {
-        animation: lyricWordIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation: lyricWordIn 0.68s cubic-bezier(0.22, 0.61, 0.36, 1) both;
         animation-delay: calc(var(--word-index) * 15ms);
+      }
+      @keyframes lyricsTrackRise {
+        from {
+          transform: translate3d(0, 28px, 0);
+        }
+        to {
+          transform: translate3d(0, 0, 0);
+        }
       }
       @keyframes lyricWordIn {
         from {
           opacity: 0;
-          transform: translate3d(0, 12px, 0);
+          transform: translate3d(0, 32px, 0);
         }
-        72% {
+        64% {
           opacity: 1;
         }
         to {
@@ -240,6 +251,10 @@
         .lyrics-background-image,
         .lyrics-line {
           transition: none;
+        }
+        .lyrics-overlay.is-open .lyrics-track {
+          animation: none;
+          transform: none;
         }
         .lyrics-overlay.is-open .lyrics-word {
           animation: none;

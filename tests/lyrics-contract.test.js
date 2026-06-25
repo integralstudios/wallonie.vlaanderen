@@ -91,18 +91,22 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
 });
 
 test('lyrics words stagger animate in when the overlay opens', () => {
+  assert.match(html, /@keyframes lyricsTrackRise/);
   assert.match(html, /@keyframes lyricWordIn/);
+  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-track[\s\S]*animation:\s*lyricsTrackRise 0\.82s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
   assert.match(html, /\.lyrics-word[\s\S]*display:\s*inline-block/);
-  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation:\s*lyricWordIn 0\.42s cubic-bezier\(0\.16, 1, 0\.3, 1\) both/);
+  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation:\s*lyricWordIn 0\.68s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\) both/);
   assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation-delay:\s*calc\(var\(--word-index\) \* 15ms\)/);
-  assert.match(html, /from\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translate3d\(0, 12px, 0\)/);
-  assert.match(html, /72%\s*\{[\s\S]*opacity:\s*1/);
+  assert.match(html, /@keyframes lyricsTrackRise[\s\S]*from\s*\{[\s\S]*transform:\s*translate3d\(0, 28px, 0\)/);
+  assert.match(html, /from\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translate3d\(0, 32px, 0\)/);
+  assert.match(html, /64%\s*\{[\s\S]*opacity:\s*1/);
   assert.match(html, /to\s*\{[\s\S]*opacity:\s*1;[\s\S]*transform:\s*translate3d\(0, 0, 0\)/);
   assert.match(html, /var wordIndex = 0/);
   assert.match(html, /var tokens = line\.split\(\s*\/\(\\s\+\)\/\s*\)/);
   assert.match(html, /wordNode\.className = 'lyrics-word'/);
   assert.match(html, /wordNode\.style\.setProperty\('--word-index', String\(wordIndex\)\)/);
   assert.match(html, /wordIndex \+= 1/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open \.lyrics-track[\s\S]*animation:\s*none/);
   assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation:\s*none/);
   assert.doesNotMatch(html, /lyricLineIn/);
   assert.doesNotMatch(html, /--line-index/);
