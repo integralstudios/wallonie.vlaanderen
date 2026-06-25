@@ -5,15 +5,61 @@ const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
+function tagWithAttribute(tagName, attributeName, value) {
+  const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`<${tagName}\\b(?=[^>]*\\b${attributeName}="${escapedValue}")[^>]*>`);
+  const match = html.match(pattern);
+  assert.ok(match, `Expected <${tagName}> with ${attributeName}="${value}"`);
+  return match[0];
+}
+
+function assertTagHasAttribute(tag, attributeName, value) {
+  const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  assert.match(tag, new RegExp(`\\b${attributeName}="${escapedValue}"`));
+}
+
+function assertTagHasBooleanAttribute(tag, attributeName) {
+  assert.match(tag, new RegExp(`\\b${attributeName}(?:\\s|>|$)`));
+}
+
+function assertTagHasClass(tag, className) {
+  const classMatch = tag.match(/\bclass="([^"]*)"/);
+  assert.ok(classMatch, `Expected class attribute on ${tag}`);
+  assert.ok(
+    classMatch[1].split(/\s+/).includes(className),
+    `Expected ${tag} to include class "${className}"`,
+  );
+}
+
 test('lyrics controls and overlay shell are present', () => {
-  assert.match(html, /id="lyricsBtn"/);
-  assert.match(html, /class="lyrics-btn control-btn"/);
-  assert.match(html, /<section id="lyricsOverlay" class="lyrics-overlay" aria-hidden="true" aria-label="Lyrics" inert>/);
-  assert.match(html, /class="lyrics-overlay"/);
+  const lyricsButton = tagWithAttribute('button', 'id', 'lyricsBtn');
+  assertTagHasClass(lyricsButton, 'lyrics-btn');
+  assertTagHasClass(lyricsButton, 'control-btn');
+  assertTagHasAttribute(lyricsButton, 'aria-pressed', 'false');
+
+  const overlay = tagWithAttribute('section', 'id', 'lyricsOverlay');
+  assertTagHasClass(overlay, 'lyrics-overlay');
+  assertTagHasAttribute(overlay, 'aria-hidden', 'true');
+  assertTagHasAttribute(overlay, 'aria-label', 'Lyrics');
+  assertTagHasBooleanAttribute(overlay, 'inert');
+
   assert.match(html, /id="lyricsTrack"/);
-  assert.match(html, /data-language="nl"/);
-  assert.match(html, /data-language="fr"/);
-  assert.match(html, /data-language="de"/);
+  ['nl', 'fr', 'de'].forEach((language) => {
+    const languageButton = tagWithAttribute('button', 'data-language', language);
+    assertTagHasClass(languageButton, 'lyrics-language');
+    assertTagHasAttribute(languageButton, 'type', 'button');
+  });
+});
+
+test('mute control hooks are preserved', () => {
+  const muteButton = tagWithAttribute('button', 'id', 'muteBtn');
+  assertTagHasClass(muteButton, 'mute-btn');
+  assertTagHasClass(muteButton, 'control-btn');
+  assertTagHasAttribute(muteButton, 'aria-pressed', 'false');
+  assert.match(html, /class="icon icon-on"/);
+  assert.match(html, /class="icon icon-off"/);
+  assert.match(html, /\.mute-btn\.is-muted \.icon-on/);
+  assert.match(html, /\.mute-btn\.is-muted \.icon-off/);
 });
 
 test('lyrics overlay has blur, readable fallback, and reduced-motion styling', () => {
@@ -26,5 +72,8 @@ test('lyrics overlay has blur, readable fallback, and reduced-motion styling', (
 
 test('first-interaction audio guard safely ignores shared controls', () => {
   assert.match(html, /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);/);
-  assert.match(html, /if \(!isControl\) play\(\);/);
+  assert.match(
+    html,
+    /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);\s*if \(isControl\) return;\s*play\(\);\s*events\.forEach/s,
+  );
 });
