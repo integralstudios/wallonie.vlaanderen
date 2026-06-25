@@ -248,10 +248,10 @@
         gap: 9px;
       }
       .lyrics-overlay.is-open.is-lyrics-entering .lyrics-track {
-        animation: lyricsTrackRise 0.82s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+        animation: lyricsTrackRise 0.48s cubic-bezier(0.22, 0.61, 0.36, 1) both;
       }
       .lyrics-overlay.is-open.is-language-switching .lyrics-track {
-        animation: lyricsLanguageSwitch 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+        animation: lyricsLanguageSwitch 0.56s cubic-bezier(0.22, 0.61, 0.36, 1) both;
       }
       .lyrics-line {
         margin: 0;
@@ -270,8 +270,8 @@
         display: inline-block;
       }
       .lyrics-overlay.is-open.is-lyrics-entering .lyrics-word {
-        animation: lyricWordIn 0.68s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-        animation-delay: calc(var(--word-index) * 15ms);
+        animation: lyricWordIn 0.38s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+        animation-delay: calc(var(--word-index) * 6ms);
       }
       @keyframes lyricsTrackRise {
         from {
@@ -284,7 +284,7 @@
       @keyframes lyricsLanguageSwitch {
         from {
           opacity: 0;
-          transform: translate3d(0, 6px, 0);
+          transform: translate3d(0, 24px, 0);
         }
         to {
           opacity: 1;
