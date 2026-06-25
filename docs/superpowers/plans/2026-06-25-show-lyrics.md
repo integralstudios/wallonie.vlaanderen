@@ -80,7 +80,8 @@ content is taller than the viewport, it adds `.has-overflow` so CSS can apply a
 short bottom mask fade instead of a hard cutoff. The overlay uses equal `72px`
 top and bottom padding, and the lyrics viewport fills that available height so
 the fade starts close to the bottom language picker instead of hiding the final
-lyrics too early.
+lyrics too early. Narrow viewports use only a tiny soft edge and keep the masked
+area above the controls, without changing lyric typography or stanza spacing.
 
 The volume and lyrics buttons use 36px circular controls with 16px imported
 Sketch icons.

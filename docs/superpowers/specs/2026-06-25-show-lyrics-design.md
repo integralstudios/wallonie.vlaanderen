@@ -58,7 +58,9 @@ When the full lyric sheet is taller than the available viewport, the scrollable
 lyrics area fades out at the bottom edge instead of clipping the next line
 harshly. The fade is applied only when overflow is detected. The lyrics viewport
 fills the overlay between equal top and bottom lyric padding, so the sheet can
-use the space down to just above the bottom language picker before fading.
+use the space down to just above the bottom language picker before fading. On
+narrow viewports, the fade is reduced to a tiny edge and the masked area stays
+above the bottom controls instead of extending through them.
 
 The language picker is fixed near the bottom center, aligned with the control
 buttons. Active language text is white with a one-pixel underline. Inactive

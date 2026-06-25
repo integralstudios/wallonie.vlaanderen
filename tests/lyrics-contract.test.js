@@ -370,8 +370,8 @@ test('lyrics language picker is center-aligned with the control buttons', () => 
   assert.match(html, /range\.getBoundingClientRect\(\)/);
   assert.match(html, /languageSwitcher\.style\.setProperty\('--language-underline-x'/);
   assert.match(html, /languageSwitcher\.style\.setProperty\('--language-underline-width'/);
-  assert.match(html, /window\.addEventListener\('resize', function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*updateLyricsViewportOverflow\(\);[\s\S]*\}\)/);
-  assert.match(html, /document\.fonts\.ready\.then\(function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*updateLyricsViewportOverflow\(\);[\s\S]*\}\)/);
+  assert.match(html, /window\.addEventListener\('resize', function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*requestLyricsViewportOverflowUpdate\(\);[\s\S]*\}\)/);
+  assert.match(html, /document\.fonts\.ready\.then\(function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*requestLyricsViewportOverflowUpdate\(\);[\s\S]*\}\)/);
 });
 
 test('mute control hooks are preserved', () => {
@@ -449,9 +449,25 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.match(html, /--lyrics-viewport-fade:\s*24px/);
   assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\(to bottom, #000 0, #000 calc\(100% - var\(--lyrics-viewport-fade\)\), transparent 100%\)/);
   assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*mask-image:\s*linear-gradient\(to bottom, #000 0, #000 calc\(100% - var\(--lyrics-viewport-fade\)\), transparent 100%\)/);
+  assert.match(html, /@media \(max-width:\s*820px\)[\s\S]*\.lyrics-viewport[\s\S]*--lyrics-viewport-fade:\s*6px/);
+  assert.match(html, /@media \(max-width:\s*820px\)[\s\S]*\.lyrics-viewport[\s\S]*height:\s*calc\(100vh - 144px\)/);
+  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-overlay[\s\S]*padding:\s*76px 18px 64px/);
+  assert.doesNotMatch(html, /padding:\s*76px 18px 104px/);
+  assert.doesNotMatch(html, /height:\s*calc\(100vh - 96px\)/);
   assert.match(html, /function updateLyricsViewportOverflow\(\)/);
-  assert.match(html, /lyricsViewport\.classList\.toggle\('has-overflow', hasOverflow\)/);
-  assert.match(html, /window\.addEventListener\('resize', function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*updateLyricsViewportOverflow\(\);[\s\S]*\}\)/);
+  assert.match(html, /function requestLyricsViewportOverflowUpdate\(\)/);
+  assert.match(html, /window\.requestAnimationFrame\(updateLyricsViewportOverflow\)/);
+  assert.match(html, /window\.setTimeout\(updateLyricsViewportOverflow, 250\)/);
+  assert.match(html, /window\.setTimeout\(updateLyricsViewportOverflow, 700\)/);
+  assert.match(html, /window\.setTimeout\(updateLyricsViewportOverflow, 1400\)/);
+  assert.match(html, /new window\.ResizeObserver\(requestLyricsViewportOverflowUpdate\)/);
+  assert.match(html, /lyricsResizeObserver\.observe\(lyricsViewport\)/);
+  assert.match(html, /lyricsResizeObserver\.observe\(lyricsTrack\)/);
+  assert.match(html, /lyricsTrack\.addEventListener\('animationend', updateLyricsViewportOverflow\)/);
+  assert.match(html, /if \(hasOverflow\) lyricsViewport\.classList\.add\('has-overflow'\)/);
+  assert.match(html, /else lyricsViewport\.classList\.remove\('has-overflow'\)/);
+  assert.doesNotMatch(html, /classList\.toggle\('has-overflow', hasOverflow\)/);
+  assert.match(html, /window\.addEventListener\('resize', function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*requestLyricsViewportOverflowUpdate\(\);[\s\S]*\}\)/);
   assert.doesNotMatch(html, /\.lyrics-line\.is-active/);
 });
 
