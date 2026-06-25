@@ -25,6 +25,7 @@
       :root {
         --volume-wave-duration: 1.4s;
         --volume-wave-stroke-opacity: 0.72;
+        --volume-wave-base-opacity: 0.32;
         --volume-wave-glow-opacity: 0.18;
         --volume-wave-glow-size: 1px;
       }
@@ -138,7 +139,7 @@
       }
       .mute-btn.is-playing .ring,
       .mute-btn.is-dialkit-previewing .ring {
-        opacity: 0;
+        opacity: var(--volume-wave-base-opacity);
       }
       .control-btn:hover .ring,
       .control-btn:focus-visible .ring {
