@@ -107,7 +107,7 @@
         margin: -18px 0 0 -18px;
         border: 1px solid rgba(255, 255, 255, 0.5);
         border-radius: 50%;
-        transition: transform 0.2s ease;
+        transition: transform 0.2s ease, opacity 0.2s ease;
       }
       .mute-btn .wave-ring {
         position: absolute;
@@ -135,6 +135,10 @@
       .mute-btn.is-playing .wave-samples,
       .mute-btn.is-dialkit-previewing .wave-samples {
         filter: drop-shadow(0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity)));
+      }
+      .mute-btn.is-playing .ring,
+      .mute-btn.is-dialkit-previewing .ring {
+        opacity: 0;
       }
       .control-btn:hover .ring,
       .control-btn:focus-visible .ring {

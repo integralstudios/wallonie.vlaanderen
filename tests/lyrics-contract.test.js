@@ -493,6 +493,8 @@ test('volume ring renders the A/B/C sampled finalist waveforms while anthem play
   assert.match(html, /--volume-wave-duration:\s*1\.4s/);
   assert.match(html, /<button id="muteBtn"[\s\S]*>\s*<span class="ring"><\/span>\s*<svg class="wave-ring" viewBox="0 0 44 44"/);
   assert.match(html, /id="muteWaveSamples" class="wave-samples"/);
+  assert.match(html, /\.control-btn \.ring[\s\S]*transition:\s*transform 0\.2s ease,\s*opacity 0\.2s ease/);
+  assert.match(html, /\.mute-btn\.is-playing \.ring,\s*\.mute-btn\.is-dialkit-previewing \.ring\s*\{\s*opacity:\s*0;\s*\}/);
   assert.match(html, /\.mute-btn \.wave-sample[\s\S]*stroke-linecap:\s*round/);
   assert.doesNotMatch(html, /\.mute-btn \.wave-sample\s*\{[^}]*opacity:\s*0/);
   assert.doesNotMatch(html, /class="wave-base"/);
