@@ -532,6 +532,12 @@
           strokeOpacity: 0.72,
           glowOpacity: 0.18,
           glowSize: 1,
+          song: {
+            reactive: true,
+            sensitivity: 1,
+            floor: 0.55,
+            smoothing: 0.18
+          },
           tuning: {}
         };
         var waveTime = 0;
@@ -539,6 +545,11 @@
         var waveAnimationFrame = null;
         var wavePlaybackActive = false;
         var wavePreviewActive = false;
+        var audioContext = null;
+        var audioSource = null;
+        var audioAnalyser = null;
+        var audioFrequencyData = null;
+        var audioEnergy = 0;
         var muted = false;
         var playbackBlocked = false;
         var isPlaying = true;
@@ -743,6 +754,61 @@
           return preset;
         }
 
+        function ensureAudioAnalysis() {
+          if (audioAnalyser) return;
+          var AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextCtor) return;
+
+          try {
+            audioContext = audioContext || new AudioContextCtor();
+            if (!audioSource) audioSource = audioContext.createMediaElementSource(audio);
+            audioAnalyser = audioContext.createAnalyser();
+            audioAnalyser.fftSize = 256;
+            audioAnalyser.smoothingTimeConstant = 0.72;
+            audioSource.connect(audioAnalyser);
+            audioAnalyser.connect(audioContext.destination);
+            audioFrequencyData = new Uint8Array(audioAnalyser.frequencyBinCount);
+          } catch (err) {
+            audioAnalyser = null;
+            audioFrequencyData = null;
+          }
+        }
+
+        function resumeAudioAnalysis() {
+          if (!waveParams.song || !waveParams.song.reactive) return;
+          ensureAudioAnalysis();
+          if (audioContext && audioContext.state === 'suspended' && audioContext.resume) {
+            var resumePromise = audioContext.resume();
+            if (resumePromise && resumePromise.catch) resumePromise.catch(function () {});
+          }
+        }
+
+        function getAudioWaveScale() {
+          var songParams = waveParams.song || {};
+          if (!songParams.reactive || !audioAnalyser || !audioFrequencyData) return 1;
+          if (muted || playbackBlocked || !isPlaying) {
+            audioEnergy += (0 - audioEnergy) * 0.12;
+            return 1;
+          }
+
+          audioAnalyser.getByteFrequencyData(audioFrequencyData);
+          var usedBins = Math.max(1, Math.floor(audioFrequencyData.length * 0.72));
+          var total = 0;
+          for (var i = 0; i < usedBins; i += 1) {
+            var value = audioFrequencyData[i] / 255;
+            total += value * value;
+          }
+
+          var rms = Math.sqrt(total / usedBins);
+          var targetAudioEnergy = Math.max(0, (rms - 0.04) * 2.4);
+          var smoothing = clampNumber(songParams.smoothing, 0.02, 0.8, 0.18);
+          audioEnergy += (targetAudioEnergy - audioEnergy) * smoothing;
+
+          var floor = clampNumber(songParams.floor, 0, 2, 0.55);
+          var sensitivity = clampNumber(songParams.sensitivity, 0, 3, 1);
+          return clampNumber(floor + audioEnergy * sensitivity, 0.05, 2.8, 1);
+        }
+
         function renderWaveSamples() {
           if (!waveSamples) return;
           var activeVariant = WAVE_PRESETS[waveParams.variant] ? waveParams.variant : 'a';
@@ -765,6 +831,7 @@
             Math.sin(waveTime * 0.52 + activePreset.seed) * activePreset.drift;
           var wakePhase = primaryPhase - Math.PI * 0.38 +
             Math.sin(waveTime * 0.78 + activePreset.seed * 2) * 0.52;
+          var audioScale = getAudioWaveScale();
 
           for (var i = 0; i < activePreset.count; i += 1) {
             var angle = -Math.PI / 2 + (i / activePreset.count) * Math.PI * 2;
@@ -775,7 +842,7 @@
 
             var granular = texture(i, waveTime, activePreset.seed);
             var breath = 0.74 + Math.sin(waveTime * activePreset.breath + i * activePreset.breathOffset) * 0.2;
-            var height = envelope * (activePreset.minHeight + granular * activePreset.maxHeight * breath);
+            var height = envelope * (activePreset.minHeight + granular * activePreset.maxHeight * breath) * audioScale;
             var line = waveSampleLines[i];
 
             if (height < activePreset.threshold) {
@@ -831,6 +898,7 @@
           }
 
           if (shouldMove && waveAnimationFrame === null) {
+            resumeAudioAnalysis();
             waveAnimationFrame = window.requestAnimationFrame(updateWaveAnimation);
           } else if (!shouldMove && waveAnimationFrame !== null) {
             window.cancelAnimationFrame(waveAnimationFrame);
@@ -847,6 +915,7 @@
           waveParams.strokeOpacity = params.line.strokeOpacity;
           waveParams.glowOpacity = params.line.glowOpacity;
           waveParams.glowSize = params.line.glowSize;
+          waveParams.song = params.song;
           waveParams.tuning = {
             a: params.waveA,
             b: params.waveB,
@@ -1163,6 +1232,13 @@
                 default: 'a'
               },
               duration: [1.4, 0.4, 3.5, 0.05],
+              song: {
+                _collapsed: false,
+                reactive: true,
+                sensitivity: [1, 0, 2.5, 0.05],
+                floor: [0.55, 0, 1.4, 0.05],
+                smoothing: [0.18, 0.02, 0.7, 0.01]
+              },
               line: {
                 _collapsed: false,
                 strokeOpacity: [0.72, 0, 1, 0.01],
@@ -1196,7 +1272,7 @@
             }, {
               id: 'wallonie-soundwave',
               persist: {
-                key: 'wallonie:soundwave-dialkit-v5'
+                key: 'wallonie:soundwave-dialkit-v6'
               },
               shortcuts: {
                 duration: { key: 'd', mode: 'fine' },
@@ -1210,6 +1286,10 @@
               params.preview,
               params.variant,
               params.duration,
+              params.song.reactive,
+              params.song.sensitivity,
+              params.song.floor,
+              params.song.smoothing,
               params.line.strokeOpacity,
               params.line.glowOpacity,
               params.line.glowSize,
