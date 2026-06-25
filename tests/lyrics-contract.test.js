@@ -491,10 +491,11 @@ test('audio control reflects autoplay blocking and retries playback on click', (
 
 test('volume ring renders the A/B/C sampled finalist waveforms while anthem playback is active', () => {
   assert.match(html, /--volume-wave-duration:\s*1\.4s/);
-  assert.match(html, /class="wave-ring" viewBox="0 0 44 44"/);
-  assert.match(html, /class="wave-base" cx="22" cy="22" r="18"/);
+  assert.match(html, /<button id="muteBtn"[\s\S]*>\s*<span class="ring"><\/span>\s*<svg class="wave-ring" viewBox="0 0 44 44"/);
   assert.match(html, /id="muteWaveSamples" class="wave-samples"/);
   assert.match(html, /\.mute-btn \.wave-sample[\s\S]*stroke-linecap:\s*round/);
+  assert.doesNotMatch(html, /\.mute-btn \.wave-sample\s*\{[^}]*opacity:\s*0/);
+  assert.doesNotMatch(html, /class="wave-base"/);
   assert.doesNotMatch(html, /wave-echo/);
   assert.doesNotMatch(html, /volumeRingEcho/);
   assert.doesNotMatch(html, /volumeWavePulse/);
