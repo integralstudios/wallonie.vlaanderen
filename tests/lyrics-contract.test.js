@@ -90,14 +90,21 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.doesNotMatch(html, /\.lyrics-line\.is-active/);
 });
 
-test('lyrics lines stagger animate in when the overlay opens', () => {
-  assert.match(html, /@keyframes lyricLineIn/);
-  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-line[\s\S]*animation:\s*lyricLineIn 0\.52s cubic-bezier\(0\.22, 1, 0\.36, 1\) both/);
-  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-line[\s\S]*animation-delay:\s*calc\(var\(--line-index\) \* 44ms\)/);
-  assert.match(html, /0%\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translate3d\(0, 14px, 0\)/);
-  assert.match(html, /100%\s*\{[\s\S]*opacity:\s*1;[\s\S]*transform:\s*translate3d\(0, 0, 0\)/);
-  assert.match(html, /lineNode\.style\.setProperty\('--line-index', String\(index\)\)/);
-  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open \.lyrics-line[\s\S]*animation:\s*none/);
+test('lyrics words stagger animate in when the overlay opens', () => {
+  assert.match(html, /@keyframes lyricWordIn/);
+  assert.match(html, /\.lyrics-word[\s\S]*display:\s*inline-block/);
+  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation:\s*lyricWordIn 0\.3s ease both/);
+  assert.match(html, /\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation-delay:\s*calc\(var\(--word-index\) \* 15ms\)/);
+  assert.match(html, /from\s*\{[\s\S]*opacity:\s*0;[\s\S]*transform:\s*translate3d\(0, 10px, 0\)/);
+  assert.match(html, /to\s*\{[\s\S]*opacity:\s*1;[\s\S]*transform:\s*translate3d\(0, 0, 0\)/);
+  assert.match(html, /var wordIndex = 0/);
+  assert.match(html, /var tokens = line\.split\(\s*\/\(\\s\+\)\/\s*\)/);
+  assert.match(html, /wordNode\.className = 'lyrics-word'/);
+  assert.match(html, /wordNode\.style\.setProperty\('--word-index', String\(wordIndex\)\)/);
+  assert.match(html, /wordIndex \+= 1/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open \.lyrics-word[\s\S]*animation:\s*none/);
+  assert.doesNotMatch(html, /lyricLineIn/);
+  assert.doesNotMatch(html, /--line-index/);
 });
 
 test('first-interaction audio guard safely ignores shared controls', () => {
@@ -179,8 +186,9 @@ test('lyrics runtime renders text safely and restores focus before inert close',
   assert.doesNotMatch(renderLyricsMatch[1], /innerHTML/);
   assert.match(renderLyricsMatch[1], /while \(lyricsTrack\.firstChild\) lyricsTrack\.removeChild\(lyricsTrack\.firstChild\);/);
   assert.match(renderLyricsMatch[1], /document\.createElement\('p'\)/);
-  assert.match(renderLyricsMatch[1], /lineNode\.textContent = line/);
-  assert.match(renderLyricsMatch[1], /lineNode\.style\.setProperty\('--line-index', String\(index\)\)/);
+  assert.match(renderLyricsMatch[1], /document\.createElement\('span'\)/);
+  assert.match(renderLyricsMatch[1], /document\.createTextNode\(part\)/);
+  assert.match(renderLyricsMatch[1], /wordNode\.textContent = part/);
   assert.match(renderLyricsMatch[1], /lyricsTrack\.appendChild\(lineNode\)/);
 
   assert.match(html, /lyricsOverlay\.contains\(document\.activeElement\)/);

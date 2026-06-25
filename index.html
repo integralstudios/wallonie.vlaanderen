@@ -174,16 +174,19 @@
         letter-spacing: 0;
         text-align: center;
       }
-      .lyrics-overlay.is-open .lyrics-line {
-        animation: lyricLineIn 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
-        animation-delay: calc(var(--line-index) * 44ms);
+      .lyrics-word {
+        display: inline-block;
       }
-      @keyframes lyricLineIn {
-        0% {
+      .lyrics-overlay.is-open .lyrics-word {
+        animation: lyricWordIn 0.3s ease both;
+        animation-delay: calc(var(--word-index) * 15ms);
+      }
+      @keyframes lyricWordIn {
+        from {
           opacity: 0;
-          transform: translate3d(0, 14px, 0);
+          transform: translate3d(0, 10px, 0);
         }
-        100% {
+        to {
           opacity: 1;
           transform: translate3d(0, 0, 0);
         }
@@ -235,7 +238,7 @@
         .lyrics-line {
           transition: none;
         }
-        .lyrics-overlay.is-open .lyrics-line {
+        .lyrics-overlay.is-open .lyrics-word {
           animation: none;
           opacity: 1;
           transform: none;
@@ -382,13 +385,25 @@
 
         function renderLyrics() {
           var lines = LYRICS[selectedLanguage];
+          var wordIndex = 0;
           while (lyricsTrack.firstChild) lyricsTrack.removeChild(lyricsTrack.firstChild);
           lines.forEach(function (line, index) {
             var lineNode = document.createElement('p');
             lineNode.className = 'lyrics-line';
             lineNode.setAttribute('data-index', String(index));
-            lineNode.style.setProperty('--line-index', String(index));
-            lineNode.textContent = line;
+            var tokens = line.split(/(\s+)/);
+            tokens.forEach(function (part) {
+              if (!part.trim()) {
+                lineNode.appendChild(document.createTextNode(part));
+                return;
+              }
+              var wordNode = document.createElement('span');
+              wordNode.className = 'lyrics-word';
+              wordNode.style.setProperty('--word-index', String(wordIndex));
+              wordNode.textContent = part;
+              wordIndex += 1;
+              lineNode.appendChild(wordNode);
+            });
             lyricsTrack.appendChild(lineNode);
           });
           lyricsTrack.parentNode.scrollTop = 0;
