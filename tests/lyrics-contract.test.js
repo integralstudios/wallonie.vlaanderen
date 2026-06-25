@@ -489,28 +489,25 @@ test('audio control reflects autoplay blocking and retries playback on click', (
   assert.match(muteClickMatch[1], /muted = false;\s*audio\.muted = false;\s*play\(\);\s*render\(\);\s*return;/);
 });
 
-test('volume ring animates only while anthem playback is active', () => {
-  assert.match(html, /@keyframes volumeWavePulse/);
+test('volume ring renders one clean circular sine wave while anthem playback is active', () => {
   assert.match(html, /--volume-wave-duration:\s*1\.4s/);
-  assert.match(html, /--volume-wave-peak-count:\s*14/);
-  assert.match(html, /--volume-wave-amplitude:\s*3\.4/);
-  assert.match(html, /--volume-wave-softness:\s*0\.64/);
-  assert.match(html, /--volume-wave-echo-scale:\s*1\.24/);
-  assert.match(html, /--volume-wave-echo-count:\s*2/);
+  assert.match(html, /--volume-wave-count:\s*10/);
+  assert.match(html, /--volume-wave-amplitude:\s*2\.4/);
+  assert.match(html, /--volume-wave-stroke-width:\s*1\.1/);
   assert.match(html, /class="wave-ring" viewBox="0 0 44 44"/);
-  assert.match(html, /id="muteWavePrimary" class="wave-path wave-primary"/);
-  assert.match(html, /class="wave-path wave-echo" style="--wave-index: 11" hidden/);
-  assert.match(html, /\.mute-btn\.is-playing \.wave-primary,\s*\.mute-btn\.is-dialkit-previewing \.wave-primary\s*\{[\s\S]*animation:\s*volumeWavePulse var\(--volume-wave-duration\) cubic-bezier\(0\.45, 0, 0\.55, 1\) infinite/);
-  assert.match(html, /\.mute-btn\.is-playing \.wave-echo,\s*\.mute-btn\.is-dialkit-previewing \.wave-echo\s*\{[\s\S]*animation:\s*volumeRingEcho var\(--volume-wave-echo-duration\) ease-out infinite/);
-  assert.match(html, /animation-delay:\s*calc\(var\(--wave-index\) \* var\(--volume-wave-echo-delay\)\)/);
-  assert.match(html, /transform:\s*scale\(var\(--volume-wave-echo-scale\)\)/);
-  assert.match(html, /function buildWavePath\(peakCount, amplitude, softness, phase\)/);
+  assert.match(html, /id="muteWavePath" class="wave-path"/);
+  assert.doesNotMatch(html, /wave-echo/);
+  assert.doesNotMatch(html, /volumeRingEcho/);
+  assert.doesNotMatch(html, /volumeWavePulse/);
+  assert.match(html, /\.mute-btn\.is-playing \.wave-path,\s*\.mute-btn\.is-dialkit-previewing \.wave-path\s*\{[\s\S]*stroke-opacity:\s*var\(--volume-wave-stroke-opacity\)/);
+  assert.match(html, /function buildWavePath\(waveCount, amplitude, phase\)/);
+  assert.match(html, /Math\.sin\(angle \* clampedWaveCount \+ phase\)/);
   assert.match(html, /function renderWavePaths\(\)/);
+  assert.match(html, /var visibleAmplitude = shouldAnimateWave\(\) \? waveParams\.amplitude : 0/);
   assert.match(html, /waveAnimationFrame = window\.requestAnimationFrame\(updateWaveAnimation\)/);
   assert.match(html, /var shouldAnimateSound = !shouldShowSoundOff && !audio\.paused/);
   assert.match(html, /btn\.classList\.toggle\('is-playing', shouldAnimateSound\)/);
-  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.wave-primary[\s\S]*animation:\s*none/);
-  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.wave-echo,\s*\.mute-btn\.is-dialkit-previewing \.wave-echo[\s\S]*display:\s*none/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.mute-btn\.is-playing \.wave-path[\s\S]*filter:\s*none/);
 });
 
 test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters', () => {
@@ -524,24 +521,21 @@ test('DialKit soundwave tuning panel is opt-in and writes soundwave parameters',
   assert.match(html, /import\('dialkit'\)/);
   assert.match(html, /useDialKit\('Soundwave'/);
   assert.match(html, /id:\s*'wallonie-soundwave'/);
-  assert.match(html, /key:\s*'wallonie:soundwave-dialkit-v2'/);
+  assert.match(html, /key:\s*'wallonie:soundwave-dialkit-v3'/);
   assert.match(html, /preview:\s*true/);
   assert.match(html, /duration:\s*\[1\.4, 0\.4, 3\.5, 0\.05\]/);
-  assert.match(html, /peakCount:\s*\[14, 3, 48, 1\]/);
-  assert.match(html, /amplitude:\s*\[3\.4, 0, 8, 0\.25\]/);
-  assert.match(html, /softness:\s*\[0\.64, 0\.1, 1, 0\.05\]/);
+  assert.match(html, /waveCount:\s*\[10, 1, 32, 1\]/);
+  assert.match(html, /amplitude:\s*\[2\.4, 0, 6, 0\.1\]/);
   assert.match(html, /rotationSpeed:\s*\[1\.15, -3, 3, 0\.05\]/);
+  assert.match(html, /strokeWidth:\s*\[1\.1, 0\.5, 2\.5, 0\.05\]/);
   assert.match(html, /glowOpacity:\s*\[0\.18, 0, 0\.8, 0\.01\]/);
-  assert.match(html, /count:\s*\[2, 0, 12, 1\]/);
-  assert.match(html, /scale:\s*\[1\.24, 1, 1\.8, 0\.01\]/);
+  assert.doesNotMatch(html, /echo:\s*\{/);
+  assert.doesNotMatch(html, /echo\.scale/);
   assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-duration', params\.duration \+ 's'\)/);
-  assert.match(html, /waveParams\.peakCount = Math\.round\(params\.wave\.peakCount\)/);
+  assert.match(html, /waveParams\.waveCount = Math\.round\(params\.wave\.waveCount\)/);
   assert.match(html, /waveParams\.amplitude = params\.wave\.amplitude/);
-  assert.match(html, /waveParams\.softness = params\.wave\.softness/);
   assert.match(html, /waveParams\.rotationSpeed = params\.wave\.rotationSpeed/);
-  assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-echo-count', String\(echoCount\)\)/);
-  assert.match(html, /waveEchoPaths\.forEach\(function \(waveEcho, index\) \{/);
-  assert.match(html, /waveEcho\.hidden = index >= echoCount/);
+  assert.match(html, /document\.documentElement\.style\.setProperty\('--volume-wave-stroke-width', params\.line\.strokeWidth \+ 'px'\)/);
   assert.match(html, /btn\.classList\.toggle\('is-dialkit-previewing', wavePreviewActive\)/);
   assert.match(html, /function waitForDialKitPanel\(\)/);
   assert.match(html, /if \(!didMount\) throw new Error\('DialKit panel did not mount'\)/);
