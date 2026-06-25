@@ -8,24 +8,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css">
     <link rel="stylesheet" href="https://use.typekit.net/qsr7tur.css">
-    <script type="importmap">
-      {
-        "imports": {
-          "dialkit": "https://esm.sh/dialkit@1.3.0?external=react,react-dom,react/jsx-runtime,motion,motion/react",
-          "motion": "https://esm.sh/motion@12.42.0?external=react,react-dom",
-          "motion/react": "https://esm.sh/motion@12.42.0/react?external=react,react-dom",
-          "react": "https://esm.sh/react@18.2.0",
-          "react-dom": "https://esm.sh/react-dom@18.2.0?external=react",
-          "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?external=react",
-          "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime"
-        }
-      }
-    </script>
     <style media="screen">
       :root {
+        --control-ring-base-opacity: 0.4;
         --volume-wave-duration: 1.4s;
         --volume-wave-stroke-opacity: 0.72;
-        --volume-wave-base-opacity: 0.32;
+        --volume-wave-base-opacity: var(--control-ring-base-opacity);
         --volume-wave-glow-opacity: 0.18;
         --volume-wave-glow-size: 1px;
       }
@@ -70,34 +58,6 @@
       .lyrics-btn {
         right: 92px;
       }
-      .dialkit-launcher {
-        position: fixed;
-        bottom: 32px;
-        left: 32px;
-        z-index: 22;
-        padding: 10px 12px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        border-radius: 18px;
-        color: #ffffff;
-        background: rgba(0, 0, 0, 0.3);
-        font: 400 12px/1 "mendl-sans-dusk", sans-serif;
-        letter-spacing: 0.6px;
-        cursor: pointer;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        transition: transform 0.2s ease, border-color 0.2s ease;
-      }
-      .dialkit-launcher:hover,
-      .dialkit-launcher:focus-visible {
-        border-color: rgba(255, 255, 255, 0.85);
-        transform: scale(1.05);
-      }
-      .dialkit-launcher:focus {
-        outline: none;
-      }
-      .dialkit-launcher[hidden] {
-        display: none;
-      }
       .control-btn .ring {
         position: absolute;
         top: 50%;
@@ -106,8 +66,10 @@
         height: 36px;
         box-sizing: border-box;
         margin: -18px 0 0 -18px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        border: 1px solid #ffffff;
         border-radius: 50%;
+        opacity: var(--control-ring-base-opacity);
+        mix-blend-mode: plus-lighter;
         transition: transform 0.2s ease, opacity 0.2s ease;
       }
       .mute-btn .wave-ring {
@@ -121,6 +83,7 @@
         color: #ffffff;
         pointer-events: none;
         transform-origin: center;
+        mix-blend-mode: plus-lighter;
         transition: transform 0.2s ease;
       }
       .mute-btn .wave-sample {
@@ -134,12 +97,16 @@
       .mute-btn .wave-samples {
         transition: filter 0.2s ease;
       }
-      .mute-btn.is-playing .wave-samples,
-      .mute-btn.is-dialkit-previewing .wave-samples {
+      .mute-btn.is-playing .wave-samples {
         filter: drop-shadow(0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity)));
       }
-      .mute-btn.is-playing .ring,
-      .mute-btn.is-dialkit-previewing .ring {
+      .mute-btn.is-wave-collapsing .wave-samples {
+        filter: drop-shadow(0 0 var(--volume-wave-glow-size) rgba(255, 255, 255, var(--volume-wave-glow-opacity)));
+      }
+      .mute-btn.is-playing .ring {
+        opacity: var(--volume-wave-base-opacity);
+      }
+      .mute-btn.is-wave-collapsing .ring {
         opacity: var(--volume-wave-base-opacity);
       }
       .control-btn:hover .ring,
@@ -383,10 +350,6 @@
         .lyrics-btn {
           right: 80px;
         }
-        .dialkit-launcher {
-          bottom: 20px;
-          left: 20px;
-        }
         .lyrics-overlay {
           padding: 76px 18px 104px;
         }
@@ -404,8 +367,7 @@
         .lyrics-background-image,
         .lyrics-line,
         .lyrics-language,
-        .lyrics-language-underline,
-        .dialkit-launcher {
+        .lyrics-language-underline {
           transition: none;
         }
         .lyrics-overlay.is-open.is-lyrics-entering .lyrics-track,
@@ -425,8 +387,10 @@
         .mute-btn:focus-visible .wave-ring {
           transform: none;
         }
-        .mute-btn.is-playing .wave-samples,
-        .mute-btn.is-dialkit-previewing .wave-samples {
+        .mute-btn.is-playing .wave-samples {
+          filter: none;
+        }
+        .mute-btn.is-wave-collapsing .wave-samples {
           filter: none;
         }
         .control-btn .icon {
@@ -458,10 +422,6 @@
       <source src="belgium.mp3" type="audio/mpeg">
       <source src="belgium.ogg" type="audio/ogg">
     </audio>
-    <template id="dialkitStyles">
-      <link id="dialkitRuntimeStyles" rel="stylesheet" href="https://esm.sh/dialkit@1.3.0/styles.css">
-    </template>
-    <button id="dialkitLauncher" class="dialkit-launcher" type="button" hidden>DialKit</button>
     <button id="muteBtn" class="mute-btn control-btn" type="button" aria-label="Mute" aria-pressed="false">
       <span class="ring"></span>
       <svg class="wave-ring" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
@@ -528,13 +488,13 @@
         var waveSampleLines = [];
         var waveParams = {
           duration: 1.4,
-          variant: 'a',
+          variant: 'b',
           strokeOpacity: 0.72,
           glowOpacity: 0.18,
           glowSize: 1,
           song: {
             reactive: true,
-            sensitivity: 1,
+            sensitivity: 1.2,
             floor: 0.55,
             smoothing: 0.18
           },
@@ -544,7 +504,9 @@
         var waveLastTimestamp = 0;
         var waveAnimationFrame = null;
         var wavePlaybackActive = false;
-        var wavePreviewActive = false;
+        var WAVE_COLLAPSE_DURATION = 260;
+        var waveCollapseStartedAt = 0;
+        var waveCollapseScale = 1;
         var audioContext = null;
         var audioSource = null;
         var audioAnalyser = null;
@@ -809,12 +771,62 @@
           return clampNumber(floor + audioEnergy * sensitivity, 0.05, 2.8, 1);
         }
 
+        function isWavePlaying() {
+          return !muted && !playbackBlocked && isPlaying && wavePlaybackActive;
+        }
+
+        function isWaveCollapsing() {
+          return waveCollapseStartedAt !== 0;
+        }
+
+        function cancelWaveCollapse() {
+          waveCollapseStartedAt = 0;
+          waveCollapseScale = 1;
+          btn.classList.remove('is-wave-collapsing');
+        }
+
+        function startWaveCollapse() {
+          if (prefersReducedMotion()) {
+            cancelWaveCollapse();
+            return;
+          }
+
+          waveCollapseStartedAt = -1;
+          waveCollapseScale = 1;
+          btn.classList.add('is-wave-collapsing');
+        }
+
+        function updateWaveCollapse(timestamp) {
+          if (!isWaveCollapsing()) {
+            waveCollapseScale = 1;
+            return false;
+          }
+
+          if (waveCollapseStartedAt < 0) waveCollapseStartedAt = timestamp;
+          var progress = Math.max(0, Math.min(1, (timestamp - waveCollapseStartedAt) / WAVE_COLLAPSE_DURATION));
+          waveCollapseScale = Math.pow(1 - progress, 3);
+
+          if (progress >= 1) {
+            waveCollapseStartedAt = 0;
+            waveCollapseScale = 0;
+            btn.classList.remove('is-wave-collapsing');
+            return true;
+          }
+
+          return false;
+        }
+
+        function getWaveCollapseScale() {
+          return isWaveCollapsing() ? waveCollapseScale : 1;
+        }
+
         function renderWaveSamples() {
           if (!waveSamples) return;
           var activeVariant = WAVE_PRESETS[waveParams.variant] ? waveParams.variant : 'a';
           var basePreset = WAVE_PRESETS[activeVariant] || WAVE_PRESETS.a;
           var activePreset = tunedWavePreset(basePreset, activeVariant);
           var isActive = shouldAnimateWave() && !prefersReducedMotion();
+          var isCollapsing = isWaveCollapsing();
           ensureWaveSampleLines(activePreset.count);
 
           for (var hiddenIndex = 0; hiddenIndex < waveSampleLines.length; hiddenIndex += 1) {
@@ -832,6 +844,7 @@
           var wakePhase = primaryPhase - Math.PI * 0.38 +
             Math.sin(waveTime * 0.78 + activePreset.seed * 2) * 0.52;
           var audioScale = getAudioWaveScale();
+          var collapseScale = getWaveCollapseScale();
 
           for (var i = 0; i < activePreset.count; i += 1) {
             var angle = -Math.PI / 2 + (i / activePreset.count) * Math.PI * 2;
@@ -842,16 +855,16 @@
 
             var granular = texture(i, waveTime, activePreset.seed);
             var breath = 0.74 + Math.sin(waveTime * activePreset.breath + i * activePreset.breathOffset) * 0.2;
-            var height = envelope * (activePreset.minHeight + granular * activePreset.maxHeight * breath) * audioScale;
+            var height = envelope * (activePreset.minHeight + granular * activePreset.maxHeight * breath) * audioScale * collapseScale;
             var line = waveSampleLines[i];
 
-            if (height < activePreset.threshold) {
+            if (!isCollapsing && height < activePreset.threshold) {
               line.setAttribute('opacity', '0');
               continue;
             }
 
-            var from = point(center, angle, activePreset.inner - height * activePreset.inward);
-            var to = point(center, angle, activePreset.inner + height);
+            var from = point(center, angle, activePreset.inner + activePreset.lineWidth * 0.5);
+            var to = point(center, angle, activePreset.inner + Math.max(height, activePreset.lineWidth * 0.5));
             var opacity = activePreset.alphaBase + envelope * (activePreset.alphaEnvelope + granular * activePreset.alphaTexture);
             line.setAttribute('x1', from.x.toFixed(2));
             line.setAttribute('y1', from.y.toFixed(2));
@@ -864,7 +877,7 @@
         }
 
         function shouldAnimateWave() {
-          return !muted && !playbackBlocked && isPlaying && (wavePlaybackActive || wavePreviewActive);
+          return isWavePlaying() || isWaveCollapsing();
         }
 
         function prefersReducedMotion() {
@@ -884,7 +897,14 @@
           var delta = Math.min(64, timestamp - waveLastTimestamp) / 1000;
           waveLastTimestamp = timestamp;
           waveTime += delta / Math.max(0.2, waveParams.duration);
+          var collapseFinished = updateWaveCollapse(timestamp);
           renderWaveSamples();
+          if (collapseFinished) {
+            waveAnimationFrame = null;
+            waveLastTimestamp = 0;
+            return;
+          }
+
           waveAnimationFrame = window.requestAnimationFrame(updateWaveAnimation);
         }
 
@@ -908,30 +928,6 @@
           }
         }
 
-        function applySoundwaveParams(params) {
-          document.documentElement.style.setProperty('--volume-wave-duration', params.duration + 's');
-          waveParams.duration = params.duration;
-          waveParams.variant = WAVE_PRESETS[params.variant] ? params.variant : 'a';
-          waveParams.strokeOpacity = params.line.strokeOpacity;
-          waveParams.glowOpacity = params.line.glowOpacity;
-          waveParams.glowSize = params.line.glowSize;
-          waveParams.song = params.song;
-          waveParams.tuning = {
-            a: params.waveA,
-            b: params.waveB,
-            c: params.waveC
-          };
-          document.documentElement.style.setProperty('--volume-wave-stroke-opacity', String(params.line.strokeOpacity));
-          document.documentElement.style.setProperty('--volume-wave-glow-opacity', String(params.line.glowOpacity));
-          document.documentElement.style.setProperty('--volume-wave-glow-size', params.line.glowSize + 'px');
-          wavePreviewActive = Boolean(params.preview);
-          btn.classList.toggle('is-dialkit-previewing', wavePreviewActive && !muted && !playbackBlocked && isPlaying);
-          renderWaveSamples();
-          syncWaveAnimation();
-        }
-
-        window.applySoundwaveParams = applySoundwaveParams;
-
         function getPreferredLyricsLanguage() {
           var preferredLanguages = [];
           if (navigator.languages && navigator.languages.length) preferredLanguages = navigator.languages;
@@ -948,9 +944,10 @@
         function render() {
           var shouldShowSoundOff = muted || playbackBlocked || !isPlaying;
           var shouldAnimateSound = !shouldShowSoundOff && !audio.paused;
+          if (shouldAnimateSound) cancelWaveCollapse();
           btn.classList.toggle('is-muted', shouldShowSoundOff);
           btn.classList.toggle('is-playing', shouldAnimateSound);
-          btn.classList.toggle('is-dialkit-previewing', wavePreviewActive && !shouldShowSoundOff);
+          btn.classList.toggle('is-wave-collapsing', isWaveCollapsing());
           wavePlaybackActive = shouldAnimateSound;
           btn.setAttribute('aria-pressed', String(muted));
           btn.setAttribute('aria-label', muted ? 'Unmute' : shouldShowSoundOff ? 'Play anthem' : 'Mute');
@@ -1128,12 +1125,16 @@
           if (playbackBlocked || !isPlaying || audio.paused) {
             muted = false;
             audio.muted = false;
+            cancelWaveCollapse();
             play();
             render();
             return;
           }
+          var wasAnimatingWave = isWavePlaying();
           muted = !muted;
           audio.muted = muted;
+          if (muted && wasAnimatingWave) startWaveCollapse();
+          if (!muted) cancelWaveCollapse();
           play();
           render();
         });
@@ -1142,229 +1143,6 @@
         renderLyricsControls();
         render();
       })();
-    </script>
-    <script type="module">
-      var SOUNDWAVE_DIALKIT_KEY = 'wallonie:soundwave-dialkit-v6';
-
-      function resetSoundwaveDialKit() {
-        try {
-          if (window.localStorage) {
-            var keysToRemove = [
-              SOUNDWAVE_DIALKIT_KEY,
-              'dialkit:' + SOUNDWAVE_DIALKIT_KEY
-            ];
-            keysToRemove.forEach(function (key) {
-              window.localStorage.removeItem(key);
-            });
-
-            for (var i = window.localStorage.length - 1; i >= 0; i -= 1) {
-              var key = window.localStorage.key(i);
-              if (key && key.indexOf(SOUNDWAVE_DIALKIT_KEY) !== -1) {
-                window.localStorage.removeItem(key);
-              }
-            }
-          }
-        } catch (err) {}
-
-        window.location.reload();
-      }
-
-      function isLocalDialKitHost() {
-        return window.location.protocol === 'file:' ||
-          ['localhost', '127.0.0.1', '0.0.0.0', '::1'].indexOf(window.location.hostname) !== -1;
-      }
-
-      function showDialKitLauncher() {
-        var launcher = document.getElementById('dialkitLauncher');
-        if (!launcher || !isLocalDialKitHost() || new URLSearchParams(window.location.search).has('dialkit')) return;
-        launcher.hidden = false;
-        launcher.addEventListener('click', function () {
-          var params = new URLSearchParams(window.location.search);
-          params.set('dialkit', '1');
-          var nextUrl = window.location.pathname + '?' + params.toString() + window.location.hash;
-          window.history.replaceState(null, '', nextUrl);
-          setupSoundwaveDialKit(true);
-        });
-      }
-
-      function setDialKitLauncherLoading(launcher, isLoading) {
-        if (!launcher) return;
-        launcher.disabled = isLoading;
-        launcher.setAttribute('aria-busy', String(isLoading));
-      }
-
-      function waitForDialKitPanel() {
-        return new Promise(function (resolve) {
-          var started = Date.now();
-          var timeout = 2500;
-
-          function check() {
-            if (document.querySelector('.dialkit-root')) {
-              resolve(true);
-              return;
-            }
-
-            if (Date.now() - started >= timeout) {
-              resolve(false);
-              return;
-            }
-
-            window.setTimeout(check, 50);
-          }
-
-          check();
-        });
-      }
-
-      async function setupSoundwaveDialKit(forceOpen) {
-        if (!forceOpen && !new URLSearchParams(window.location.search).has('dialkit')) return;
-        if (document.getElementById('dialkitSoundwaveRoot')) return;
-
-        var muteBtn = document.getElementById('muteBtn');
-        var stylesTemplate = document.getElementById('dialkitStyles');
-        var launcher = document.getElementById('dialkitLauncher');
-        if (!muteBtn || !stylesTemplate) return;
-
-        setDialKitLauncherLoading(launcher, true);
-        if (!document.getElementById('dialkitRuntimeStyles')) {
-          document.head.appendChild(stylesTemplate.content.cloneNode(true));
-        }
-
-        try {
-          var React = await import('react');
-          var ReactDOMClient = await import('react-dom/client');
-          var dialkit = await import('dialkit');
-          var DialRoot = dialkit.DialRoot;
-          var useDialKit = dialkit.useDialKit;
-          var mount = document.createElement('div');
-          mount.id = 'dialkitSoundwaveRoot';
-          document.body.appendChild(mount);
-
-          function applySoundwaveParams(params) {
-            if (window.applySoundwaveParams) window.applySoundwaveParams(params);
-          }
-
-          function SoundwaveControls() {
-            var params = useDialKit('Soundwave', {
-              preview: true,
-              reset: { type: 'action' },
-              variant: {
-                type: 'select',
-                options: [
-                  { value: 'a', label: 'A - Sparse asymmetry' },
-                  { value: 'b', label: 'B - Taller asymmetry' },
-                  { value: 'c', label: 'C - Very sparse duo' }
-                ],
-                default: 'a'
-              },
-              duration: [1.4, 0.4, 3.5, 0.05],
-              song: {
-                _collapsed: false,
-                reactive: true,
-                sensitivity: [1, 0, 2.5, 0.05],
-                floor: [0.55, 0, 1.4, 0.05],
-                smoothing: [0.18, 0.02, 0.7, 0.01]
-              },
-              line: {
-                _collapsed: false,
-                strokeOpacity: [0.72, 0, 1, 0.01],
-                glowOpacity: [0.18, 0, 0.8, 0.01],
-                glowSize: [1, 0, 6, 0.5]
-              },
-              waveA: {
-                _collapsed: true,
-                samples: [36, 18, 56, 1],
-                amplitude: [1, 0.4, 1.8, 0.05],
-                threshold: [0.28, 0.05, 0.8, 0.01],
-                lineWidth: [0.88, 0.4, 1.4, 0.01],
-                speed: [0.72, 0.25, 1.4, 0.01]
-              },
-              waveB: {
-                _collapsed: true,
-                samples: [34, 18, 56, 1],
-                amplitude: [1, 0.4, 1.8, 0.05],
-                threshold: [0.36, 0.05, 0.8, 0.01],
-                lineWidth: [0.9, 0.4, 1.4, 0.01],
-                speed: [0.68, 0.25, 1.4, 0.01]
-              },
-              waveC: {
-                _collapsed: true,
-                samples: [28, 18, 56, 1],
-                amplitude: [1, 0.4, 1.8, 0.05],
-                threshold: [0.46, 0.05, 0.8, 0.01],
-                lineWidth: [0.92, 0.4, 1.4, 0.01],
-                speed: [0.76, 0.25, 1.4, 0.01]
-              }
-            }, {
-              id: 'wallonie-soundwave',
-              persist: {
-                key: 'wallonie:soundwave-dialkit-v6'
-              },
-              shortcuts: {
-                duration: { key: 'd', mode: 'fine' },
-                'line.glowSize': { key: 'g', mode: 'fine' }
-              },
-              onAction: function (action) {
-                if (action === 'reset') resetSoundwaveDialKit();
-              }
-            });
-
-            React.useEffect(function () {
-              applySoundwaveParams(params);
-            }, [
-              params.preview,
-              params.variant,
-              params.duration,
-              params.song.reactive,
-              params.song.sensitivity,
-              params.song.floor,
-              params.song.smoothing,
-              params.line.strokeOpacity,
-              params.line.glowOpacity,
-              params.line.glowSize,
-              params.waveA.samples,
-              params.waveA.amplitude,
-              params.waveA.threshold,
-              params.waveA.lineWidth,
-              params.waveA.speed,
-              params.waveB.samples,
-              params.waveB.amplitude,
-              params.waveB.threshold,
-              params.waveB.lineWidth,
-              params.waveB.speed,
-              params.waveC.samples,
-              params.waveC.amplitude,
-              params.waveC.threshold,
-              params.waveC.lineWidth,
-              params.waveC.speed
-            ]);
-
-            return null;
-          }
-
-          function SoundwaveDialKit() {
-            return React.createElement(React.Fragment, null,
-              React.createElement(SoundwaveControls),
-              React.createElement(DialRoot, { position: 'top-left', theme: 'dark', defaultOpen: true, productionEnabled: true })
-            );
-          }
-
-          ReactDOMClient.createRoot(mount).render(React.createElement(SoundwaveDialKit));
-          var didMount = await waitForDialKitPanel();
-          if (!didMount) throw new Error('DialKit panel did not mount');
-          if (launcher) launcher.hidden = true;
-        } catch (err) {
-          var existingMount = document.getElementById('dialkitSoundwaveRoot');
-          if (existingMount) existingMount.remove();
-          if (launcher && isLocalDialKitHost()) launcher.hidden = false;
-          console.warn('DialKit soundwave controls failed to load', err);
-        } finally {
-          setDialKitLauncherLoading(launcher, false);
-        }
-      }
-
-      showDialKitLauncher();
-      setupSoundwaveDialKit();
     </script>
     <script> (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){ (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o), m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m) })(window,document,'script','//www.google-analytics.com/analytics.js','ga'); ga('create', 'UA-20134293-8', 'auto'); ga('send', 'pageview'); </script>
   </body>
