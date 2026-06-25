@@ -43,6 +43,7 @@ test('lyrics controls and overlay shell are present', () => {
   assertTagHasClass(lyricsButton, 'lyrics-btn');
   assertTagHasClass(lyricsButton, 'control-btn');
   assertTagHasAttribute(lyricsButton, 'aria-pressed', 'false');
+  assertTagHasAttribute(lyricsButton, 'aria-controls', 'lyricsOverlay');
 
   const overlay = tagWithAttribute('section', 'id', 'lyricsOverlay');
   assertTagHasClass(overlay, 'lyrics-overlay');
@@ -132,4 +133,17 @@ test('lyrics runtime exposes open, close, language, and render hooks', () => {
   assert.match(html, /document\.addEventListener\('keydown'/);
   assert.match(html, /lyricsOverlay\.removeAttribute\('inert'\)/);
   assert.match(html, /lyricsOverlay\.setAttribute\('inert', ''\)/);
+});
+
+test('lyrics runtime renders text safely and restores focus before inert close', () => {
+  const renderLyricsMatch = html.match(/function renderLyrics\(\) \{([\s\S]*?)\n        \}/);
+  assert.ok(renderLyricsMatch, 'Expected renderLyrics function body');
+  assert.doesNotMatch(renderLyricsMatch[1], /innerHTML/);
+  assert.match(renderLyricsMatch[1], /while \(lyricsTrack\.firstChild\) lyricsTrack\.removeChild\(lyricsTrack\.firstChild\);/);
+  assert.match(renderLyricsMatch[1], /document\.createElement\('p'\)/);
+  assert.match(renderLyricsMatch[1], /lineNode\.textContent = line\.text/);
+  assert.match(renderLyricsMatch[1], /lyricsTrack\.appendChild\(lineNode\)/);
+
+  assert.match(html, /lyricsOverlay\.contains\(document\.activeElement\)/);
+  assert.match(html, /lyricsBtn\.focus\(\)/);
 });
