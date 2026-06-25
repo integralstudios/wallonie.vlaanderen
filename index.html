@@ -134,32 +134,23 @@
         background: rgba(255, 255, 255, 0.94);
       }
       .lyrics-viewport {
-        width: min(880px, 100%);
-        max-height: min(68vh, 560px);
-        overflow: hidden;
+        width: min(1000px, 100%);
+        max-height: min(76vh, 640px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
       }
       .lyrics-track {
         display: flex;
         flex-direction: column;
-        gap: 18px;
-        transition: transform 0.46s cubic-bezier(0.33, 1, 0.68, 1);
+        gap: 9px;
       }
       .lyrics-line {
         margin: 0;
-        color: rgba(255, 255, 255, 0.38);
-        font: 800 clamp(26px, 6vw, 64px)/1.08 Arial, Helvetica, sans-serif;
+        color: rgba(255, 255, 255, 0.9);
+        font: 800 clamp(20px, 3vw, 32px)/1.18 Arial, Helvetica, sans-serif;
         letter-spacing: 0;
         text-align: center;
-        transform: scale(0.94);
-        transition: color 0.28s ease, opacity 0.28s ease, transform 0.28s ease;
-      }
-      .lyrics-line.is-active {
-        color: #ffffff;
-        opacity: 1;
-        transform: scale(1);
-      }
-      .lyrics-line.is-past {
-        color: rgba(255, 255, 255, 0.24);
       }
       .mute-btn .icon-on {
         opacity: 1;
@@ -194,22 +185,22 @@
         .lyrics-overlay {
           padding: 76px 18px 104px;
         }
+        .lyrics-track {
+          gap: 8px;
+        }
         .lyrics-line {
-          font-size: clamp(24px, 9vw, 44px);
+          font-size: clamp(19px, 6.6vw, 28px);
         }
       }
       @media (prefers-reduced-motion: reduce) {
         .control-btn .ring,
         .lyrics-overlay,
-        .lyrics-track,
         .lyrics-line {
           transition: none;
         }
         .control-btn:hover .ring,
         .control-btn:focus-visible .ring,
-        .lyrics-btn.is-active .ring,
-        .lyrics-line,
-        .lyrics-line.is-active {
+        .lyrics-btn.is-active .ring {
           transform: none;
         }
         .mute-btn .icon {
@@ -254,7 +245,7 @@
         <button class="lyrics-language" type="button" data-language="fr" aria-pressed="false">FR</button>
         <button class="lyrics-language" type="button" data-language="de" aria-pressed="false">DE</button>
       </div>
-      <div class="lyrics-viewport" aria-live="polite">
+      <div class="lyrics-viewport" aria-live="polite" tabindex="0">
         <div id="lyricsTrack" class="lyrics-track"></div>
       </div>
     </section>
@@ -270,51 +261,39 @@
         var muted = false;
         var lyricsOpen = false;
         var selectedLanguage = 'nl';
-        var activeLineIndex = -1;
-        var lyricsSyncFrame = null;
-        // Line starts are tuned to this 54.079s instrumental and lead phrase attacks slightly.
         var LYRICS = {
           nl: [
-            { time: 0, text: "O dierbaar België" },
-            { time: 4.1, text: "O heilig land der vaad'ren" },
-            { time: 8.7, text: "Onze ziel en ons hart zijn u gewijd." },
-            { time: 14.2, text: "Aanvaard ons kracht en het bloed van onze adren," },
-            { time: 20.6, text: "Wees ons doel in arbeid en in strijd." },
-            { time: 22.6, text: "Bloei, o land, in eendracht niet te breken;" },
-            { time: 28.6, text: "Wees immer u zelf en ongeknecht," },
-            { time: 32.6, text: "Het woord getrouw, dat ge onbevreesd moogt spreken:" },
-            { time: 36.7, text: "Voor Vorst, voor Vrijheid en voor Recht." },
-            { time: 41.6, text: "Het woord getrouw, dat ge onbevreesd moogt spreken:" },
-            { time: 44.6, text: "Voor Vorst, voor Vrijheid en voor Recht." },
-            { time: 47.1, text: "Voor Vorst, voor Vrijheid en voor Recht." }
+            "O dierbaar België",
+            "O heilig land der vaad'ren",
+            "Onze ziel en ons hart zijn u gewijd.",
+            "Aanvaard ons kracht en het bloed van onze adren,",
+            "Wees ons doel in arbeid en in strijd.",
+            "Bloei, o land, in eendracht niet te breken;",
+            "Wees immer u zelf en ongeknecht,",
+            "Het woord getrouw, dat ge onbevreesd moogt spreken:",
+            "Voor Vorst, voor Vrijheid en voor Recht.",
+            "Het woord getrouw, dat ge onbevreesd moogt spreken:",
+            "Voor Vorst, voor Vrijheid en voor Recht. (x3)"
           ],
           fr: [
-            { time: 0, text: "O Belgique, ô mère chérie," },
-            { time: 4.1, text: "À toi nos cœurs, à toi nos bras," },
-            { time: 8.7, text: "À toi notre sang, ô Patrie !" },
-            { time: 14.2, text: "Nous le jurons tous, tu vivras !" },
-            { time: 20.6, text: "Tu vivras toujours grande et belle" },
-            { time: 22.6, text: "Et ton invincible unité" },
-            { time: 28.6, text: "Aura pour devise immortelle :" },
-            { time: 32.6, text: "Le Roi, la Loi, la Liberté !" },
-            { time: 36.7, text: "Le Roi, la Loi, la Liberté !" },
-            { time: 41.6, text: "Le Roi, la Loi, la Liberté !" },
-            { time: 44.6, text: "Le Roi, la Loi, la Liberté !" },
-            { time: 47.1, text: "Le Roi, la Loi, la Liberté !" }
+            "O Belgique, ô mère chérie,",
+            "À toi nos cœurs, à toi nos bras,",
+            "À toi notre sang, ô Patrie !",
+            "Nous le jurons tous, tu vivras !",
+            "Tu vivras toujours grande et belle",
+            "Et ton invincible unité",
+            "Aura pour devise immortelle :",
+            "Le Roi, la Loi, la Liberté ! (ter)"
           ],
           de: [
-            { time: 0, text: "O liebes Land, o Belgiens Erde," },
-            { time: 4.1, text: "Dir unser Herz, Dir unsere Hand," },
-            { time: 8.7, text: "Dir unser Blut, dem Heimatherde," },
-            { time: 14.2, text: "wir schwören's Dir, o Vaterland!" },
-            { time: 20.6, text: "So blühe froh in voller Schöne," },
-            { time: 22.6, text: "zu der die Freiheit Dich erzog," },
-            { time: 28.6, text: "und fortan singen Deine Söhne:" },
-            { time: 32.6, text: "Gesetz und König und die Freiheit hoch!" },
-            { time: 36.7, text: "Gesetz und König und die Freiheit hoch!" },
-            { time: 41.6, text: "Gesetz und König und die Freiheit hoch!" },
-            { time: 44.6, text: "Gesetz und König und die Freiheit hoch!" },
-            { time: 47.1, text: "Gesetz und König und die Freiheit hoch!" }
+            "O liebes Land, o Belgiens Erde,",
+            "Dir unser Herz, Dir unsere Hand,",
+            "Dir unser Blut, dem Heimatherde,",
+            "wir schwören's Dir, o Vaterland!",
+            "So blühe froh in voller Schöne,",
+            "zu der die Freiheit Dich erzog,",
+            "und fortan singen Deine Söhne:",
+            "Gesetz und König und die Freiheit hoch!"
           ]
         };
 
@@ -337,14 +316,10 @@
             var lineNode = document.createElement('p');
             lineNode.className = 'lyrics-line';
             lineNode.setAttribute('data-index', String(index));
-            lineNode.textContent = line.text;
+            lineNode.textContent = line;
             lyricsTrack.appendChild(lineNode);
           });
-          activeLineIndex = 0;
-          Array.prototype.forEach.call(lyricsTrack.children, function (lineNode, index) {
-            lineNode.classList.toggle('is-active', index === activeLineIndex);
-            lineNode.classList.toggle('is-past', false);
-          });
+          lyricsTrack.parentNode.scrollTop = 0;
         }
 
         function renderLyricsControls() {
@@ -369,10 +344,6 @@
           renderLyricsControls();
           if (lyricsOpen) {
             play();
-            updateActiveLyric(true);
-            startLyricsSync();
-          } else {
-            stopLyricsSync();
           }
         }
 
@@ -381,51 +352,6 @@
           selectedLanguage = language;
           renderLyrics();
           renderLyricsControls();
-          updateActiveLyric(true);
-        }
-
-        function findActiveLyricIndex(lines, currentTime) {
-          var index = 0;
-          for (var i = 0; i < lines.length; i += 1) {
-            if (currentTime >= lines[i].time) index = i;
-            else break;
-          }
-          return index;
-        }
-
-        function updateActiveLyric(forceScroll) {
-          if (!lyricsOpen || !lyricsTrack.children.length) return;
-          var lines = LYRICS[selectedLanguage];
-          var nextIndex = findActiveLyricIndex(lines, audio.currentTime || 0);
-          if (nextIndex === activeLineIndex && !forceScroll) return;
-          activeLineIndex = nextIndex;
-
-          Array.prototype.forEach.call(lyricsTrack.children, function (lineNode, index) {
-            lineNode.classList.toggle('is-active', index === activeLineIndex);
-            lineNode.classList.toggle('is-past', index < activeLineIndex);
-          });
-
-          var activeNode = lyricsTrack.children[activeLineIndex];
-          if (!activeNode) return;
-          var viewport = lyricsTrack.parentNode;
-          var offset = (viewport.clientHeight / 2) - activeNode.offsetTop - (activeNode.offsetHeight / 2);
-          lyricsTrack.style.transform = 'translateY(' + offset + 'px)';
-        }
-
-        function startLyricsSync() {
-          if (lyricsSyncFrame !== null) return;
-          lyricsSyncFrame = requestAnimationFrame(syncLyrics);
-        }
-
-        function stopLyricsSync() {
-          if (lyricsSyncFrame !== null) cancelAnimationFrame(lyricsSyncFrame);
-          lyricsSyncFrame = null;
-        }
-
-        function syncLyrics() {
-          lyricsSyncFrame = null;
-          updateActiveLyric(false);
-          if (lyricsOpen) startLyricsSync();
         }
 
         // Start the anthem. Browsers block audible autoplay until the visitor
@@ -460,28 +386,6 @@
         document.addEventListener('keydown', function (evt) {
           if (evt.key === 'Escape' && lyricsOpen) setLyricsOpen(false);
         });
-
-        audio.addEventListener('timeupdate', function () {
-          updateActiveLyric(false);
-        });
-
-        audio.addEventListener('seeked', function () {
-          updateActiveLyric(true);
-        });
-
-        audio.addEventListener('loadedmetadata', function () {
-          updateActiveLyric(true);
-        });
-
-        window.addEventListener('resize', function () {
-          updateActiveLyric(true);
-        });
-
-        if (window.visualViewport) {
-          window.visualViewport.addEventListener('resize', function () {
-            updateActiveLyric(true);
-          });
-        }
 
         // Mute / unmute, resuming playback when unmuted.
         btn.addEventListener('click', function () {

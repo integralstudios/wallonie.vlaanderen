@@ -5,7 +5,6 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const EXPECTED_TIMINGS = [0, 4.1, 8.7, 14.2, 20.6, 22.6, 28.6, 32.6, 36.7, 41.6, 44.6, 47.1];
 
 function tagWithAttribute(tagName, attributeName, value) {
   const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -77,7 +76,8 @@ test('lyrics overlay has blur, readable fallback, and reduced-motion styling', (
   assert.match(html, /@supports not \(\(backdrop-filter:\s*blur\(1px\)\)/);
   assert.match(html, /prefers-reduced-motion:\s*reduce/);
   assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.control-btn \.ring/);
-  assert.match(html, /\.lyrics-line\.is-active/);
+  assert.match(html, /\.lyrics-viewport[\s\S]*overflow-y:\s*auto/);
+  assert.doesNotMatch(html, /\.lyrics-line\.is-active/);
 });
 
 test('first-interaction audio guard safely ignores shared controls', () => {
@@ -88,7 +88,7 @@ test('first-interaction audio guard safely ignores shared controls', () => {
   );
 });
 
-test('lyrics data includes timed Dutch, French, and German lines', () => {
+test('lyrics data includes full Dutch, French, and German lyric sheets', () => {
   assert.match(html, /var LYRICS = \{/);
   assert.match(html, /nl:\s*\[/);
   assert.match(html, /fr:\s*\[/);
@@ -100,26 +100,23 @@ test('lyrics data includes timed Dutch, French, and German lines', () => {
   assert.match(html, /O liebes Land/);
   assert.match(html, /Liberté/);
   assert.match(html, /König/);
-  assert.match(html, /time:\s*0/);
-  assert.match(html, /time:\s*47\.1/);
+  assert.match(html, /\(x3\)/);
+  assert.match(html, /\(ter\)/);
+  assert.doesNotMatch(html, /time:\s*\d/);
 });
 
-test('lyrics data has the expected language structure and audio-aligned timings', () => {
+test('lyrics data has static sheet structure without timing metadata', () => {
   const lyrics = extractLyricsData();
   assert.deepEqual(Object.keys(lyrics), ['nl', 'fr', 'de']);
 
+  assert.equal(lyrics.nl.length, 11);
+  assert.equal(lyrics.fr.length, 8);
+  assert.equal(lyrics.de.length, 8);
+
   Object.values(lyrics).forEach((lines) => {
-    assert.equal(lines.length, 12);
-    assert.deepEqual(Array.from(lines, (line) => line.time), EXPECTED_TIMINGS);
-
     lines.forEach((line, index) => {
-      assert.equal(typeof line.time, 'number');
-      assert.equal(typeof line.text, 'string');
-      assert.notEqual(line.text.trim(), '');
-
-      if (index > 0) {
-        assert.ok(line.time >= lines[index - 1].time);
-      }
+      assert.equal(typeof line, 'string');
+      assert.notEqual(line.trim(), '', `Expected non-empty lyric at index ${index}`);
     });
   });
 });
@@ -142,32 +139,28 @@ test('lyrics runtime renders text safely and restores focus before inert close',
   assert.doesNotMatch(renderLyricsMatch[1], /innerHTML/);
   assert.match(renderLyricsMatch[1], /while \(lyricsTrack\.firstChild\) lyricsTrack\.removeChild\(lyricsTrack\.firstChild\);/);
   assert.match(renderLyricsMatch[1], /document\.createElement\('p'\)/);
-  assert.match(renderLyricsMatch[1], /lineNode\.textContent = line\.text/);
+  assert.match(renderLyricsMatch[1], /lineNode\.textContent = line/);
   assert.match(renderLyricsMatch[1], /lyricsTrack\.appendChild\(lineNode\)/);
 
   assert.match(html, /lyricsOverlay\.contains\(document\.activeElement\)/);
   assert.match(html, /lyricsBtn\.focus\(\)/);
 });
 
-test('lyrics sync uses audio time, active classes, and animation frames', () => {
+test('lyrics runtime presents a static sheet without audio sync machinery', () => {
   const setLyricsOpenMatch = html.match(/function setLyricsOpen\(open\) \{([\s\S]*?)\n        function setLanguage/);
   assert.ok(setLyricsOpenMatch, 'Expected setLyricsOpen function body');
 
-  assert.match(html, /var lyricsSyncFrame = null/);
-  assert.match(html, /function findActiveLyricIndex\(lines, currentTime\)/);
-  assert.match(html, /function updateActiveLyric\(forceScroll\)/);
-  assert.match(html, /function startLyricsSync\(\)/);
-  assert.match(html, /function stopLyricsSync\(\)/);
-  assert.match(html, /function syncLyrics\(\)/);
-  assert.match(html, /audio\.currentTime/);
-  assert.match(html, /requestAnimationFrame\(syncLyrics\)/);
-  assert.match(html, /cancelAnimationFrame\(lyricsSyncFrame\)/);
-  assert.match(html, /audio\.addEventListener\('timeupdate'/);
-  assert.match(html, /window\.addEventListener\('resize'/);
-  assert.match(html, /window\.visualViewport/);
-  assert.match(html, /classList\.toggle\('is-active'/);
-  assert.match(html, /classList\.toggle\('is-past'/);
-  assert.match(setLyricsOpenMatch[1], /startLyricsSync\(\)/);
-  assert.match(setLyricsOpenMatch[1], /stopLyricsSync\(\)/);
+  assert.match(setLyricsOpenMatch[1], /play\(\)/);
+  assert.doesNotMatch(html, /var lyricsSyncFrame/);
+  assert.doesNotMatch(html, /function findActiveLyricIndex/);
+  assert.doesNotMatch(html, /function updateActiveLyric/);
+  assert.doesNotMatch(html, /function startLyricsSync/);
+  assert.doesNotMatch(html, /function stopLyricsSync/);
+  assert.doesNotMatch(html, /function syncLyrics/);
+  assert.doesNotMatch(html, /audio\.currentTime/);
+  assert.doesNotMatch(html, /requestAnimationFrame/);
+  assert.doesNotMatch(html, /cancelAnimationFrame/);
+  assert.doesNotMatch(html, /audio\.addEventListener\('timeupdate'/);
+  assert.doesNotMatch(html, /classList\.toggle\('is-past'/);
   assert.doesNotMatch(setLyricsOpenMatch[1], /requestAnimationFrame\(syncLyrics\)/);
 });
