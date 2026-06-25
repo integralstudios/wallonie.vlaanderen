@@ -70,12 +70,24 @@ test('mute control hooks are preserved', () => {
   assert.match(html, /\.mute-btn\.is-muted \.icon-off/);
 });
 
-test('lyrics overlay has blur, readable fallback, and reduced-motion styling', () => {
-  assert.match(html, /backdrop-filter:\s*blur\(/);
-  assert.match(html, /-webkit-backdrop-filter:\s*blur\(/);
-  assert.match(html, /@supports not \(\(backdrop-filter:\s*blur\(1px\)\)/);
+test('lyrics overlay has animated artwork-derived background and reduced-motion styling', () => {
+  assert.match(html, /class="lyrics-artwork-backdrop"/);
+  assert.match(html, /class="lyrics-artwork-base"/);
+  assert.match(html, /class="lyrics-artwork-slice lyrics-artwork-slice-1"/);
+  assert.match(html, /class="lyrics-artwork-slice lyrics-artwork-slice-6"/);
+  assert.match(html, /class="lyrics-vibrant-wash"/);
+  assert.match(html, /\.lyrics-artwork-base[\s\S]*filter:\s*blur\(56px\) saturate\(1\.7\) contrast\(1\.08\)/);
+  assert.match(html, /\.lyrics-artwork-slice[\s\S]*clip-path:\s*polygon\(/);
+  assert.match(html, /\.lyrics-artwork-slice[\s\S]*filter:\s*blur\(42px\) saturate\(1\.85\)/);
+  assert.match(html, /\.lyrics-artwork-slice-1[\s\S]*transform:\s*translate3d\([^)]*\) rotate\([^)]*\) skew\(/);
+  assert.match(html, /@keyframes artworkDrift/);
+  assert.match(html, /animation:\s*artworkDrift/);
+  assert.match(html, /\.lyrics-vibrant-wash[\s\S]*mix-blend-mode:\s*screen/);
+  assert.doesNotMatch(html, /backdrop-filter:\s*blur\(/);
+  assert.doesNotMatch(html, /-webkit-backdrop-filter:\s*blur\(/);
   assert.match(html, /prefers-reduced-motion:\s*reduce/);
-  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.control-btn \.ring/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-artwork-base/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*animation:\s*none/);
   assert.match(html, /\.lyrics-viewport[\s\S]*overflow-y:\s*auto/);
   assert.doesNotMatch(html, /\.lyrics-line\.is-active/);
 });
