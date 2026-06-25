@@ -25,6 +25,44 @@ const expectedDutchLyrics = [
   'Voor Vorst, voor Vrijheid en voor Recht!',
   'Voor Vorst, voor Vrijheid en voor Recht!',
 ];
+const expectedFrenchLyrics = [
+  'O Belgique, ô mère chérie,',
+  'À toi nos cœurs, à toi nos bras,',
+  '',
+  'À toi notre sang, ô Patrie !',
+  'Nous le jurons tous, tu vivras !',
+  '',
+  'Tu vivras toujours grande et belle',
+  'Et ton invincible unité',
+  '',
+  'Aura pour devise immortelle :',
+  'Le Roi, la Loi, la Liberté !',
+  '',
+  'Aura pour devise immortelle :',
+  'Le Roi, la Loi, la Liberté !',
+  '',
+  'Le Roi, la Loi, la Liberté !',
+  'Le Roi, la Loi, la Liberté !',
+];
+const expectedGermanLyrics = [
+  'O liebes Land, o Belgiens Erde,',
+  'Dir unser Herz, Dir unsere Hand,',
+  '',
+  'Dir unser Blut, dem Heimatherde,',
+  "wir schwören's Dir, o Vaterland!",
+  '',
+  'So blühe froh in voller Schöne,',
+  'zu der die Freiheit Dich erzog,',
+  '',
+  'und fortan singen Deine Söhne:',
+  'Gesetz und König und die Freiheit hoch!',
+  '',
+  'und fortan singen Deine Söhne:',
+  'Gesetz und König und die Freiheit hoch!',
+  '',
+  'Gesetz und König und die Freiheit hoch!',
+  'Gesetz und König und die Freiheit hoch!',
+];
 
 function tagWithAttribute(tagName, attributeName, value) {
   const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -223,7 +261,7 @@ test('lyrics data includes full Dutch, French, and German lyric sheets', () => {
   assert.match(html, /Liberté/);
   assert.match(html, /König/);
   assert.doesNotMatch(html, /\(x3\)/);
-  assert.match(html, /\(ter\)/);
+  assert.doesNotMatch(html, /\(ter\)/);
   assert.doesNotMatch(html, /time:\s*\d/);
 });
 
@@ -232,19 +270,21 @@ test('lyrics data has static sheet structure without timing metadata', () => {
   assert.deepEqual(Object.keys(lyrics), ['nl', 'fr', 'de']);
 
   assert.deepEqual(Array.from(lyrics.nl), expectedDutchLyrics);
-  assert.deepEqual(
-    lyrics.nl.reduce((indexes, line, index) => (line === '' ? indexes.concat(index) : indexes), []),
-    [2, 5, 8, 11, 14],
-  );
-  assert.equal(lyrics.nl.length, 17);
-  assert.equal(lyrics.fr.length, 8);
-  assert.equal(lyrics.de.length, 8);
+  assert.deepEqual(Array.from(lyrics.fr), expectedFrenchLyrics);
+  assert.deepEqual(Array.from(lyrics.de), expectedGermanLyrics);
+  Object.values(lyrics).forEach((lines) => {
+    assert.deepEqual(
+      lines.reduce((indexes, line, index) => (line === '' ? indexes.concat(index) : indexes), []),
+      [2, 5, 8, 11, 14],
+    );
+    assert.equal(lines.length, 17);
+  });
 
   Object.entries(lyrics).forEach(([language, lines]) => {
     lines.forEach((line, index) => {
       assert.equal(typeof line, 'string');
-      if (language === 'nl' && expectedDutchLyrics[index] === '') {
-        assert.equal(line, '', `Expected Dutch spacer at index ${index}`);
+      if ([2, 5, 8, 11, 14].includes(index)) {
+        assert.equal(line, '', `Expected ${language} spacer at index ${index}`);
         return;
       }
       assert.notEqual(line.trim(), '', `Expected non-empty ${language} lyric at index ${index}`);
