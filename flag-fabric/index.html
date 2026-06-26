@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Flag Fabric — shader lab</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* Tuning panel ----------------------------------------------------------- */
+  #panel {
+    position: fixed; top: 12px; right: 12px; width: 270px; max-height: calc(100% - 24px);
+    overflow-y: auto; padding: 12px 14px 16px;
+    background: rgba(18,18,20,0.82); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 14px;
+    font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #e8e8ea;
+    -webkit-user-select: none; user-select: none;
+  }
+  #panel h1 { font-size: 12px; margin: 0 0 8px; letter-spacing: .04em; text-transform: uppercase; opacity: .7; }
+  .presets { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .presets button, .actions button {
+    flex: 1; min-width: 64px; padding: 6px 8px; cursor: pointer; color: #e8e8ea;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 8px; font: inherit;
+  }
+  .presets button:hover, .actions button:hover { background: rgba(255,255,255,0.16); }
+  .grp { margin: 12px 0 4px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; opacity: .5; }
+  .row { display: grid; grid-template-columns: 78px 1fr 40px; align-items: center; gap: 8px; margin: 5px 0; }
+  .row label { opacity: .85; }
+  .row input[type=range] { width: 100%; }
+  .row input[type=color] { width: 100%; height: 22px; padding: 0; border: none; background: none; grid-column: 2 / span 2; }
+  .row .val { text-align: right; opacity: .65; font-variant-numeric: tabular-nums; }
+  .actions { display: flex; gap: 6px; margin-top: 12px; }
+  #hint { position: fixed; left: 12px; bottom: 10px; font: 11px ui-monospace, monospace; color: rgba(255,255,255,.45); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+
+  <div id="panel">
+    <h1>Flag Fabric</h1>
+    <div class="presets" id="presets"></div>
+    <div id="controls"></div>
+    <div class="actions">
+      <button id="copyBtn">Copy params</button>
+      <button id="hideBtn">Hide</button>
+    </div>
+  </div>
+  <div id="hint">press <b>H</b> to toggle panel · <b>?ui=0</b> hides it · <b>?t=2&amp;preset=red</b> freezes a frame</div>
+
+  <script src="flag-fabric.js"></script>
+  <script>
+    const q = new URLSearchParams(location.search);
+    const canvas = document.getElementById("gl");
+    const startPreset = q.get("preset") && FlagFabric.PRESETS[q.get("preset")] ? q.get("preset") : "belgium";
+    const fab = new FlagFabric(canvas, FlagFabric.PRESETS[startPreset]);
+
+    // ---- build the control panel from the schema --------------------------
+    const controls = document.getElementById("controls");
+    const inputs = {};
+    function rebuild() {
+      controls.innerHTML = "";
+      for (const item of FlagFabric.SCHEMA) {
+        if (item.group) {
+          const g = document.createElement("div"); g.className = "grp"; g.textContent = item.group;
+          controls.appendChild(g); continue;
+        }
+        const row = document.createElement("div"); row.className = "row";
+        const lab = document.createElement("label"); lab.textContent = item.label; row.appendChild(lab);
+        const v = fab.params[item.key];
+        if (item.type === "color") {
+          const inp = document.createElement("input"); inp.type = "color"; inp.value = v;
+          inp.oninput = () => fab.setParams({ [item.key]: inp.value });
+          row.appendChild(inp); inputs[item.key] = inp;
+        } else if (item.type === "bool") {
+          const inp = document.createElement("input"); inp.type = "checkbox"; inp.checked = !!v;
+          inp.onchange = () => fab.setParams({ [item.key]: inp.checked });
+          row.appendChild(inp); const spacer = document.createElement("span"); row.appendChild(spacer);
+          inputs[item.key] = inp;
+        } else {
+          const inp = document.createElement("input"); inp.type = "range";
+          inp.min = item.min; inp.max = item.max; inp.step = item.step; inp.value = v;
+          const out = document.createElement("span"); out.className = "val"; out.textContent = (+v).toFixed(2);
+          inp.oninput = () => { fab.setParams({ [item.key]: +inp.value }); out.textContent = (+inp.value).toFixed(2); };
+          row.appendChild(inp); row.appendChild(out); inputs[item.key] = inp;
+        }
+        controls.appendChild(row);
+      }
+    }
+    rebuild();
+
+    // ---- presets ----------------------------------------------------------
+    const presetsEl = document.getElementById("presets");
+    for (const name of Object.keys(FlagFabric.PRESETS)) {
+      const b = document.createElement("button"); b.textContent = name;
+      b.onclick = () => { fab.setParams(Object.assign({}, FlagFabric.PRESETS[name])); syncInputs(); };
+      presetsEl.appendChild(b);
+    }
+    function syncInputs() {
+      for (const item of FlagFabric.SCHEMA) {
+        if (item.group || !inputs[item.key]) continue;
+        const el = inputs[item.key], v = fab.params[item.key];
+        if (item.type === "bool") el.checked = !!v;
+        else { el.value = v; if (el.nextSibling && el.nextSibling.className === "val") el.nextSibling.textContent = (+v).toFixed(2); }
+      }
+    }
+
+    // ---- actions ----------------------------------------------------------
+    document.getElementById("copyBtn").onclick = () => {
+      const json = JSON.stringify(fab.params, null, 2);
+      navigator.clipboard?.writeText(json).catch(() => {});
+      console.log(json);
+    };
+    const panel = document.getElementById("panel");
+    document.getElementById("hideBtn").onclick = () => panel.classList.add("hidden");
+    addEventListener("keydown", (e) => { if (e.key === "h" || e.key === "H") panel.classList.toggle("hidden"); });
+
+    // ---- capture / freeze mode (for headless frame comparison) ------------
+    // ?ui=0 hides the panel; ?t=<seconds> renders one frozen frame.
+    if (q.get("ui") === "0") panel.classList.add("hidden");
+    if (q.has("t")) {
+      const draw = () => fab.renderAt(parseFloat(q.get("t")));
+      draw(); addEventListener("resize", draw);
+      window.__seek = (t) => fab.renderAt(t);   // lets a tool scrub time then screenshot
+    } else {
+      fab.start();
+    }
+  </script>
+</body>
+</html>
