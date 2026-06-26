@@ -165,7 +165,8 @@
       .lyrics-background-image {
         position: absolute;
         inset: -42px;
-        background-image: url('lyrics-bg.jpg');
+        /* background-image is set by JS only when the shader falls back (avoids
+           fetching the JPG on the happy path). */
         background-size: cover;
         background-position: center;
         filter: blur(28px) saturate(1.12);
@@ -1207,26 +1208,34 @@
       ;(function () {
         var canvas = document.getElementById('lyricsShader');
         var overlay = document.getElementById('lyricsOverlay');
-        if (!canvas || !overlay || typeof FlagFabric === 'undefined') {
+        var imageEl = document.querySelector('.lyrics-background-image');
+        // Fallback: show the blurred image (the JPG is only fetched here, on
+        // failure) and drop the canvas — so the happy path never downloads it.
+        function showImageFallback() {
+          if (imageEl) imageEl.style.backgroundImage = "url('lyrics-bg.jpg')";
           if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas);
-          return;
         }
+        if (!canvas || !overlay || typeof FlagFabric === 'undefined') { showImageFallback(); return; }
         var fab;
         try {
           fab = new FlagFabric(canvas, FlagFabric.PRESETS.belgium);
         } catch (e) {
           console.warn('Lyrics shader unavailable, using image fallback:', e);
-          canvas.parentNode.removeChild(canvas);
+          showImageFallback();
           return;
         }
         window.lyricsShaderFab = fab; // exposed for live tuning
+
         // Tuning panel on the real overlay: open the page with ?tune=1
         if (new URLSearchParams(location.search).get('tune') === '1' && FlagFabric.mountPanel) {
           var wash = document.querySelector('.lyrics-background-wash');
-          function washCtl(label, name, def, max) {
+          function washCtl(label, name, max) {
             return {
               label: label, min: 0, max: max, step: 0.01,
-              get: function () { return parseFloat(getComputedStyle(wash).getPropertyValue(name)) || def; },
+              get: function () {
+                var n = parseFloat(getComputedStyle(wash).getPropertyValue(name));
+                return isNaN(n) ? 0 : n;          // 0 is a valid value — don't fall through
+              },
               set: function (v) { wash.style.setProperty(name, v); }
             };
           }
@@ -1234,25 +1243,30 @@
             title: 'Lyrics shader',
             extras: wash ? [
               { group: 'Wash (overlay dim)' },
-              washCtl('Dim top', '--wash-top', 0.08, 0.8),
-              washCtl('Dim bottom', '--wash-bottom', 0.46, 0.9),
-              washCtl('Edge dim', '--wash-edge', 0.30, 0.9)
+              washCtl('Dim top', '--wash-top', 0.8),
+              washCtl('Dim bottom', '--wash-bottom', 0.9),
+              washCtl('Edge dim', '--wash-edge', 0.9)
             ] : []
           });
         }
-        var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        function sync() {
-          if (overlay.classList.contains('is-open')) {
-            if (reduce) { fab.renderAt(0); } else { fab.start(); }
-          } else {
-            fab.stop();
-          }
+
+        // Run only while the overlay is open AND the tab is visible. Reduced-motion
+        // users get a single static frame. `running` dedups so unrelated overlay
+        // class changes (language switch, scroll-enter) don't re-trigger.
+        var mq = matchMedia('(prefers-reduced-motion: reduce)');
+        var reduce = mq.matches;
+        var running = false;
+        function apply() {
+          var shouldRun = overlay.classList.contains('is-open') && !document.hidden;
+          if (shouldRun === running) return;
+          running = shouldRun;
+          if (shouldRun) { if (reduce) { fab.renderAt(0); } else { fab.start(); } }
+          else { fab.stop(); }
         }
-        new MutationObserver(sync).observe(overlay, { attributes: true, attributeFilter: ['class'] });
-        document.addEventListener('visibilitychange', function () {
-          if (document.hidden) { fab.stop(); } else { sync(); }
-        });
-        sync();
+        new MutationObserver(apply).observe(overlay, { attributes: true, attributeFilter: ['class'] });
+        document.addEventListener('visibilitychange', apply);
+        mq.addEventListener('change', function (e) { reduce = e.matches; running = false; apply(); });
+        apply();
       })();
     </script>
     <script> (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){ (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o), m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m) })(window,document,'script','//www.google-analytics.com/analytics.js','ga'); ga('create', 'UA-20134293-8', 'auto'); ga('send', 'pageview'); </script>

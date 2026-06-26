@@ -305,7 +305,17 @@
       this.params = Object.assign({}, DEFAULTS, params || {});
       this._running = false;
       this._frozenTime = null;
+      this._syncColors();
       this._initGL();
+    }
+
+    // Parse the hex colour params once (on change) instead of every frame.
+    _syncColors() {
+      const p = this.params;
+      this._rgb = {
+        colHi: hexToRgb(p.colHi), colMid: hexToRgb(p.colMid), colLo: hexToRgb(p.colLo),
+        stripe0: hexToRgb(p.stripe0), stripe1: hexToRgb(p.stripe1), stripe2: hexToRgb(p.stripe2),
+      };
     }
 
     _initGL() {
@@ -342,7 +352,7 @@
       return p;
     }
 
-    setParams(partial) { Object.assign(this.params, partial); if (!this._running) this._draw(this._frozenTime ?? 0); }
+    setParams(partial) { Object.assign(this.params, partial); this._syncColors(); if (!this._running) this._draw(this._frozenTime ?? 0); }
 
     _resize() {
       const dpr = Math.min(global.devicePixelRatio || 1, 2);
@@ -353,7 +363,7 @@
     }
 
     _draw(timeSeconds) {
-      const gl = this.gl, p = this.params, u = this.u;
+      const gl = this.gl, p = this.params, u = this.u, c = this._rgb;
       this._resize();
       gl.useProgram(this.prog);
       gl.bindVertexArray(this.vao);
@@ -368,9 +378,9 @@
       gl.uniform1f(u.u_foldDir, p.foldDir);
       gl.uniform1f(u.u_vignette, p.vignette);
       // background glow
-      gl.uniform3fv(u.u_colHi, hexToRgb(p.colHi));
-      gl.uniform3fv(u.u_colMid, hexToRgb(p.colMid));
-      gl.uniform3fv(u.u_colLo, hexToRgb(p.colLo));
+      gl.uniform3fv(u.u_colHi, c.colHi);
+      gl.uniform3fv(u.u_colMid, c.colMid);
+      gl.uniform3fv(u.u_colLo, c.colLo);
       gl.uniform1f(u.u_gradShift, p.gradShift);
       gl.uniform1f(u.u_gradPow, p.gradPow);
       gl.uniform1f(u.u_glowAmp, p.glowAmp);
@@ -379,9 +389,9 @@
       gl.uniform1f(u.u_glowDrift, p.glowDrift);
       // flag
       gl.uniform1f(u.u_flag, p.flag ? 1 : 0);
-      gl.uniform3fv(u.u_stripe0, hexToRgb(p.stripe0));
-      gl.uniform3fv(u.u_stripe1, hexToRgb(p.stripe1));
-      gl.uniform3fv(u.u_stripe2, hexToRgb(p.stripe2));
+      gl.uniform3fv(u.u_stripe0, c.stripe0);
+      gl.uniform3fv(u.u_stripe1, c.stripe1);
+      gl.uniform3fv(u.u_stripe2, c.stripe2);
       gl.uniform1f(u.u_warp, p.warp);
       gl.uniform1f(u.u_shadeDepth, p.shadeDepth);
       gl.uniform1f(u.u_sheenAmt, p.sheenAmt);
