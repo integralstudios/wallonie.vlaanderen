@@ -300,11 +300,17 @@
 
   // ---- engine ---------------------------------------------------------------
   class FlagFabric {
-    constructor(canvas, params) {
+    // opts.preserveDrawingBuffer: keep the backbuffer readable (needed only for
+    // canvas capture, e.g. toDataURL in the tuning harness). Off by default so
+    // the live animated background doesn't pay the per-frame retain cost.
+    constructor(canvas, params, opts) {
       this.canvas = canvas;
       this.params = Object.assign({}, DEFAULTS, params || {});
+      this._preserve = !!(opts && opts.preserveDrawingBuffer);
       this._running = false;
       this._frozenTime = null;
+      this._elapsed = 0;       // accumulated animation seconds (survives stop/start)
+      this._startWall = 0;
       this._syncColors();
       this._initGL();
     }
@@ -319,9 +325,27 @@
     }
 
     _initGL() {
-      const gl = this.canvas.getContext("webgl2", { antialias: false, alpha: false, preserveDrawingBuffer: true });
+      const gl = this.canvas.getContext("webgl2", { antialias: false, alpha: false, preserveDrawingBuffer: this._preserve });
       if (!gl) throw new Error("WebGL2 not available");
       this.gl = gl;
+      // Survive GPU context loss: stop the loop, then rebuild + resume on restore
+      // (otherwise the loop draws into a dead context and the background stays black).
+      this.canvas.addEventListener("webglcontextlost", (e) => {
+        e.preventDefault();              // signal we want the context restored
+        this._wasRunning = this._running;
+        this.stop();
+      });
+      this.canvas.addEventListener("webglcontextrestored", () => {
+        this._buildProgram();
+        if (this._wasRunning) this.start(); else this._draw(this._frozenTime ?? 0);
+      });
+      this._buildProgram();
+    }
+
+    // (Re)compile the program, VAO and uniform-location cache for the current
+    // GL context. Called at init and again after a context-restored event.
+    _buildProgram() {
+      const gl = this.gl;
       this.prog = this._link(VERT, FRAG);
       gl.useProgram(this.prog);
       this.vao = gl.createVertexArray();
@@ -403,14 +427,26 @@
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
 
+    // Animation clock resumes (accumulates elapsed) across stop/start so pausing
+    // — overlay close/reopen, tab hide/show — continues instead of jumping to t=0.
     start() {
       if (this._running) return;
       this._running = true; this._frozenTime = null;
-      const t0 = performance.now();
-      const loop = () => { if (!this._running) return; this._draw((performance.now() - t0) / 1000); this._raf = requestAnimationFrame(loop); };
+      this._startWall = performance.now();
+      const loop = () => {
+        if (!this._running) return;
+        this._draw(this._elapsed + (performance.now() - this._startWall) / 1000);
+        this._raf = requestAnimationFrame(loop);
+      };
       this._raf = requestAnimationFrame(loop);
     }
-    stop() { this._running = false; if (this._raf) cancelAnimationFrame(this._raf); }
+    stop() {
+      if (this._running) {
+        this._elapsed += (performance.now() - this._startWall) / 1000;
+        this._running = false;
+      }
+      if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; }
+    }
     renderAt(timeSeconds) { this.stop(); this._frozenTime = timeSeconds; this._draw(timeSeconds); }
   }
 

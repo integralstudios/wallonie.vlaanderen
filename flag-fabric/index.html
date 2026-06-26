@@ -21,7 +21,8 @@
     const q = new URLSearchParams(location.search);
     const canvas = document.getElementById("gl");
     const startPreset = q.get("preset") && FlagFabric.PRESETS[q.get("preset")] ? q.get("preset") : "belgium";
-    const fab = new FlagFabric(canvas, FlagFabric.PRESETS[startPreset]);
+    // Harness opts into preserveDrawingBuffer so frame capture (toDataURL) works.
+    const fab = new FlagFabric(canvas, FlagFabric.PRESETS[startPreset], { preserveDrawingBuffer: true });
 
     // Reuse the engine's shared control panel (auto-generated from SCHEMA).
     const panel = q.get("ui") === "0" ? null : FlagFabric.mountPanel(fab);

@@ -1256,16 +1256,30 @@
         var mq = matchMedia('(prefers-reduced-motion: reduce)');
         var reduce = mq.matches;
         var running = false;
+        var stopTimer = null;
         function apply() {
           var shouldRun = overlay.classList.contains('is-open') && !document.hidden;
           if (shouldRun === running) return;
           running = shouldRun;
-          if (shouldRun) { if (reduce) { fab.renderAt(0); } else { fab.start(); } }
-          else { fab.stop(); }
+          if (stopTimer) { clearTimeout(stopTimer); stopTimer = null; }
+          if (shouldRun) {
+            if (reduce) { fab.renderAt(0); } else { fab.start(); }
+          } else if (!document.hidden && !reduce) {
+            // Overlay is closing but still fading out (0.32s opacity transition):
+            // keep animating through the fade, then stop.
+            stopTimer = setTimeout(function () { stopTimer = null; fab.stop(); }, 360);
+          } else {
+            fab.stop();
+          }
         }
         new MutationObserver(apply).observe(overlay, { attributes: true, attributeFilter: ['class'] });
         document.addEventListener('visibilitychange', apply);
-        mq.addEventListener('change', function (e) { reduce = e.matches; running = false; apply(); });
+        var onMqChange = function (e) { reduce = e.matches; running = false; apply(); };
+        if (mq.addEventListener) mq.addEventListener('change', onMqChange);
+        else if (mq.addListener) mq.addListener(onMqChange); // legacy Safari < 14
+        // The animated path resizes itself each frame; the reduced-motion static
+        // frame must be redrawn manually when the viewport/DPR changes.
+        addEventListener('resize', function () { if (running && reduce) fab.renderAt(0); });
         apply();
       })();
     </script>
