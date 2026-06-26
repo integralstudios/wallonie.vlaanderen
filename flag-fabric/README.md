@@ -82,6 +82,10 @@ All live-editable in the panel and stored on `fab.params`.
     around the hue arc → a vivid orange between yellow and red. Black's missing
     hue is carried from the adjacent stop so it doesn't detour (the caveat
     oklch.fyi warns about).
+  - `chromaBoost` (OKLCH only) — lifts chroma through the middle of each leg so
+    dark transitions stay vivid. The black→yellow leg is otherwise an olive/mud
+    dip (a dark, low-chroma yellow *is* olive); boosting turns it into gold.
+    `0` = none, `~0.55` = default, `1` = mid-chroma matches the brighter stop.
   - `warp` — local fabric ripple amplitude · `shadeDepth` — light/shadow depth
   - `sheenAmt` — satin highlight on crests · `roll` — 2nd-harmonic (organic folds)
   - shared: `foldAngleDeg` (wave direction), `foldScale` (fold count),

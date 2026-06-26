@@ -70,6 +70,7 @@
   uniform float u_colorSoft;    // colour transition softness (half-width)
   uniform float u_colorWarp;    // how much the colour boundaries ripple
   uniform float u_gradSpace;    // 0 = sRGB, 1 = OKLab, 2 = OKLCH
+  uniform float u_chromaBoost;  // OKLCH: lift mid-transition chroma (un-muddy darks)
 
   // --- value noise -----------------------------------------------------------
   float hash21(vec2 p) {
@@ -126,6 +127,9 @@
     if (dh >  3.14159265) dh -= 6.28318531;
     if (dh < -3.14159265) dh += 6.28318531;
     float L = mix(a.x, b.x, t), C = mix(Ca, Cb, t), h = ha + dh * t;
+    // Lift chroma through the middle of the leg so dark transitions stay vivid
+    // (e.g. black→yellow becomes gold, not olive mud) instead of dipping.
+    C = mix(C, max(Ca, Cb), sin(3.14159265 * t) * u_chromaBoost);
     return vec3(L, C * cos(h), C * sin(h));
   }
   // Soft 3-stop gradient (left/mid/right) interpolated in the chosen space:
@@ -232,6 +236,7 @@
     { key: "colorSoft",  label: "Blend",       type: "range", min: 0.0, max: 0.4,  step: 0.005 },
     { key: "colorWarp",  label: "Edge ripple", type: "range", min: 0.0, max: 1.0,  step: 0.01 },
     { key: "gradSpace",  label: "Space 0sRGB/1Lab/2LCH", type: "range", min: 0, max: 2, step: 1 },
+    { key: "chromaBoost", label: "Chroma boost", type: "range", min: 0, max: 1, step: 0.01 },
     { group: "Folds / fabric (shared)" },
     { key: "foldAngleDeg", label: "Angle°",   type: "range", min: -90, max: 90,  step: 1 },
     { key: "aniso",        label: "Elongate", type: "range", min: 1.0, max: 8.0, step: 0.05 },
@@ -256,7 +261,7 @@
   // Sensible defaults for every key (so any preset can omit unrelated keys).
   const DEFAULTS = {
     flag: 0, stripe0: "#000000", stripe1: "#FDDA24", stripe2: "#EF3340",
-    warp: 0.06, shadeDepth: 0.45, sheenAmt: 0.12, roll: 0.35, colorSoft: 0.16, colorWarp: 0.25, gradSpace: 1,
+    warp: 0.06, shadeDepth: 0.45, sheenAmt: 0.12, roll: 0.35, colorSoft: 0.16, colorWarp: 0.25, gradSpace: 1, chromaBoost: 0.0,
     foldAngleDeg: -32, aniso: 2.3, foldScale: 2.2, foldSpeed: 0.06, foldContrast: 1.2,
     vignette: 0.30,
     colHi: "#1c7128", colMid: "#073a11", colLo: "#020c06",
@@ -285,7 +290,7 @@
     belgium: Object.assign({}, DEFAULTS, {
       flag: 1,
       stripe0: "#000000", stripe1: "#FDDA24", stripe2: "#EF3340",
-      warp: 0.06, shadeDepth: 0.3, sheenAmt: 0.04, roll: 0.35, colorSoft: 0.18, colorWarp: 0.25, gradSpace: 2,
+      warp: 0.06, shadeDepth: 0.3, sheenAmt: 0.04, roll: 0.35, colorSoft: 0.18, colorWarp: 0.25, gradSpace: 2, chromaBoost: 0.55,
       foldAngleDeg: 16, aniso: 2.5, foldScale: 0.8, foldSpeed: 0.1, foldContrast: 1.0,
       vignette: 0.22,
     }),
@@ -313,7 +318,7 @@
         "u_foldContrast","u_vignette",
         "u_colHi","u_colMid","u_colLo","u_gradShift","u_gradPow","u_glowAmp","u_glowSize",
         "u_glowPos","u_glowDrift","u_flag","u_stripe0","u_stripe1","u_stripe2","u_warp",
-        "u_shadeDepth","u_sheenAmt","u_roll","u_colorSoft","u_colorWarp","u_gradSpace"];
+        "u_shadeDepth","u_sheenAmt","u_roll","u_colorSoft","u_colorWarp","u_gradSpace","u_chromaBoost"];
       for (const n of names) this.u[n] = gl.getUniformLocation(this.prog, n);
     }
 
@@ -381,6 +386,7 @@
       gl.uniform1f(u.u_colorSoft, p.colorSoft);
       gl.uniform1f(u.u_colorWarp, p.colorWarp);
       gl.uniform1f(u.u_gradSpace, p.gradSpace);
+      gl.uniform1f(u.u_chromaBoost, p.chromaBoost);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
 
