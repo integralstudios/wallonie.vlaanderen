@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Flag Fabric — shader lab</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #hint { position: fixed; left: 12px; bottom: 10px; font: 11px ui-monospace, monospace; color: rgba(255,255,255,.45); }
+</style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <div id="hint">press <b>H</b> to toggle panel · <b>?ui=0</b> hides it · <b>?t=2&amp;preset=red</b> freezes a frame</div>
+
+  <script src="flag-fabric.js"></script>
+  <script>
+    const q = new URLSearchParams(location.search);
+    const canvas = document.getElementById("gl");
+    const startPreset = q.get("preset") && FlagFabric.PRESETS[q.get("preset")] ? q.get("preset") : "belgium";
+    // Harness opts into preserveDrawingBuffer so frame capture (toDataURL) works.
+    const fab = new FlagFabric(canvas, FlagFabric.PRESETS[startPreset], { preserveDrawingBuffer: true });
+
+    // Reuse the engine's shared control panel (auto-generated from SCHEMA).
+    const panel = q.get("ui") === "0" ? null : FlagFabric.mountPanel(fab);
+    addEventListener("keydown", (e) => {
+      if ((e.key === "h" || e.key === "H") && panel) panel.style.display = panel.style.display === "none" ? "" : "none";
+    });
+
+    // Capture / freeze mode (for headless frame comparison):
+    // ?ui=0 hides the panel; ?t=<seconds> renders one frozen frame.
+    if (q.has("t")) {
+      const draw = () => fab.renderAt(parseFloat(q.get("t")));
+      draw(); addEventListener("resize", draw);
+      window.__seek = (t) => fab.renderAt(t);   // lets a tool scrub time then screenshot
+    } else {
+      fab.start();
+    }
+  </script>
+</body>
+</html>
