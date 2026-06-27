@@ -413,6 +413,17 @@ test('control buttons use compact Sketch icon sizing', () => {
   assert.doesNotMatch(html, /\.control-btn \.icon[\s\S]*width:\s*20px/);
 });
 
+test('reduced motion disables the control entrance animation after it is declared', () => {
+  const controlRiseIndex = html.indexOf('animation: control-rise');
+  assert.notEqual(controlRiseIndex, -1, 'Expected control entrance animation');
+
+  const reducedMotionAfterControlRise = html.slice(controlRiseIndex);
+  assert.match(
+    reducedMotionAfterControlRise,
+    /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.control-btn\s*\{\s*animation:\s*none;\s*\}/,
+  );
+});
+
 test('lyrics control uses normal and selected Sketch icons', () => {
   assert.match(html, /data-sketch-icon="lyrics"/);
   assert.match(html, /data-sketch-icon="lyrics-selected"/);
@@ -675,6 +686,12 @@ test('lyrics runtime exposes open, close, language, and render hooks', () => {
   assert.match(html, /document\.addEventListener\('keydown'/);
   assert.match(html, /lyricsOverlay\.removeAttribute\('inert'\)/);
   assert.match(html, /lyricsOverlay\.setAttribute\('inert', ''\)/);
+});
+
+test('first inline runtime script includes the flag cleanup and lyrics runtime', () => {
+  const pageScript = extractPageScript();
+  assert.match(pageScript, /flag\.addEventListener\('animationend'/);
+  assert.match(pageScript, /lyricsBtn\.addEventListener\('click'/);
 });
 
 test('lyrics runtime opens with the first supported browser language', () => {

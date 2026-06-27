@@ -59,7 +59,6 @@
       @media (prefers-reduced-motion: reduce) {
         .flag,
         .flag .black { animation: none; will-change: auto; }
-        .control-btn { animation: none; }
       }
       body {
         margin: 0;
@@ -421,6 +420,9 @@
         }
       }
       @media (prefers-reduced-motion: reduce) {
+        .control-btn {
+          animation: none;
+        }
         .control-btn .ring,
         .lyrics-overlay,
         .lyrics-background-image,
@@ -475,19 +477,6 @@
       <div class="band yellow"></div>
       <div class="band red"></div>
     </div>
-    <script>
-      /* Drop the GPU layer hint once the on-load reveal has finished, so the
-         flag doesn't hold a compositor layer for the life of the page. */
-      ;(function () {
-        var flag = document.querySelector('.flag');
-        if (!flag) return;
-        flag.addEventListener('animationend', function () {
-          flag.style.willChange = 'auto';
-          var black = flag.querySelector('.black');
-          if (black) black.style.willChange = 'auto';
-        }, { once: true });
-      })();
-    </script>
     <audio id="anthem" preload="auto" loop>
       <source src="belgium.mp3" type="audio/mpeg">
       <source src="belgium.ogg" type="audio/ogg">
@@ -590,6 +579,14 @@
         var lyricsOpen = false;
         var selectedLanguage = 'nl';
         var hasManualLanguageSelection = false;
+        var flag = document.querySelector('.flag');
+        if (flag) {
+          flag.addEventListener('animationend', function () {
+            flag.style.willChange = 'auto';
+            var black = flag.querySelector('.black');
+            if (black) black.style.willChange = 'auto';
+          }, { once: true });
+        }
         var LYRICS = {
           nl: [
             "O dierbaar België, o heilig land der vaad'ren",
