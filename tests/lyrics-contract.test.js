@@ -442,6 +442,11 @@ test('lyrics control uses normal and selected Sketch icons', () => {
   assert.match(html, /\.lyrics-btn\.is-active \.icon-lyrics-selected[\s\S]*opacity:\s*1/);
 });
 
+test('lyrics viewport only enables scrollbars after measured overflow', () => {
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*overflow-y:\s*hidden/);
+  assert.match(html, /\.lyrics-viewport\.has-overflow\s*\{[^}]*overflow-y:\s*auto/);
+});
+
 test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.ok(fs.existsSync(lyricsBackgroundPath), 'Expected lyrics-bg.jpg asset');
   assert.ok(fs.statSync(lyricsBackgroundPath).size > 0, 'Expected lyrics-bg.jpg to be non-empty');
@@ -462,7 +467,8 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-background-image/);
   assert.match(html, /\.lyrics-overlay[\s\S]*padding:\s*72px 24px 72px/);
   assert.match(html, /\.lyrics-viewport[\s\S]*height:\s*calc\(100vh - 144px\)/);
-  assert.match(html, /\.lyrics-viewport[\s\S]*overflow-y:\s*auto/);
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*overflow-y:\s*hidden/);
+  assert.match(html, /\.lyrics-viewport\.has-overflow\s*\{[^}]*overflow-y:\s*auto/);
   assert.match(html, /--lyrics-viewport-fade:\s*24px/);
   assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\(to bottom, #000 0, #000 calc\(100% - var\(--lyrics-viewport-fade\)\), transparent 100%\)/);
   assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*mask-image:\s*linear-gradient\(to bottom, #000 0, #000 calc\(100% - var\(--lyrics-viewport-fade\)\), transparent 100%\)/);

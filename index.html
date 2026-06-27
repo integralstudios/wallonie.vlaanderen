@@ -285,11 +285,12 @@
         z-index: 1;
         width: min(1000px, 100%);
         height: calc(100vh - 144px);
-        overflow-y: auto;
+        overflow-y: hidden;
         overscroll-behavior: contain;
         scrollbar-width: thin;
       }
       .lyrics-viewport.has-overflow {
+        overflow-y: auto;
         -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--lyrics-viewport-fade)), transparent 100%);
         mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--lyrics-viewport-fade)), transparent 100%);
       }
