@@ -653,6 +653,7 @@ test('volume ring renders the A/B/C sampled finalist waveforms while anthem play
   assert.match(html, /var WAVE_PRESETS = \{/);
   assert.match(html, /a:\s*\{[\s\S]*label:\s*'A - Sparse asymmetry'[\s\S]*count:\s*36/);
   assert.match(html, /b:\s*\{[\s\S]*label:\s*'B - Taller asymmetry'[\s\S]*count:\s*34/);
+  assert.match(html, /b:\s*\{[\s\S]*label:\s*'B - Taller asymmetry'[\s\S]*maxHeight:\s*7\.2/);
   assert.match(html, /c:\s*\{[\s\S]*label:\s*'C - Very sparse duo'[\s\S]*count:\s*28/);
   assert.match(html, /var waveParams = \{[\s\S]*variant:\s*'b'[\s\S]*sensitivity:\s*1\.2/);
   assert.match(html, /function renderWaveSamples\(\)/);
