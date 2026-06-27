@@ -182,7 +182,7 @@ function createFakeElement(text = '') {
   return element;
 }
 
-function createLyricsRuntime({ languages, language }) {
+function createLyricsRuntime({ languages, language, protocol = 'https:', AudioContext } = {}) {
   const audio = createFakeElement();
   const muteBtn = createFakeElement();
   const lyricsBtn = createFakeElement();
@@ -206,8 +206,11 @@ function createLyricsRuntime({ languages, language }) {
 
   lyricsViewport.appendChild(lyricsTrack);
   audio.paused = false;
+  let playCalls = 0;
   audio.play = () => ({
     then(callback) {
+      playCalls += 1;
+      audio.paused = false;
       callback();
       return { catch() {} };
     },
@@ -272,7 +275,9 @@ function createLyricsRuntime({ languages, language }) {
       animationFrameId += 1;
       return animationFrameId;
     },
+    location: { protocol },
   };
+  if (AudioContext) window.AudioContext = AudioContext;
 
   vm.runInNewContext(extractPageScript(), {
     console: { log() {} },
@@ -291,6 +296,9 @@ function createLyricsRuntime({ languages, language }) {
     lyricsViewport,
     lyricsTrack,
     muteBtn,
+    get playCalls() {
+      return playCalls;
+    },
     requestedAnimationFrames,
     window,
     windowHandlers,
@@ -587,6 +595,41 @@ test('audio analysis is prepared inside playback gestures before media play', ()
   assert.match(resumeMatch[1], /if \(!waveParams\.song \|\| !waveParams\.song\.reactive \|\| !audioContext\) return;/);
 
   assert.match(html, /if \(lyricsOpen\) \{\s*prepareAudioAnalysis\(\);\s*play\(\);\s*\}/);
+});
+
+test('local file playback keeps the anthem out of Web Audio routing', () => {
+  let mediaSourceCalls = 0;
+  function FakeAudioContext() {
+    this.destination = {};
+    this.state = 'running';
+  }
+  FakeAudioContext.prototype.createMediaElementSource = function () {
+    mediaSourceCalls += 1;
+    return { connect() {} };
+  };
+  FakeAudioContext.prototype.createAnalyser = function () {
+    return {
+      connect() {},
+      fftSize: 0,
+      frequencyBinCount: 8,
+      getByteFrequencyData() {},
+      smoothingTimeConstant: 0,
+    };
+  };
+
+  const runtime = createLyricsRuntime({
+    languages: ['nl-BE'],
+    language: 'nl-BE',
+    protocol: 'file:',
+    AudioContext: FakeAudioContext,
+  });
+
+  runtime.audio.paused = true;
+  click(runtime.muteBtn);
+
+  assert.equal(runtime.audio.muted, false);
+  assert.ok(runtime.playCalls >= 2);
+  assert.equal(mediaSourceCalls, 0);
 });
 
 test('volume ring renders the A/B/C sampled finalist waveforms while anthem playback is active', () => {

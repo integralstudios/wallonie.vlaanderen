@@ -792,7 +792,13 @@
           return preset;
         }
 
+        function canUseAudioAnalysis() {
+          // Local file playback needs to stay on the direct media element path.
+          return !window.location || window.location.protocol !== 'file:';
+        }
+
         function ensureAudioAnalysis() {
+          if (!canUseAudioAnalysis()) return;
           if (audioAnalyser) return;
           var AudioContextCtor = window.AudioContext || window.webkitAudioContext;
           if (!AudioContextCtor) return;
