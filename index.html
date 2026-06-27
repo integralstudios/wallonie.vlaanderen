@@ -294,6 +294,9 @@
         -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--lyrics-viewport-fade)), transparent 100%);
         mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--lyrics-viewport-fade)), transparent 100%);
       }
+      .lyrics-overlay.is-open.is-lyrics-entering .lyrics-viewport.has-overflow {
+        overflow-y: hidden;
+      }
       .lyrics-track {
         display: flex;
         flex-direction: column;
@@ -442,6 +445,9 @@
           animation: none;
           opacity: 1;
           transform: none;
+        }
+        .lyrics-overlay.is-open.is-lyrics-entering .lyrics-viewport.has-overflow {
+          overflow-y: auto;
         }
         .control-btn:hover .ring,
         .control-btn:focus-visible .ring,
@@ -1127,12 +1133,18 @@
           if (window.setTimeout) window.setTimeout(updateLyricsViewportOverflow, 1400);
         }
 
+        function finishLyricsTransition(evt) {
+          if (evt && evt.target && evt.target !== lyricsTrack) return;
+          clearLyricsTransitions();
+          updateLyricsViewportOverflow();
+        }
+
         if (window.ResizeObserver && lyricsViewport && lyricsTrack) {
           var lyricsResizeObserver = new window.ResizeObserver(requestLyricsViewportOverflowUpdate);
           lyricsResizeObserver.observe(lyricsViewport);
           lyricsResizeObserver.observe(lyricsTrack);
         }
-        lyricsTrack.addEventListener('animationend', updateLyricsViewportOverflow);
+        lyricsTrack.addEventListener('animationend', finishLyricsTransition);
 
         function renderLyricsControls() {
           lyricsBtn.classList.toggle('is-active', lyricsOpen);

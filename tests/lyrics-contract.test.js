@@ -288,6 +288,7 @@ function createLyricsRuntime({ languages, language }) {
     languageButtons,
     lyricsBtn,
     lyricsOverlay,
+    lyricsViewport,
     lyricsTrack,
     muteBtn,
     requestedAnimationFrames,
@@ -447,6 +448,19 @@ test('lyrics viewport only enables scrollbars after measured overflow', () => {
   assert.match(html, /\.lyrics-viewport\.has-overflow\s*\{[^}]*overflow-y:\s*auto/);
 });
 
+test('lyrics entrance suppresses temporary Firefox transform overflow', () => {
+  assert.match(
+    html,
+    /\.lyrics-overlay\.is-open\.is-lyrics-entering \.lyrics-viewport\.has-overflow\s*\{[^}]*overflow-y:\s*hidden/,
+  );
+  assert.match(
+    html,
+    /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open\.is-lyrics-entering \.lyrics-viewport\.has-overflow\s*\{[^}]*overflow-y:\s*auto/,
+  );
+  assert.match(html, /function finishLyricsTransition\(/);
+  assert.match(html, /lyricsTrack\.addEventListener\('animationend', finishLyricsTransition\)/);
+});
+
 test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.ok(fs.existsSync(lyricsBackgroundPath), 'Expected lyrics-bg.jpg asset');
   assert.ok(fs.statSync(lyricsBackgroundPath).size > 0, 'Expected lyrics-bg.jpg to be non-empty');
@@ -486,7 +500,7 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.match(html, /new window\.ResizeObserver\(requestLyricsViewportOverflowUpdate\)/);
   assert.match(html, /lyricsResizeObserver\.observe\(lyricsViewport\)/);
   assert.match(html, /lyricsResizeObserver\.observe\(lyricsTrack\)/);
-  assert.match(html, /lyricsTrack\.addEventListener\('animationend', updateLyricsViewportOverflow\)/);
+  assert.match(html, /lyricsTrack\.addEventListener\('animationend', finishLyricsTransition\)/);
   assert.match(html, /if \(hasOverflow\) lyricsViewport\.classList\.add\('has-overflow'\)/);
   assert.match(html, /else lyricsViewport\.classList\.remove\('has-overflow'\)/);
   assert.doesNotMatch(html, /classList\.toggle\('has-overflow', hasOverflow\)/);
@@ -792,6 +806,26 @@ test('lyrics runtime uses a lighter transition for open language switches', () =
   assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
   assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-language-switching\b/);
   assert.equal(selectedLyricsLanguage(runtime), 'de');
+});
+
+test('lyrics runtime clears entrance state before exposing measured overflow', () => {
+  const runtime = createLyricsRuntime({
+    language: 'nl-BE',
+    languages: ['nl-BE'],
+  });
+  Object.defineProperty(runtime.lyricsViewport, 'scrollHeight', { configurable: true, value: 200 });
+  Object.defineProperty(runtime.lyricsViewport, 'clientHeight', { configurable: true, value: 100 });
+
+  click(runtime.lyricsBtn);
+  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  assert.match(runtime.lyricsViewport.className, /\bhas-overflow\b/);
+
+  runtime.lyricsTrack.handlers.animationend({ target: runtime.lyricsTrack.children[0] });
+  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+
+  runtime.lyricsTrack.handlers.animationend({ target: runtime.lyricsTrack });
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  assert.match(runtime.lyricsViewport.className, /\bhas-overflow\b/);
 });
 
 test('lyrics runtime renders text safely and restores focus before inert close', () => {
