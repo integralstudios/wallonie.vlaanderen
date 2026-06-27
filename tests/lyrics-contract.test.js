@@ -182,7 +182,7 @@ function createFakeElement(text = '') {
   return element;
 }
 
-function createLyricsRuntime({ languages, language }) {
+function createLyricsRuntime({ languages, language, protocol = 'https:', AudioContext } = {}) {
   const audio = createFakeElement();
   const muteBtn = createFakeElement();
   const lyricsBtn = createFakeElement();
@@ -206,8 +206,11 @@ function createLyricsRuntime({ languages, language }) {
 
   lyricsViewport.appendChild(lyricsTrack);
   audio.paused = false;
+  let playCalls = 0;
   audio.play = () => ({
     then(callback) {
+      playCalls += 1;
+      audio.paused = false;
       callback();
       return { catch() {} };
     },
@@ -272,7 +275,9 @@ function createLyricsRuntime({ languages, language }) {
       animationFrameId += 1;
       return animationFrameId;
     },
+    location: { protocol },
   };
+  if (AudioContext) window.AudioContext = AudioContext;
 
   vm.runInNewContext(extractPageScript(), {
     console: { log() {} },
@@ -291,6 +296,9 @@ function createLyricsRuntime({ languages, language }) {
     lyricsViewport,
     lyricsTrack,
     muteBtn,
+    get playCalls() {
+      return playCalls;
+    },
     requestedAnimationFrames,
     window,
     windowHandlers,
@@ -431,16 +439,18 @@ test('reduced motion disables the control entrance animation after it is declare
   );
 });
 
-test('lyrics control uses normal and selected Sketch icons', () => {
-  assert.match(html, /data-sketch-icon="lyrics"/);
+test('lyrics control uses a layered Sketch icon with animated fill', () => {
   assert.match(html, /data-sketch-icon="lyrics-selected"/);
   assert.match(html, /class="icon icon-lyrics"/);
-  assert.match(html, /class="icon icon-lyrics-selected"/);
-  assert.match(html, /data-sketch-icon="lyrics" viewBox="0 0 24 24"/);
   assert.match(html, /data-sketch-icon="lyrics-selected" viewBox="0 0 24 24"/);
-  assert.match(html, /\.lyrics-btn \.icon-lyrics-selected[\s\S]*opacity:\s*0/);
-  assert.match(html, /\.lyrics-btn\.is-active \.icon-lyrics[\s\S]*opacity:\s*0/);
-  assert.match(html, /\.lyrics-btn\.is-active \.icon-lyrics-selected[\s\S]*opacity:\s*1/);
+  assert.match(html, /class="lyrics-icon-fill"/);
+  assert.match(html, /class="lyrics-icon-stroke"/);
+  assert.match(html, /\.lyrics-btn \.lyrics-icon-fill[\s\S]*transform-origin:\s*center top/);
+  assert.match(html, /\.lyrics-btn \.lyrics-icon-fill[\s\S]*transform:\s*scaleY\(0\)/);
+  assert.match(html, /\.lyrics-btn\.is-active \.lyrics-icon-fill[\s\S]*opacity:\s*1/);
+  assert.match(html, /\.lyrics-btn\.is-active \.lyrics-icon-fill[\s\S]*transform:\s*scaleY\(1\)/);
+  assert.doesNotMatch(html, /class="icon icon-lyrics-selected"/);
+  assert.doesNotMatch(html, /\.lyrics-btn\.is-active \.icon-lyrics[\s\S]*opacity:\s*0/);
 });
 
 test('lyrics viewport only enables scrollbars after measured overflow', () => {
@@ -551,7 +561,7 @@ test('first-interaction audio guard safely ignores shared controls', () => {
   assert.match(html, /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);/);
   assert.match(
     html,
-    /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);\s*if \(isControl\) return;\s*play\(\);\s*events\.forEach/s,
+    /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);\s*if \(isControl\) return;\s*prepareAudioAnalysis\(\);\s*play\(\);\s*events\.forEach/s,
   );
 });
 
@@ -572,7 +582,56 @@ test('audio control reflects autoplay blocking and retries playback on click', (
   const muteClickMatch = html.match(/btn\.addEventListener\('click', function \(\) \{([\s\S]*?)\n        \}\);/);
   assert.ok(muteClickMatch, 'Expected mute button click handler');
   assert.match(muteClickMatch[1], /if \(playbackBlocked \|\| !isPlaying \|\| audio\.paused\) \{/);
-  assert.match(muteClickMatch[1], /muted = false;\s*audio\.muted = false;\s*cancelWaveCollapse\(\);\s*play\(\);\s*render\(\);\s*return;/);
+  assert.match(muteClickMatch[1], /muted = false;\s*audio\.muted = false;\s*cancelWaveCollapse\(\);\s*prepareAudioAnalysis\(\);\s*play\(\);\s*render\(\);\s*return;/);
+  assert.match(muteClickMatch[1], /if \(!muted\) prepareAudioAnalysis\(\);\s*play\(\);/);
+});
+
+test('audio analysis is prepared inside playback gestures before media play', () => {
+  const prepareMatch = html.match(/function prepareAudioAnalysis\(\) \{([\s\S]*?)\n        \}/);
+  assert.ok(prepareMatch, 'Expected prepareAudioAnalysis function');
+  assert.match(prepareMatch[1], /ensureAudioAnalysis\(\);\s*resumeAudioAnalysis\(\);/);
+
+  const resumeMatch = html.match(/function resumeAudioAnalysis\(\) \{([\s\S]*?)\n        \}/);
+  assert.ok(resumeMatch, 'Expected resumeAudioAnalysis function');
+  assert.doesNotMatch(resumeMatch[1], /ensureAudioAnalysis\(\)/);
+  assert.match(resumeMatch[1], /if \(!waveParams\.song \|\| !waveParams\.song\.reactive \|\| !audioContext\) return;/);
+
+  assert.match(html, /if \(lyricsOpen\) \{\s*prepareAudioAnalysis\(\);\s*play\(\);\s*\}/);
+});
+
+test('local file playback keeps the anthem out of Web Audio routing', () => {
+  let mediaSourceCalls = 0;
+  function FakeAudioContext() {
+    this.destination = {};
+    this.state = 'running';
+  }
+  FakeAudioContext.prototype.createMediaElementSource = function () {
+    mediaSourceCalls += 1;
+    return { connect() {} };
+  };
+  FakeAudioContext.prototype.createAnalyser = function () {
+    return {
+      connect() {},
+      fftSize: 0,
+      frequencyBinCount: 8,
+      getByteFrequencyData() {},
+      smoothingTimeConstant: 0,
+    };
+  };
+
+  const runtime = createLyricsRuntime({
+    languages: ['nl-BE'],
+    language: 'nl-BE',
+    protocol: 'file:',
+    AudioContext: FakeAudioContext,
+  });
+
+  runtime.audio.paused = true;
+  click(runtime.muteBtn);
+
+  assert.equal(runtime.audio.muted, false);
+  assert.ok(runtime.playCalls >= 2);
+  assert.equal(mediaSourceCalls, 0);
 });
 
 test('volume ring renders the A/B/C sampled finalist waveforms while anthem playback is active', () => {
@@ -596,6 +655,7 @@ test('volume ring renders the A/B/C sampled finalist waveforms while anthem play
   assert.match(html, /var WAVE_PRESETS = \{/);
   assert.match(html, /a:\s*\{[\s\S]*label:\s*'A - Sparse asymmetry'[\s\S]*count:\s*36/);
   assert.match(html, /b:\s*\{[\s\S]*label:\s*'B - Taller asymmetry'[\s\S]*count:\s*34/);
+  assert.match(html, /b:\s*\{[\s\S]*label:\s*'B - Taller asymmetry'[\s\S]*maxHeight:\s*7\.2/);
   assert.match(html, /c:\s*\{[\s\S]*label:\s*'C - Very sparse duo'[\s\S]*count:\s*28/);
   assert.match(html, /var waveParams = \{[\s\S]*variant:\s*'b'[\s\S]*sensitivity:\s*1\.2/);
   assert.match(html, /function renderWaveSamples\(\)/);
@@ -619,6 +679,9 @@ test('volume ring renders the A/B/C sampled finalist waveforms while anthem play
   assert.match(html, /var activePreset = tunedWavePreset\(basePreset, activeVariant\)/);
   assert.match(html, /waveAnimationFrame = window\.requestAnimationFrame\(updateWaveAnimation\)/);
   assert.match(html, /resumeAudioAnalysis\(\);\s*waveAnimationFrame = window\.requestAnimationFrame\(updateWaveAnimation\)/);
+  const syncWaveAnimationMatch = html.match(/function syncWaveAnimation\(\) \{([\s\S]*?)\n        \}/);
+  assert.ok(syncWaveAnimationMatch, 'Expected syncWaveAnimation function');
+  assert.doesNotMatch(syncWaveAnimationMatch[1], /ensureAudioAnalysis\(\)/);
   assert.match(html, /function startWaveCollapse\(\)/);
   assert.match(html, /function getWaveCollapseScale\(\)/);
   assert.match(html, /return isWavePlaying\(\) \|\| isWaveCollapsing\(\)/);
@@ -808,7 +871,7 @@ test('lyrics runtime uses a lighter transition for open language switches', () =
   assert.equal(selectedLyricsLanguage(runtime), 'de');
 });
 
-test('lyrics runtime clears entrance state before exposing measured overflow', () => {
+test('lyrics runtime keeps entrance state until the final word animation completes', () => {
   const runtime = createLyricsRuntime({
     language: 'nl-BE',
     languages: ['nl-BE'],
@@ -820,10 +883,19 @@ test('lyrics runtime clears entrance state before exposing measured overflow', (
   assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
   assert.match(runtime.lyricsViewport.className, /\bhas-overflow\b/);
 
-  runtime.lyricsTrack.handlers.animationend({ target: runtime.lyricsTrack.children[0] });
-  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  const lyricWords = runtime.lyricsTrack.children.flatMap((line) =>
+    line.children.filter((child) => /\blyrics-word\b/.test(child.className)),
+  );
+  assert.ok(lyricWords.length > 1, 'Expected staggered lyric words');
 
   runtime.lyricsTrack.handlers.animationend({ target: runtime.lyricsTrack });
+  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  assert.match(runtime.lyricsViewport.className, /\bhas-overflow\b/);
+
+  runtime.lyricsTrack.handlers.animationend({ target: lyricWords[0] });
+  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+
+  runtime.lyricsTrack.handlers.animationend({ target: lyricWords[lyricWords.length - 1] });
   assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
   assert.match(runtime.lyricsViewport.className, /\bhas-overflow\b/);
 });
