@@ -17,12 +17,9 @@
         --volume-wave-glow-opacity: 0.18;
         --volume-wave-glow-size: 1px;
       }
-      html, body, table {
+      html, body {
         height: 100%;
         width: 100%;
-      }
-      td {
-        width: 33%;
       }
       .black {
         background-color: #000000;
@@ -32,6 +29,37 @@
       }
       .red {
         background-color: #EF3340;
+      }
+      /* Flag + on-load reveal: a wall of black pulls back into its third as the
+         whole flag eases down from a zoom (snappy ease-out, ~0.8s). */
+      .flag {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        transform-origin: left center;
+        will-change: transform;
+        animation: flag-reveal-zoom 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      .flag .band {
+        position: absolute;
+        top: 0;
+        height: 100%;
+        width: 33.34%;
+      }
+      .flag .black {
+        left: 0;
+        transform-origin: left center;
+        will-change: transform;
+        animation: flag-reveal-black 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      .flag .yellow { left: 33.33%; }
+      .flag .red { right: 0; }
+      @keyframes flag-reveal-zoom { from { transform: scale(2.4); } to { transform: scale(1); } }
+      @keyframes flag-reveal-black { from { transform: scaleX(2); } to { transform: scaleX(1); } }
+      @media (prefers-reduced-motion: reduce) {
+        .flag,
+        .flag .black { animation: none; will-change: auto; }
+        .control-btn { animation: none; }
       }
       body {
         margin: 0;
@@ -51,12 +79,19 @@
         cursor: pointer;
         z-index: 20;
         -webkit-tap-highlight-color: transparent;
+        /* scale in once the flag reveal has settled (~0.8s), gently staggered */
+        animation: control-rise 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) 0.85s both;
       }
       .mute-btn {
         right: 32px;
+        animation-delay: 0.95s;
       }
       .lyrics-btn {
         right: 92px;
+      }
+      @keyframes control-rise {
+        from { opacity: 0; transform: scale(0.6); }
+        to { opacity: 1; transform: scale(1); }
       }
       .control-btn .ring {
         position: absolute;
@@ -435,13 +470,24 @@
     </style>
   </head>
   <body>
-    <table>
-      <tr>
-        <td class="black"></td>
-        <td class="yellow"></td>
-        <td class="red"></td>
-      </tr>
-    </table>
+    <div class="flag">
+      <div class="band black"></div>
+      <div class="band yellow"></div>
+      <div class="band red"></div>
+    </div>
+    <script>
+      /* Drop the GPU layer hint once the on-load reveal has finished, so the
+         flag doesn't hold a compositor layer for the life of the page. */
+      ;(function () {
+        var flag = document.querySelector('.flag');
+        if (!flag) return;
+        flag.addEventListener('animationend', function () {
+          flag.style.willChange = 'auto';
+          var black = flag.querySelector('.black');
+          if (black) black.style.willChange = 'auto';
+        }, { once: true });
+      })();
+    </script>
     <audio id="anthem" preload="auto" loop>
       <source src="belgium.mp3" type="audio/mpeg">
       <source src="belgium.ogg" type="audio/ogg">
