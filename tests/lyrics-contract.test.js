@@ -413,6 +413,12 @@ test('control buttons use compact Sketch icon sizing', () => {
   assert.doesNotMatch(html, /\.control-btn \.icon[\s\S]*width:\s*20px/);
 });
 
+test('control entrance animation stays snappy', () => {
+  const animationMatch = html.match(/animation:\s*control-rise\s+([\d.]+)s\b/);
+  assert.ok(animationMatch, 'Expected control-rise animation duration');
+  assert.ok(Number(animationMatch[1]) <= 0.3, 'Expected control-rise duration to be 0.30s or less');
+});
+
 test('reduced motion disables the control entrance animation after it is declared', () => {
   const controlRiseIndex = html.indexOf('animation: control-rise');
   assert.notEqual(controlRiseIndex, -1, 'Expected control entrance animation');
