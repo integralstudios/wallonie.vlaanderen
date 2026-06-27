@@ -445,7 +445,7 @@ test('lyrics control uses a layered Sketch icon with animated fill', () => {
   assert.match(html, /data-sketch-icon="lyrics-selected" viewBox="0 0 24 24"/);
   assert.match(html, /class="lyrics-icon-fill"/);
   assert.match(html, /class="lyrics-icon-stroke"/);
-  assert.match(html, /\.lyrics-btn \.lyrics-icon-fill[\s\S]*transform-origin:\s*center bottom/);
+  assert.match(html, /\.lyrics-btn \.lyrics-icon-fill[\s\S]*transform-origin:\s*center top/);
   assert.match(html, /\.lyrics-btn \.lyrics-icon-fill[\s\S]*transform:\s*scaleY\(0\)/);
   assert.match(html, /\.lyrics-btn\.is-active \.lyrics-icon-fill[\s\S]*opacity:\s*1/);
   assert.match(html, /\.lyrics-btn\.is-active \.lyrics-icon-fill[\s\S]*transform:\s*scaleY\(1\)/);
