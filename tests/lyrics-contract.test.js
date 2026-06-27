@@ -868,7 +868,7 @@ test('lyrics runtime uses a lighter transition for open language switches', () =
   assert.equal(selectedLyricsLanguage(runtime), 'de');
 });
 
-test('lyrics runtime clears entrance state before exposing measured overflow', () => {
+test('lyrics runtime keeps entrance state until the final word animation completes', () => {
   const runtime = createLyricsRuntime({
     language: 'nl-BE',
     languages: ['nl-BE'],
@@ -880,10 +880,19 @@ test('lyrics runtime clears entrance state before exposing measured overflow', (
   assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
   assert.match(runtime.lyricsViewport.className, /\bhas-overflow\b/);
 
-  runtime.lyricsTrack.handlers.animationend({ target: runtime.lyricsTrack.children[0] });
-  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  const lyricWords = runtime.lyricsTrack.children.flatMap((line) =>
+    line.children.filter((child) => /\blyrics-word\b/.test(child.className)),
+  );
+  assert.ok(lyricWords.length > 1, 'Expected staggered lyric words');
 
   runtime.lyricsTrack.handlers.animationend({ target: runtime.lyricsTrack });
+  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  assert.match(runtime.lyricsViewport.className, /\bhas-overflow\b/);
+
+  runtime.lyricsTrack.handlers.animationend({ target: lyricWords[0] });
+  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+
+  runtime.lyricsTrack.handlers.animationend({ target: lyricWords[lyricWords.length - 1] });
   assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
   assert.match(runtime.lyricsViewport.className, /\bhas-overflow\b/);
 });

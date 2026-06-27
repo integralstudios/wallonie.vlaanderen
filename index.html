@@ -584,6 +584,7 @@
         var playbackBlocked = false;
         var isPlaying = true;
         var lyricsOpen = false;
+        var lyricsEntranceLastWord = null;
         var selectedLanguage = 'nl';
         var hasManualLanguageSelection = false;
         var flag = document.querySelector('.flag');
@@ -1071,6 +1072,7 @@
         function renderLyrics() {
           var lines = LYRICS[selectedLanguage];
           var wordIndex = 0;
+          lyricsEntranceLastWord = null;
           while (lyricsTrack.firstChild) lyricsTrack.removeChild(lyricsTrack.firstChild);
           lines.forEach(function (line, index) {
             var lineNode = document.createElement('p');
@@ -1092,6 +1094,7 @@
               wordNode.style.setProperty('--word-index', String(wordIndex));
               wordNode.textContent = part;
               wordIndex += 1;
+              lyricsEntranceLastWord = wordNode;
               lineNode.appendChild(wordNode);
             });
             lyricsTrack.appendChild(lineNode);
@@ -1108,6 +1111,10 @@
 
         function clearLyricsTransitions() {
           lyricsOverlay.classList.remove('is-lyrics-entering', 'is-language-switching');
+        }
+
+        function hasClass(element, className) {
+          return (' ' + (element.className || '') + ' ').indexOf(' ' + className + ' ') >= 0;
         }
 
         function updateLanguageUnderline() {
@@ -1144,7 +1151,11 @@
         }
 
         function finishLyricsTransition(evt) {
-          if (evt && evt.target && evt.target !== lyricsTrack) return;
+          if (evt && evt.target === lyricsTrack && hasClass(lyricsOverlay, 'is-lyrics-entering')) {
+            updateLyricsViewportOverflow();
+            return;
+          }
+          if (evt && evt.target && evt.target !== lyricsTrack && evt.target !== lyricsEntranceLastWord) return;
           clearLyricsTransitions();
           updateLyricsViewportOverflow();
         }
