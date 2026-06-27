@@ -182,7 +182,15 @@ function createFakeElement(text = '') {
   return element;
 }
 
-function createLyricsRuntime({ languages, language, protocol = 'https:', AudioContext } = {}) {
+function createLyricsRuntime({
+  languages,
+  language,
+  protocol = 'https:',
+  search = '',
+  pathname = '/index.html',
+  hash = '',
+  AudioContext,
+} = {}) {
   const audio = createFakeElement();
   const muteBtn = createFakeElement();
   const lyricsBtn = createFakeElement();
@@ -203,6 +211,17 @@ function createLyricsRuntime({ languages, language, protocol = 'https:', AudioCo
   let animationFrameId = 0;
   const requestedAnimationFrames = [];
   const cancelledAnimationFrames = [];
+  const replacedUrls = [];
+  const location = { protocol, pathname, search, hash };
+  const history = {
+    replaceState(state, title, url) {
+      replacedUrls.push(url);
+      const nextUrl = new URL(url, 'https://example.test');
+      location.pathname = nextUrl.pathname;
+      location.search = nextUrl.search;
+      location.hash = nextUrl.hash;
+    },
+  };
 
   lyricsViewport.appendChild(lyricsTrack);
   audio.paused = false;
@@ -275,7 +294,9 @@ function createLyricsRuntime({ languages, language, protocol = 'https:', AudioCo
       animationFrameId += 1;
       return animationFrameId;
     },
-    location: { protocol },
+    history,
+    location,
+    URLSearchParams,
   };
   if (AudioContext) window.AudioContext = AudioContext;
 
@@ -299,6 +320,7 @@ function createLyricsRuntime({ languages, language, protocol = 'https:', AudioCo
     get playCalls() {
       return playCalls;
     },
+    replacedUrls,
     requestedAnimationFrames,
     window,
     windowHandlers,
@@ -318,6 +340,11 @@ function selectedLyricsLanguage(runtime) {
 
 function renderedLyrics(runtime) {
   return runtime.lyricsTrack.children.map((line) => line.textContent);
+}
+
+function lastReplacedUrl(runtime) {
+  assert.ok(runtime.replacedUrls.length > 0, 'Expected a replaceState call');
+  return new URL(runtime.replacedUrls[runtime.replacedUrls.length - 1], 'https://example.test');
 }
 
 test('lyrics controls and overlay shell are present', () => {
@@ -768,8 +795,8 @@ test('lyrics data has static sheet structure without timing metadata', () => {
 test('lyrics runtime exposes open, close, language, and render hooks', () => {
   assert.match(html, /var lyricsOpen = false/);
   assert.match(html, /var selectedLanguage = 'nl'/);
-  assert.match(html, /function setLyricsOpen\(open\)/);
-  assert.match(html, /function setLanguage\(language, animateSwitch\)/);
+  assert.match(html, /function setLyricsOpen\(open, syncUrl\)/);
+  assert.match(html, /function setLanguage\(language, animateSwitch, syncUrl\)/);
   assert.match(html, /function renderLyrics\(\)/);
   assert.match(html, /lyricsBtn\.addEventListener\('click'/);
   assert.match(html, /document\.addEventListener\('keydown'/);
@@ -820,6 +847,68 @@ test('lyrics runtime opens with the first supported browser language', () => {
     assert.equal(selectedLyricsLanguage(runtime), expectedLanguage);
     assert.deepEqual(renderedLyrics(runtime), expectedLyrics);
   });
+});
+
+test('lyrics runtime uses a valid lang URL parameter without opening the overlay', () => {
+  const runtime = createLyricsRuntime({
+    language: 'nl-BE',
+    languages: ['nl-BE'],
+    search: '?lang=fr',
+  });
+
+  assert.equal(selectedLyricsLanguage(runtime), 'fr');
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-open\b/);
+
+  click(runtime.lyricsBtn);
+
+  assert.equal(selectedLyricsLanguage(runtime), 'fr');
+  assert.deepEqual(renderedLyrics(runtime), expectedFrenchLyrics);
+});
+
+test('lyrics runtime opens from a shareable lyrics URL', () => {
+  const runtime = createLyricsRuntime({
+    language: 'fr-BE',
+    languages: ['fr-BE'],
+    search: '?lyrics=1&lang=de',
+  });
+
+  assert.match(runtime.lyricsOverlay.className, /\bis-open\b/);
+  assert.equal(runtime.lyricsOverlay.getAttribute('aria-hidden'), 'false');
+  assert.equal(selectedLyricsLanguage(runtime), 'de');
+  assert.deepEqual(renderedLyrics(runtime), expectedGermanLyrics);
+});
+
+test('lyrics runtime keeps shareable URL parameters in sync', () => {
+  const runtime = createLyricsRuntime({
+    language: 'nl-BE',
+    languages: ['nl-BE'],
+    search: '?source=qr',
+    hash: '#anthem',
+  });
+
+  click(runtime.lyricsBtn);
+  let nextUrl = lastReplacedUrl(runtime);
+  assert.equal(nextUrl.searchParams.get('source'), 'qr');
+  assert.equal(nextUrl.searchParams.get('lyrics'), '1');
+  assert.equal(nextUrl.searchParams.has('lang'), false);
+  assert.equal(nextUrl.hash, '#anthem');
+
+  const frenchButton = runtime.languageButtons.find(
+    (button) => button.getAttribute('data-language') === 'fr',
+  );
+  click(frenchButton);
+  nextUrl = lastReplacedUrl(runtime);
+  assert.equal(nextUrl.searchParams.get('source'), 'qr');
+  assert.equal(nextUrl.searchParams.get('lyrics'), '1');
+  assert.equal(nextUrl.searchParams.get('lang'), 'fr');
+  assert.equal(nextUrl.hash, '#anthem');
+
+  click(runtime.lyricsBtn);
+  nextUrl = lastReplacedUrl(runtime);
+  assert.equal(nextUrl.searchParams.get('source'), 'qr');
+  assert.equal(nextUrl.searchParams.has('lyrics'), false);
+  assert.equal(nextUrl.searchParams.get('lang'), 'fr');
+  assert.equal(nextUrl.hash, '#anthem');
 });
 
 test('lyrics runtime keeps a manually selected language when reopened', () => {
@@ -917,7 +1006,7 @@ test('lyrics runtime renders text safely and restores focus before inert close',
 });
 
 test('lyrics runtime presents a static sheet without audio sync machinery', () => {
-  const setLyricsOpenMatch = html.match(/function setLyricsOpen\(open\) \{([\s\S]*?)\n        function setLanguage/);
+  const setLyricsOpenMatch = html.match(/function setLyricsOpen\(open, syncUrl\) \{([\s\S]*?)\n        function setLanguage/);
   assert.ok(setLyricsOpenMatch, 'Expected setLyricsOpen function body');
 
   assert.match(setLyricsOpenMatch[1], /play\(\)/);

@@ -1031,6 +1031,39 @@
           return 'nl';
         }
 
+        function getShareableLyricsLanguage(value) {
+          var languageCode = String(value || '').toLowerCase().split('-')[0];
+          return LYRICS[languageCode] ? languageCode : null;
+        }
+
+        function getLyricsUrlParams() {
+          if (!window.location) return null;
+          var UrlSearchParamsCtor = window.URLSearchParams ||
+            (typeof URLSearchParams !== 'undefined' ? URLSearchParams : null);
+          if (!UrlSearchParamsCtor) return null;
+          try {
+            return new UrlSearchParamsCtor(window.location.search || '');
+          } catch (err) {
+            return null;
+          }
+        }
+
+        function updateShareableLyricsUrl() {
+          if (!window.history || !window.history.replaceState || !window.location) return;
+          var params = getLyricsUrlParams();
+          if (!params) return;
+          if (lyricsOpen) params.set('lyrics', '1');
+          else params.delete('lyrics');
+          if (hasManualLanguageSelection) params.set('lang', selectedLanguage);
+          else params.delete('lang');
+
+          var query = params.toString();
+          var nextUrl = (window.location.pathname || '') +
+            (query ? '?' + query : '') +
+            (window.location.hash || '');
+          window.history.replaceState(null, '', nextUrl);
+        }
+
         function render() {
           var shouldShowSoundOff = muted || playbackBlocked || !isPlaying;
           var shouldAnimateSound = !shouldShowSoundOff && !audio.paused;
@@ -1188,11 +1221,11 @@
           requestLyricsViewportOverflowUpdate();
         }
 
-        function setLyricsOpen(open) {
+        function setLyricsOpen(open, syncUrl) {
           lyricsOpen = open;
           if (lyricsOpen) {
             restartLyricsTransition('is-lyrics-entering');
-            if (!hasManualLanguageSelection) setLanguage(getPreferredLyricsLanguage(), false);
+            if (!hasManualLanguageSelection) setLanguage(getPreferredLyricsLanguage(), false, false);
             if (!lyricsTrack.children.length) renderLyrics();
           } else {
             clearLyricsTransitions();
@@ -1202,14 +1235,28 @@
             prepareAudioAnalysis();
             play();
           }
+          if (syncUrl !== false) updateShareableLyricsUrl();
         }
 
-        function setLanguage(language, animateSwitch) {
-          if (!LYRICS[language] || selectedLanguage === language) return;
-          selectedLanguage = language;
+        function setLanguage(language, animateSwitch, syncUrl) {
+          var shareableLanguage = getShareableLyricsLanguage(language);
+          if (!shareableLanguage || selectedLanguage === shareableLanguage) return;
+          selectedLanguage = shareableLanguage;
           renderLyrics();
           if (lyricsOpen && animateSwitch !== false) restartLyricsTransition('is-language-switching');
           renderLyricsControls();
+          if (syncUrl !== false) updateShareableLyricsUrl();
+        }
+
+        function applyInitialLyricsUrlState() {
+          var params = getLyricsUrlParams();
+          if (!params) return;
+          var urlLanguage = getShareableLyricsLanguage(params.get('lang'));
+          if (urlLanguage) {
+            selectedLanguage = urlLanguage;
+            hasManualLanguageSelection = true;
+          }
+          if (params.get('lyrics') === '1') setLyricsOpen(true, false);
         }
 
         // Start the anthem. Browsers block audible autoplay until the visitor
@@ -1279,6 +1326,7 @@
           render();
         });
 
+        applyInitialLyricsUrlState();
         renderWaveSamples();
         renderLyricsControls();
         render();
