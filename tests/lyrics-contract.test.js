@@ -439,16 +439,18 @@ test('reduced motion disables the control entrance animation after it is declare
   );
 });
 
-test('lyrics control uses normal and selected Sketch icons', () => {
-  assert.match(html, /data-sketch-icon="lyrics"/);
+test('lyrics control uses a layered Sketch icon with animated fill', () => {
   assert.match(html, /data-sketch-icon="lyrics-selected"/);
   assert.match(html, /class="icon icon-lyrics"/);
-  assert.match(html, /class="icon icon-lyrics-selected"/);
-  assert.match(html, /data-sketch-icon="lyrics" viewBox="0 0 24 24"/);
   assert.match(html, /data-sketch-icon="lyrics-selected" viewBox="0 0 24 24"/);
-  assert.match(html, /\.lyrics-btn \.icon-lyrics-selected[\s\S]*opacity:\s*0/);
-  assert.match(html, /\.lyrics-btn\.is-active \.icon-lyrics[\s\S]*opacity:\s*0/);
-  assert.match(html, /\.lyrics-btn\.is-active \.icon-lyrics-selected[\s\S]*opacity:\s*1/);
+  assert.match(html, /class="lyrics-icon-fill"/);
+  assert.match(html, /class="lyrics-icon-stroke"/);
+  assert.match(html, /\.lyrics-btn \.lyrics-icon-fill[\s\S]*transform-origin:\s*center bottom/);
+  assert.match(html, /\.lyrics-btn \.lyrics-icon-fill[\s\S]*transform:\s*scaleY\(0\)/);
+  assert.match(html, /\.lyrics-btn\.is-active \.lyrics-icon-fill[\s\S]*opacity:\s*1/);
+  assert.match(html, /\.lyrics-btn\.is-active \.lyrics-icon-fill[\s\S]*transform:\s*scaleY\(1\)/);
+  assert.doesNotMatch(html, /class="icon icon-lyrics-selected"/);
+  assert.doesNotMatch(html, /\.lyrics-btn\.is-active \.icon-lyrics[\s\S]*opacity:\s*0/);
 });
 
 test('lyrics viewport only enables scrollbars after measured overflow', () => {
