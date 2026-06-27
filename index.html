@@ -813,12 +813,16 @@
         }
 
         function resumeAudioAnalysis() {
-          if (!waveParams.song || !waveParams.song.reactive) return;
-          ensureAudioAnalysis();
+          if (!waveParams.song || !waveParams.song.reactive || !audioContext) return;
           if (audioContext && audioContext.state === 'suspended' && audioContext.resume) {
             var resumePromise = audioContext.resume();
             if (resumePromise && resumePromise.catch) resumePromise.catch(function () {});
           }
+        }
+
+        function prepareAudioAnalysis() {
+          ensureAudioAnalysis();
+          resumeAudioAnalysis();
         }
 
         function getAudioWaveScale() {
@@ -1175,6 +1179,7 @@
           }
           renderLyricsControls();
           if (lyricsOpen) {
+            prepareAudioAnalysis();
             play();
           }
         }
@@ -1197,6 +1202,7 @@
           // beat before the control click handles the interaction.
           var isControl = evt.target && evt.target.closest && evt.target.closest('.control-btn');
           if (isControl) return;
+          prepareAudioAnalysis();
           play();
           events.forEach(function (name) {
             document.removeEventListener(name, onFirstInteraction);
@@ -1238,6 +1244,7 @@
             muted = false;
             audio.muted = false;
             cancelWaveCollapse();
+            prepareAudioAnalysis();
             play();
             render();
             return;
@@ -1247,6 +1254,7 @@
           audio.muted = muted;
           if (muted && wasAnimatingWave) startWaveCollapse();
           if (!muted) cancelWaveCollapse();
+          if (!muted) prepareAudioAnalysis();
           play();
           render();
         });

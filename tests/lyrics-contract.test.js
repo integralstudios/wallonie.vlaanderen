@@ -551,7 +551,7 @@ test('first-interaction audio guard safely ignores shared controls', () => {
   assert.match(html, /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);/);
   assert.match(
     html,
-    /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);\s*if \(isControl\) return;\s*play\(\);\s*events\.forEach/s,
+    /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);\s*if \(isControl\) return;\s*prepareAudioAnalysis\(\);\s*play\(\);\s*events\.forEach/s,
   );
 });
 
@@ -572,7 +572,21 @@ test('audio control reflects autoplay blocking and retries playback on click', (
   const muteClickMatch = html.match(/btn\.addEventListener\('click', function \(\) \{([\s\S]*?)\n        \}\);/);
   assert.ok(muteClickMatch, 'Expected mute button click handler');
   assert.match(muteClickMatch[1], /if \(playbackBlocked \|\| !isPlaying \|\| audio\.paused\) \{/);
-  assert.match(muteClickMatch[1], /muted = false;\s*audio\.muted = false;\s*cancelWaveCollapse\(\);\s*play\(\);\s*render\(\);\s*return;/);
+  assert.match(muteClickMatch[1], /muted = false;\s*audio\.muted = false;\s*cancelWaveCollapse\(\);\s*prepareAudioAnalysis\(\);\s*play\(\);\s*render\(\);\s*return;/);
+  assert.match(muteClickMatch[1], /if \(!muted\) prepareAudioAnalysis\(\);\s*play\(\);/);
+});
+
+test('audio analysis is prepared inside playback gestures before media play', () => {
+  const prepareMatch = html.match(/function prepareAudioAnalysis\(\) \{([\s\S]*?)\n        \}/);
+  assert.ok(prepareMatch, 'Expected prepareAudioAnalysis function');
+  assert.match(prepareMatch[1], /ensureAudioAnalysis\(\);\s*resumeAudioAnalysis\(\);/);
+
+  const resumeMatch = html.match(/function resumeAudioAnalysis\(\) \{([\s\S]*?)\n        \}/);
+  assert.ok(resumeMatch, 'Expected resumeAudioAnalysis function');
+  assert.doesNotMatch(resumeMatch[1], /ensureAudioAnalysis\(\)/);
+  assert.match(resumeMatch[1], /if \(!waveParams\.song \|\| !waveParams\.song\.reactive \|\| !audioContext\) return;/);
+
+  assert.match(html, /if \(lyricsOpen\) \{\s*prepareAudioAnalysis\(\);\s*play\(\);\s*\}/);
 });
 
 test('volume ring renders the A/B/C sampled finalist waveforms while anthem playback is active', () => {
@@ -619,6 +633,9 @@ test('volume ring renders the A/B/C sampled finalist waveforms while anthem play
   assert.match(html, /var activePreset = tunedWavePreset\(basePreset, activeVariant\)/);
   assert.match(html, /waveAnimationFrame = window\.requestAnimationFrame\(updateWaveAnimation\)/);
   assert.match(html, /resumeAudioAnalysis\(\);\s*waveAnimationFrame = window\.requestAnimationFrame\(updateWaveAnimation\)/);
+  const syncWaveAnimationMatch = html.match(/function syncWaveAnimation\(\) \{([\s\S]*?)\n        \}/);
+  assert.ok(syncWaveAnimationMatch, 'Expected syncWaveAnimation function');
+  assert.doesNotMatch(syncWaveAnimationMatch[1], /ensureAudioAnalysis\(\)/);
   assert.match(html, /function startWaveCollapse\(\)/);
   assert.match(html, /function getWaveCollapseScale\(\)/);
   assert.match(html, /return isWavePlaying\(\) \|\| isWaveCollapsing\(\)/);
