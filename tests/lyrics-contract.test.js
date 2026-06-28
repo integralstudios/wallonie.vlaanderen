@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const faviconPath = path.join(__dirname, '..', 'favicon.svg');
+const ogImagePath = path.join(__dirname, '..', 'og-image.jpg');
 const lyricsBackgroundPath = path.join(__dirname, '..', 'lyrics-bg.jpg');
 const expectedDutchLyrics = [
   "O dierbaar België, o heilig land der vaad'ren",
@@ -403,6 +404,26 @@ test('initial flag has an SVG paint layer for measurable first contentful paint'
   assert.match(html, /\.flag-paint-black[\s\S]*fill:\s*#000000/);
   assert.match(html, /\.flag-paint-yellow[\s\S]*fill:\s*#FDDA24/);
   assert.match(html, /\.flag-paint-red[\s\S]*fill:\s*#EF3340/);
+});
+
+test('site exposes the social preview image metadata', () => {
+  const ogImage = tagWithAttribute('meta', 'property', 'og:image');
+  const ogImageSecureUrl = tagWithAttribute('meta', 'property', 'og:image:secure_url');
+  const ogImageType = tagWithAttribute('meta', 'property', 'og:image:type');
+  const ogImageWidth = tagWithAttribute('meta', 'property', 'og:image:width');
+  const ogImageHeight = tagWithAttribute('meta', 'property', 'og:image:height');
+  const twitterCard = tagWithAttribute('meta', 'name', 'twitter:card');
+  const twitterImage = tagWithAttribute('meta', 'name', 'twitter:image');
+
+  assertTagHasAttribute(ogImage, 'content', 'https://www.wallonie.vlaanderen/og-image.jpg');
+  assertTagHasAttribute(ogImageSecureUrl, 'content', 'https://www.wallonie.vlaanderen/og-image.jpg');
+  assertTagHasAttribute(ogImageType, 'content', 'image/jpeg');
+  assertTagHasAttribute(ogImageWidth, 'content', '1200');
+  assertTagHasAttribute(ogImageHeight, 'content', '630');
+  assertTagHasAttribute(twitterCard, 'content', 'summary_large_image');
+  assertTagHasAttribute(twitterImage, 'content', 'https://www.wallonie.vlaanderen/og-image.jpg');
+  assert.ok(fs.existsSync(ogImagePath), 'Expected og-image.jpg to exist');
+  assert.deepEqual([...fs.readFileSync(ogImagePath).subarray(0, 3)], [0xff, 0xd8, 0xff]);
 });
 
 test('lyrics language picker is centered on desktop and left-aligned on mobile', () => {
