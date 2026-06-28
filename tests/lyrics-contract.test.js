@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const faviconPath = path.join(__dirname, '..', 'favicon.svg');
 const lyricsBackgroundPath = path.join(__dirname, '..', 'lyrics-bg.jpg');
 const expectedDutchLyrics = [
   "O dierbaar België, o heilig land der vaad'ren",
@@ -384,8 +385,18 @@ test('site gives Safari a black document background to sample', () => {
   assert.match(html, /html,\s*body\s*\{[^}]*background-color:\s*#000000/);
 });
 
-test('lyrics language picker is center-aligned with the control buttons', () => {
+test('site exposes the SVG favicon', () => {
+  const favicon = tagWithAttribute('link', 'rel', 'icon');
+
+  assertTagHasAttribute(favicon, 'type', 'image/svg+xml');
+  assertTagHasAttribute(favicon, 'href', 'favicon.svg');
+  assert.ok(fs.existsSync(faviconPath), 'Expected favicon.svg to exist');
+  assert.match(fs.readFileSync(faviconPath, 'utf8'), /<title>favicon<\/title>/);
+});
+
+test('lyrics language picker is centered on desktop and left-aligned on mobile', () => {
   assert.match(html, /\.lyrics-language-switcher[\s\S]*bottom:\s*50px/);
+  assert.match(html, /\.lyrics-language-switcher[\s\S]*left:\s*50%/);
   assert.match(html, /\.lyrics-language-switcher[\s\S]*transform:\s*translate\(-50%, 50%\)/);
   assert.doesNotMatch(html, /\.lyrics-language-switcher[\s\S]*top:\s*28px/);
   assert.match(html, /\.lyrics-language-switcher[\s\S]*--language-underline-x:\s*0px/);
@@ -410,6 +421,8 @@ test('lyrics language picker is center-aligned with the control buttons', () => 
   assert.match(html, /\.lyrics-language-underline[\s\S]*transform:\s*translate3d\(var\(--language-underline-x\), 0, 0\)/);
   assert.match(html, /\.lyrics-language-underline[\s\S]*transition:\s*transform 0\.34s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\),\s*width 0\.34s cubic-bezier\(0\.22, 0\.61, 0\.36, 1\)/);
   assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-language-switcher[\s\S]*bottom:\s*38px/);
+  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-language-switcher[\s\S]*left:\s*20px/);
+  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-language-switcher[\s\S]*transform:\s*translate\(0, 50%\)/);
   assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-language-switcher[\s\S]*gap:\s*20px/);
   assert.match(html, /function updateLanguageUnderline\(\)/);
   assert.match(html, /document\.createRange\(\)/);
