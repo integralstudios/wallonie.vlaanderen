@@ -620,7 +620,6 @@
         var lyricsOpen = false;
         var lyricsEntranceLastWord = null;
         var selectedLanguage = 'nl';
-        var renderedLyricsLayoutKey = '';
         var hasManualLanguageSelection = false;
         var flag = document.querySelector('.flag');
         if (flag) {
@@ -687,30 +686,6 @@
             "",
             "Gesetz und König und die Freiheit hoch!",
             "Gesetz und König und die Freiheit hoch!"
-          ]
-        };
-        var MOBILE_LYRICS = {
-          nl: [
-            "O dierbaar België,",
-            "o heilig land der vaad'ren",
-            "Onze ziel en ons hart zijn u gewijd.",
-            "",
-            "Aanvaard ons kracht en het bloed van onze adren,",
-            "Wees ons doel in arbeid en in strijd.",
-            "",
-            "Bloei, o land, in eendracht niet te breken;",
-            "Wees immer u zelf en ongeknecht,",
-            "",
-            "Het woord getrouw,",
-            "dat ge onbevreesd moogt spreken:",
-            "Voor Vorst, voor Vrijheid en voor Recht.",
-            "",
-            "Het woord getrouw,",
-            "dat ge onbevreesd moogt spreken:",
-            "Voor Vorst, voor Vrijheid en voor Recht!",
-            "",
-            "Voor Vorst, voor Vrijheid en voor Recht!",
-            "Voor Vorst, voor Vrijheid en voor Recht!"
           ]
         };
         var WAVE_PRESETS = {
@@ -1161,24 +1136,8 @@
           }
         }
 
-        function usesMobileLyricsLayout(language) {
-          return language === 'nl' &&
-            window.matchMedia &&
-            window.matchMedia('(max-width: 520px)').matches;
-        }
-
-        function getLyricsLayoutKey(language) {
-          return language + (usesMobileLyricsLayout(language) ? ':mobile' : ':default');
-        }
-
-        function getLyricsLines(language) {
-          if (usesMobileLyricsLayout(language) && MOBILE_LYRICS[language]) return MOBILE_LYRICS[language];
-          return LYRICS[language];
-        }
-
         function renderLyrics() {
-          var lines = getLyricsLines(selectedLanguage);
-          renderedLyricsLayoutKey = getLyricsLayoutKey(selectedLanguage);
+          var lines = LYRICS[selectedLanguage];
           var wordIndex = 0;
           lyricsEntranceLastWord = null;
           while (lyricsTrack.firstChild) lyricsTrack.removeChild(lyricsTrack.firstChild);
@@ -1368,8 +1327,7 @@
 
         window.addEventListener('resize', function () {
           updateLanguageUnderline();
-          if (lyricsOpen && getLyricsLayoutKey(selectedLanguage) !== renderedLyricsLayoutKey) renderLyrics();
-          else requestLyricsViewportOverflowUpdate();
+          requestLyricsViewportOverflowUpdate();
         });
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(function () {

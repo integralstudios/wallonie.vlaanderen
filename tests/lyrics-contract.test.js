@@ -25,28 +25,6 @@ const expectedDutchLyrics = [
   'Voor Vorst, voor Vrijheid en voor Recht!',
   'Voor Vorst, voor Vrijheid en voor Recht!',
 ];
-const expectedDutchMobileLyrics = [
-  'O dierbaar België,',
-  "o heilig land der vaad'ren",
-  'Onze ziel en ons hart zijn u gewijd.',
-  '',
-  'Aanvaard ons kracht en het bloed van onze adren,',
-  'Wees ons doel in arbeid en in strijd.',
-  '',
-  'Bloei, o land, in eendracht niet te breken;',
-  'Wees immer u zelf en ongeknecht,',
-  '',
-  'Het woord getrouw,',
-  'dat ge onbevreesd moogt spreken:',
-  'Voor Vorst, voor Vrijheid en voor Recht.',
-  '',
-  'Het woord getrouw,',
-  'dat ge onbevreesd moogt spreken:',
-  'Voor Vorst, voor Vrijheid en voor Recht!',
-  '',
-  'Voor Vorst, voor Vrijheid en voor Recht!',
-  'Voor Vorst, voor Vrijheid en voor Recht!',
-];
 const expectedFrenchLyrics = [
   'O Belgique, ô mère chérie,',
   'À toi nos cœurs, à toi nos bras,',
@@ -626,7 +604,7 @@ test('lyrics overlay uses the shader with the provided image as fallback', () =>
   assert.match(html, /if \(hasOverflow\) lyricsViewport\.classList\.add\('has-overflow'\)/);
   assert.match(html, /else lyricsViewport\.classList\.remove\('has-overflow'\)/);
   assert.doesNotMatch(html, /classList\.toggle\('has-overflow', hasOverflow\)/);
-  assert.match(html, /window\.addEventListener\('resize', function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*if \(lyricsOpen && getLyricsLayoutKey\(selectedLanguage\) !== renderedLyricsLayoutKey\) renderLyrics\(\);[\s\S]*else requestLyricsViewportOverflowUpdate\(\);[\s\S]*\}\)/);
+  assert.match(html, /window\.addEventListener\('resize', function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*requestLyricsViewportOverflowUpdate\(\);[\s\S]*\}\)/);
   assert.doesNotMatch(html, /\.lyrics-line\.is-active/);
 });
 
@@ -934,7 +912,7 @@ test('lyrics runtime opens with the first supported browser language', () => {
   });
 });
 
-test('lyrics runtime uses a mobile-specific Dutch line layout only on mobile', () => {
+test('lyrics runtime uses the same Dutch line layout on mobile and desktop', () => {
   const desktopRuntime = createLyricsRuntime({
     language: 'nl-BE',
     languages: ['nl-BE'],
@@ -948,7 +926,7 @@ test('lyrics runtime uses a mobile-specific Dutch line layout only on mobile', (
     mobile: true,
   });
   click(mobileDutchRuntime.lyricsBtn);
-  assert.deepEqual(renderedLyrics(mobileDutchRuntime), expectedDutchMobileLyrics);
+  assert.deepEqual(renderedLyrics(mobileDutchRuntime), expectedDutchLyrics);
 
   const mobileFrenchRuntime = createLyricsRuntime({
     language: 'fr-BE',
