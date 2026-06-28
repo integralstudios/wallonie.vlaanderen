@@ -380,6 +380,10 @@ test('site asks mobile browsers to tint browser chrome black', () => {
   assertTagHasAttribute(themeColor, 'content', '#000000');
 });
 
+test('site gives Safari a black document background to sample', () => {
+  assert.match(html, /html,\s*body\s*\{[^}]*background-color:\s*#000000/);
+});
+
 test('lyrics language picker is center-aligned with the control buttons', () => {
   assert.match(html, /\.lyrics-language-switcher[\s\S]*bottom:\s*50px/);
   assert.match(html, /\.lyrics-language-switcher[\s\S]*transform:\s*translate\(-50%, 50%\)/);
