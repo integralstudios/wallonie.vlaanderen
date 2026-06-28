@@ -6,6 +6,7 @@
     <title>BELGIE - BELGIQUE - BELGIEN</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#000000">
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.2/normalize.min.css">
     <link rel="stylesheet" href="https://use.typekit.net/qsr7tur.css">
     <style media="screen">
@@ -281,6 +282,8 @@
       }
       .lyrics-viewport {
         --lyrics-viewport-fade: 24px;
+        --lyrics-viewport-fade-mid: calc(100% - 14px);
+        --lyrics-viewport-fade-soft: calc(100% - 6px);
         position: relative;
         z-index: 1;
         width: min(1000px, 100%);
@@ -291,18 +294,34 @@
       }
       .lyrics-viewport.has-overflow {
         overflow-y: auto;
-        -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--lyrics-viewport-fade)), transparent 100%);
-        mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--lyrics-viewport-fade)), transparent 100%);
+        -webkit-mask-image: linear-gradient(
+          to bottom,
+          #000 0,
+          #000 calc(100% - var(--lyrics-viewport-fade)),
+          rgba(0, 0, 0, 0.84) var(--lyrics-viewport-fade-mid),
+          rgba(0, 0, 0, 0.38) var(--lyrics-viewport-fade-soft),
+          rgba(0, 0, 0, 0.12) 100%
+        );
+        mask-image: linear-gradient(
+          to bottom,
+          #000 0,
+          #000 calc(100% - var(--lyrics-viewport-fade)),
+          rgba(0, 0, 0, 0.84) var(--lyrics-viewport-fade-mid),
+          rgba(0, 0, 0, 0.38) var(--lyrics-viewport-fade-soft),
+          rgba(0, 0, 0, 0.12) 100%
+        );
       }
       .lyrics-overlay.is-open.is-lyrics-entering .lyrics-viewport.has-overflow {
         overflow-y: hidden;
       }
       .lyrics-track {
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
         justify-content: center;
         gap: 9px;
         min-height: 100%;
+        padding-bottom: var(--lyrics-track-bottom-pad, 0);
       }
       .lyrics-overlay.is-open.is-lyrics-entering .lyrics-track {
         animation: lyricsTrackRise 0.48s cubic-bezier(0.22, 0.61, 0.36, 1) both;
@@ -321,7 +340,7 @@
         text-align: center;
       }
       .lyrics-line.is-spacer {
-        height: 32px;
+        height: 24px;
       }
       .lyrics-word {
         display: inline-block;
@@ -402,6 +421,8 @@
       @media (max-width: 820px) {
         .lyrics-viewport {
           --lyrics-viewport-fade: 6px;
+          --lyrics-viewport-fade-mid: calc(100% - 4px);
+          --lyrics-viewport-fade-soft: calc(100% - 2px);
           height: calc(100vh - 144px);
         }
       }
@@ -416,13 +437,23 @@
           right: 80px;
         }
         .lyrics-overlay {
-          padding: 76px 18px 64px;
+          padding: 40px 18px 0px;
+        }
+        .lyrics-viewport {
+          --lyrics-viewport-fade: 96px;
+          --lyrics-viewport-fade-mid: calc(100% - 56px);
+          --lyrics-viewport-fade-soft: calc(100% - 20px);
+          height: calc(100vh - 40px);
+        }
+        .lyrics-line {
+          font-size: 18px;
         }
         .lyrics-language-switcher {
           bottom: 38px;
           gap: 20px;
         }
         .lyrics-track {
+          --lyrics-track-bottom-pad: 104px;
           gap: 8px;
         }
       }
@@ -589,6 +620,7 @@
         var lyricsOpen = false;
         var lyricsEntranceLastWord = null;
         var selectedLanguage = 'nl';
+        var renderedLyricsLayoutKey = '';
         var hasManualLanguageSelection = false;
         var flag = document.querySelector('.flag');
         if (flag) {
@@ -655,6 +687,30 @@
             "",
             "Gesetz und König und die Freiheit hoch!",
             "Gesetz und König und die Freiheit hoch!"
+          ]
+        };
+        var MOBILE_LYRICS = {
+          nl: [
+            "O dierbaar België,",
+            "o heilig land der vaad'ren",
+            "Onze ziel en ons hart zijn u gewijd.",
+            "",
+            "Aanvaard ons kracht en het bloed van onze adren,",
+            "Wees ons doel in arbeid en in strijd.",
+            "",
+            "Bloei, o land, in eendracht niet te breken;",
+            "Wees immer u zelf en ongeknecht,",
+            "",
+            "Het woord getrouw,",
+            "dat ge onbevreesd moogt spreken:",
+            "Voor Vorst, voor Vrijheid en voor Recht.",
+            "",
+            "Het woord getrouw,",
+            "dat ge onbevreesd moogt spreken:",
+            "Voor Vorst, voor Vrijheid en voor Recht!",
+            "",
+            "Voor Vorst, voor Vrijheid en voor Recht!",
+            "Voor Vorst, voor Vrijheid en voor Recht!"
           ]
         };
         var WAVE_PRESETS = {
@@ -1105,8 +1161,24 @@
           }
         }
 
+        function usesMobileLyricsLayout(language) {
+          return language === 'nl' &&
+            window.matchMedia &&
+            window.matchMedia('(max-width: 520px)').matches;
+        }
+
+        function getLyricsLayoutKey(language) {
+          return language + (usesMobileLyricsLayout(language) ? ':mobile' : ':default');
+        }
+
+        function getLyricsLines(language) {
+          if (usesMobileLyricsLayout(language) && MOBILE_LYRICS[language]) return MOBILE_LYRICS[language];
+          return LYRICS[language];
+        }
+
         function renderLyrics() {
-          var lines = LYRICS[selectedLanguage];
+          var lines = getLyricsLines(selectedLanguage);
+          renderedLyricsLayoutKey = getLyricsLayoutKey(selectedLanguage);
           var wordIndex = 0;
           lyricsEntranceLastWord = null;
           while (lyricsTrack.firstChild) lyricsTrack.removeChild(lyricsTrack.firstChild);
@@ -1296,7 +1368,8 @@
 
         window.addEventListener('resize', function () {
           updateLanguageUnderline();
-          requestLyricsViewportOverflowUpdate();
+          if (lyricsOpen && getLyricsLayoutKey(selectedLanguage) !== renderedLyricsLayoutKey) renderLyrics();
+          else requestLyricsViewportOverflowUpdate();
         });
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(function () {

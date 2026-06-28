@@ -25,6 +25,28 @@ const expectedDutchLyrics = [
   'Voor Vorst, voor Vrijheid en voor Recht!',
   'Voor Vorst, voor Vrijheid en voor Recht!',
 ];
+const expectedDutchMobileLyrics = [
+  'O dierbaar België,',
+  "o heilig land der vaad'ren",
+  'Onze ziel en ons hart zijn u gewijd.',
+  '',
+  'Aanvaard ons kracht en het bloed van onze adren,',
+  'Wees ons doel in arbeid en in strijd.',
+  '',
+  'Bloei, o land, in eendracht niet te breken;',
+  'Wees immer u zelf en ongeknecht,',
+  '',
+  'Het woord getrouw,',
+  'dat ge onbevreesd moogt spreken:',
+  'Voor Vorst, voor Vrijheid en voor Recht.',
+  '',
+  'Het woord getrouw,',
+  'dat ge onbevreesd moogt spreken:',
+  'Voor Vorst, voor Vrijheid en voor Recht!',
+  '',
+  'Voor Vorst, voor Vrijheid en voor Recht!',
+  'Voor Vorst, voor Vrijheid en voor Recht!',
+];
 const expectedFrenchLyrics = [
   'O Belgique, ô mère chérie,',
   'À toi nos cœurs, à toi nos bras,',
@@ -185,6 +207,7 @@ function createFakeElement(text = '') {
 function createLyricsRuntime({
   languages,
   language,
+  mobile = false,
   protocol = 'https:',
   search = '',
   pathname = '/index.html',
@@ -286,8 +309,8 @@ function createLyricsRuntime({
     cancelAnimationFrame(id) {
       cancelledAnimationFrames.push(id);
     },
-    matchMedia() {
-      return { matches: false };
+    matchMedia(query) {
+      return { matches: mobile && query === '(max-width: 520px)' };
     },
     requestAnimationFrame(callback) {
       requestedAnimationFrames.push(callback);
@@ -371,6 +394,12 @@ test('lyrics controls and overlay shell are present', () => {
     /data-language="de"[\s\S]*>DE<\/button>\s*<button[\s\S]*data-language="fr"[\s\S]*>FR<\/button>\s*<button[\s\S]*data-language="nl"[\s\S]*>NL<\/button>/,
   );
   assert.match(html, /class="lyrics-language-underline"/);
+});
+
+test('site asks mobile browsers to tint browser chrome black', () => {
+  const themeColor = tagWithAttribute('meta', 'name', 'theme-color');
+
+  assertTagHasAttribute(themeColor, 'content', '#000000');
 });
 
 test('lyrics language picker is center-aligned with the control buttons', () => {
@@ -485,6 +514,53 @@ test('lyrics viewport only enables scrollbars after measured overflow', () => {
   assert.match(html, /\.lyrics-viewport\.has-overflow\s*\{[^}]*overflow-y:\s*auto/);
 });
 
+test('mobile lyrics overlay keeps top breathing room compact', () => {
+  const mobileOverlayMatch = html.match(
+    /@media \(max-width:\s*520px\)[\s\S]*?\.lyrics-overlay\s*\{\s*padding:\s*(\d+)px 18px (\d+)px;/,
+  );
+
+  assert.ok(mobileOverlayMatch, 'Expected mobile lyrics overlay padding');
+  assert.ok(Number(mobileOverlayMatch[1]) <= 48, 'Expected compact mobile top padding');
+  assert.equal(Number(mobileOverlayMatch[2]), 0);
+  assert.match(
+    html,
+    /@media \(max-width:\s*520px\)[\s\S]*?\.lyrics-viewport\s*\{[^}]*height:\s*calc\(100vh - 40px\)/,
+  );
+  assert.doesNotMatch(html, /@media \(max-width:\s*520px\)[\s\S]*padding:\s*76px 18px 64px/);
+});
+
+test('mobile lyrics type is slightly smaller than desktop', () => {
+  assert.match(html, /\.lyrics-line\s*\{[^}]*font:\s*400 20px\/1\.18 "mendl-serif-dusk", sans-serif/);
+  assert.match(
+    html,
+    /@media \(max-width:\s*520px\)[\s\S]*?\.lyrics-line\s*\{\s*font-size:\s*18px;\s*\}/,
+  );
+});
+
+test('mobile overflowing lyrics fade progressively behind the controls', () => {
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade:\s*24px/);
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-mid:\s*calc\(100% - 14px\)/);
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-soft:\s*calc\(100% - 6px\)/);
+  assert.match(html, /\.lyrics-track\s*\{[^}]*padding-bottom:\s*var\(--lyrics-track-bottom-pad, 0\)/);
+  assert.match(
+    html,
+    /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.84\) var\(--lyrics-viewport-fade-mid\)[\s\S]*rgba\(0, 0, 0, 0\.38\) var\(--lyrics-viewport-fade-soft\)[\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/,
+  );
+  assert.match(
+    html,
+    /\.lyrics-viewport\.has-overflow[\s\S]*mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.84\) var\(--lyrics-viewport-fade-mid\)[\s\S]*rgba\(0, 0, 0, 0\.38\) var\(--lyrics-viewport-fade-soft\)[\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/,
+  );
+  assert.match(
+    html,
+    /@media \(max-width:\s*520px\)[\s\S]*?\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade:\s*96px[\s\S]*--lyrics-viewport-fade-mid:\s*calc\(100% - 56px\)[\s\S]*--lyrics-viewport-fade-soft:\s*calc\(100% - 20px\)[\s\S]*height:\s*calc\(100vh - 40px\)/,
+  );
+  assert.match(
+    html,
+    /@media \(max-width:\s*520px\)[\s\S]*?\.lyrics-track\s*\{[^}]*--lyrics-track-bottom-pad:\s*104px/,
+  );
+  assert.doesNotMatch(html, /@media \(max-width:\s*520px\)[\s\S]*--lyrics-viewport-fade:\s*6px/);
+});
+
 test('lyrics entrance suppresses temporary Firefox transform overflow', () => {
   assert.match(
     html,
@@ -498,20 +574,26 @@ test('lyrics entrance suppresses temporary Firefox transform overflow', () => {
   assert.match(html, /lyricsTrack\.addEventListener\('animationend', finishLyricsTransition\)/);
 });
 
-test('lyrics overlay uses the provided image as a blurred background', () => {
+test('lyrics overlay uses the shader with the provided image as fallback', () => {
   assert.ok(fs.existsSync(lyricsBackgroundPath), 'Expected lyrics-bg.jpg asset');
   assert.ok(fs.statSync(lyricsBackgroundPath).size > 0, 'Expected lyrics-bg.jpg to be non-empty');
   assert.match(html, /class="lyrics-background"/);
   assert.match(html, /class="lyrics-background-image"/);
+  assert.match(html, /id="lyricsShader" class="lyrics-background-shader"/);
   assert.match(html, /class="lyrics-background-wash"/);
   assert.match(html, /\.lyrics-overlay[\s\S]*background:\s*#120f0d/);
-  assert.match(html, /\.lyrics-background-image[\s\S]*background-image:\s*url\('lyrics-bg\.jpg'\)/);
+  assert.doesNotMatch(html, /\.lyrics-background-image[\s\S]*background-image:\s*url\('lyrics-bg\.jpg'\)/);
+  assert.match(html, /background-image is set by JS only when the shader falls back/);
+  assert.match(html, /if \(imageEl\) imageEl\.style\.backgroundImage = "url\('lyrics-bg\.jpg'\)"/);
   assert.match(html, /\.lyrics-background-image[\s\S]*background-size:\s*cover/);
   assert.match(html, /\.lyrics-background-image[\s\S]*filter:\s*blur\(28px\) saturate\(1\.12\)/);
   assert.match(html, /\.lyrics-background-image[\s\S]*opacity:\s*0\.96/);
   assert.match(html, /\.lyrics-background-image[\s\S]*transform:\s*scale\(1\.08\)/);
-  assert.match(html, /\.lyrics-background-wash[\s\S]*linear-gradient\(180deg, rgba\(0, 0, 0, 0\.08\), rgba\(0, 0, 0, 0\.24\) 54%, rgba\(0, 0, 0, 0\.46\)\)/);
-  assert.match(html, /\.lyrics-background-wash[\s\S]*radial-gradient\(circle at 50% 32%, rgba\(255, 255, 255, 0\.05\), rgba\(0, 0, 0, 0\.05\) 44%, rgba\(0, 0, 0, 0\.3\) 100%\)/);
+  assert.match(html, /\.lyrics-background-wash[\s\S]*--wash-top:\s*0/);
+  assert.match(html, /\.lyrics-background-wash[\s\S]*--wash-bottom:\s*0/);
+  assert.match(html, /\.lyrics-background-wash[\s\S]*--wash-edge:\s*0/);
+  assert.match(html, /\.lyrics-background-wash[\s\S]*linear-gradient\(180deg, rgba\(0, 0, 0, var\(--wash-top\)\), rgba\(0, 0, 0, var\(--wash-bottom\)\)\)/);
+  assert.match(html, /\.lyrics-background-wash[\s\S]*radial-gradient\(circle at 50% 32%, rgba\(255, 255, 255, 0\.05\), rgba\(0, 0, 0, 0\.05\) 44%, rgba\(0, 0, 0, var\(--wash-edge\)\) 100%\)/);
   assert.doesNotMatch(html, /backdrop-filter:\s*blur\(/);
   assert.doesNotMatch(html, /-webkit-backdrop-filter:\s*blur\(/);
   assert.match(html, /prefers-reduced-motion:\s*reduce/);
@@ -521,11 +603,14 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.match(html, /\.lyrics-viewport\s*\{[^}]*overflow-y:\s*hidden/);
   assert.match(html, /\.lyrics-viewport\.has-overflow\s*\{[^}]*overflow-y:\s*auto/);
   assert.match(html, /--lyrics-viewport-fade:\s*24px/);
-  assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\(to bottom, #000 0, #000 calc\(100% - var\(--lyrics-viewport-fade\)\), transparent 100%\)/);
-  assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*mask-image:\s*linear-gradient\(to bottom, #000 0, #000 calc\(100% - var\(--lyrics-viewport-fade\)\), transparent 100%\)/);
+  assert.match(html, /--lyrics-viewport-fade-mid:\s*calc\(100% - 14px\)/);
+  assert.match(html, /--lyrics-viewport-fade-soft:\s*calc\(100% - 6px\)/);
+  assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/);
+  assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/);
   assert.match(html, /@media \(max-width:\s*820px\)[\s\S]*\.lyrics-viewport[\s\S]*--lyrics-viewport-fade:\s*6px/);
   assert.match(html, /@media \(max-width:\s*820px\)[\s\S]*\.lyrics-viewport[\s\S]*height:\s*calc\(100vh - 144px\)/);
-  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-overlay[\s\S]*padding:\s*76px 18px 64px/);
+  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-overlay[\s\S]*padding:\s*40px 18px 0px/);
+  assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-viewport[\s\S]*height:\s*calc\(100vh - 40px\)/);
   assert.doesNotMatch(html, /padding:\s*76px 18px 104px/);
   assert.doesNotMatch(html, /height:\s*calc\(100vh - 96px\)/);
   assert.match(html, /function updateLyricsViewportOverflow\(\)/);
@@ -541,7 +626,7 @@ test('lyrics overlay uses the provided image as a blurred background', () => {
   assert.match(html, /if \(hasOverflow\) lyricsViewport\.classList\.add\('has-overflow'\)/);
   assert.match(html, /else lyricsViewport\.classList\.remove\('has-overflow'\)/);
   assert.doesNotMatch(html, /classList\.toggle\('has-overflow', hasOverflow\)/);
-  assert.match(html, /window\.addEventListener\('resize', function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*requestLyricsViewportOverflowUpdate\(\);[\s\S]*\}\)/);
+  assert.match(html, /window\.addEventListener\('resize', function \(\) \{[\s\S]*updateLanguageUnderline\(\);[\s\S]*if \(lyricsOpen && getLyricsLayoutKey\(selectedLanguage\) !== renderedLyricsLayoutKey\) renderLyrics\(\);[\s\S]*else requestLyricsViewportOverflowUpdate\(\);[\s\S]*\}\)/);
   assert.doesNotMatch(html, /\.lyrics-line\.is-active/);
 });
 
@@ -556,7 +641,7 @@ test('lyrics words stagger animate in when the overlay opens', () => {
   assert.doesNotMatch(html, /\.lyrics-line\s*\{[^}]*mix-blend-mode/);
   assert.match(html, /\.lyrics-line[\s\S]*-webkit-font-smoothing:\s*antialiased/);
   assert.match(html, /\.lyrics-line[\s\S]*-moz-osx-font-smoothing:\s*grayscale/);
-  assert.match(html, /\.lyrics-line\.is-spacer[\s\S]*height:\s*32px/);
+  assert.match(html, /\.lyrics-line\.is-spacer[\s\S]*height:\s*24px/);
   assert.match(html, /\.lyrics-track[\s\S]*min-height:\s*100%/);
   assert.match(html, /\.lyrics-track[\s\S]*justify-content:\s*center/);
   assert.doesNotMatch(html, /font:\s*800 clamp/);
@@ -847,6 +932,31 @@ test('lyrics runtime opens with the first supported browser language', () => {
     assert.equal(selectedLyricsLanguage(runtime), expectedLanguage);
     assert.deepEqual(renderedLyrics(runtime), expectedLyrics);
   });
+});
+
+test('lyrics runtime uses a mobile-specific Dutch line layout only on mobile', () => {
+  const desktopRuntime = createLyricsRuntime({
+    language: 'nl-BE',
+    languages: ['nl-BE'],
+  });
+  click(desktopRuntime.lyricsBtn);
+  assert.deepEqual(renderedLyrics(desktopRuntime), expectedDutchLyrics);
+
+  const mobileDutchRuntime = createLyricsRuntime({
+    language: 'nl-BE',
+    languages: ['nl-BE'],
+    mobile: true,
+  });
+  click(mobileDutchRuntime.lyricsBtn);
+  assert.deepEqual(renderedLyrics(mobileDutchRuntime), expectedDutchMobileLyrics);
+
+  const mobileFrenchRuntime = createLyricsRuntime({
+    language: 'fr-BE',
+    languages: ['fr-BE'],
+    mobile: true,
+  });
+  click(mobileFrenchRuntime.lyricsBtn);
+  assert.deepEqual(renderedLyrics(mobileFrenchRuntime), expectedFrenchLyrics);
 });
 
 test('lyrics runtime uses a valid lang URL parameter without opening the overlay', () => {
