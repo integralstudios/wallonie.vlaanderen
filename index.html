@@ -43,6 +43,16 @@
         will-change: transform;
         animation: flag-reveal-zoom 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
       }
+      .flag-paint {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .flag-paint-black { fill: #000000; }
+      .flag-paint-yellow { fill: #FDDA24; }
+      .flag-paint-red { fill: #EF3340; }
       .flag .band {
         position: absolute;
         top: 0;
@@ -518,6 +528,11 @@
   </head>
   <body>
     <div class="flag">
+      <svg class="flag-paint" viewBox="0 0 3 1" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <rect class="flag-paint-black" x="0" y="0" width="1" height="1"></rect>
+        <rect class="flag-paint-yellow" x="1" y="0" width="1" height="1"></rect>
+        <rect class="flag-paint-red" x="2" y="0" width="1" height="1"></rect>
+      </svg>
       <div class="band black"></div>
       <div class="band yellow"></div>
       <div class="band red"></div>

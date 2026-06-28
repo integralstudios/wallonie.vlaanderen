@@ -394,6 +394,17 @@ test('site exposes the SVG favicon', () => {
   assert.match(fs.readFileSync(faviconPath, 'utf8'), /<title>favicon<\/title>/);
 });
 
+test('initial flag has an SVG paint layer for measurable first contentful paint', () => {
+  assert.match(html, /<svg class="flag-paint"[\s\S]*viewBox="0 0 3 1"[\s\S]*preserveAspectRatio="none"/);
+  assert.match(html, /<rect class="flag-paint-black" x="0" y="0" width="1" height="1"><\/rect>/);
+  assert.match(html, /<rect class="flag-paint-yellow" x="1" y="0" width="1" height="1"><\/rect>/);
+  assert.match(html, /<rect class="flag-paint-red" x="2" y="0" width="1" height="1"><\/rect>/);
+  assert.match(html, /\.flag-paint[\s\S]*position:\s*absolute/);
+  assert.match(html, /\.flag-paint-black[\s\S]*fill:\s*#000000/);
+  assert.match(html, /\.flag-paint-yellow[\s\S]*fill:\s*#FDDA24/);
+  assert.match(html, /\.flag-paint-red[\s\S]*fill:\s*#EF3340/);
+});
+
 test('lyrics language picker is centered on desktop and left-aligned on mobile', () => {
   assert.match(html, /\.lyrics-language-switcher[\s\S]*bottom:\s*50px/);
   assert.match(html, /\.lyrics-language-switcher[\s\S]*left:\s*50%/);
