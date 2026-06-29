@@ -1,0 +1,22 @@
+# BELGIE - BELGIQUE - BELGIEN
+
+> Eendracht maakt macht. L’union fait la force. Einigkeit macht stark.
+
+## Canonical
+
+- [Homepage](https://www.wallonie.vlaanderen/): The canonical public page.
+
+## Language States
+
+- [Dutch](https://www.wallonie.vlaanderen/?lang=nl): Opens the site with Dutch selected.
+- [French](https://www.wallonie.vlaanderen/?lang=fr): Opens the site with French selected.
+- [German](https://www.wallonie.vlaanderen/?lang=de): Opens the site with German selected.
+- [Dutch lyrics](https://www.wallonie.vlaanderen/?lyrics=1&lang=nl): Opens the lyrics overlay in Dutch.
+- [French lyrics](https://www.wallonie.vlaanderen/?lyrics=1&lang=fr): Opens the lyrics overlay in French.
+- [German lyrics](https://www.wallonie.vlaanderen/?lyrics=1&lang=de): Opens the lyrics overlay in German.
+
+## Crawling Notes
+
+- Canonical URL: https://www.wallonie.vlaanderen/
+- Language query URLs are shareable UI states, not separate canonical pages.
+- Public AI assistants and search crawlers may reference this page.

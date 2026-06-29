@@ -13,6 +13,7 @@ const lyricsBackgroundPath = path.join(__dirname, '..', 'lyrics-bg.jpg');
 const robotsPath = path.join(__dirname, '..', 'robots.txt');
 const sitemapPath = path.join(__dirname, '..', 'sitemap.xml');
 const humansPath = path.join(__dirname, '..', 'humans.txt');
+const llmsPath = path.join(__dirname, '..', 'llms.txt');
 const expectedSocialDescription = 'Eendracht maakt macht. L’union fait la force. Einigkeit macht stark.';
 const expectedSiteTitle = 'BELGIE - BELGIQUE - BELGIEN';
 const expectedDutchLyrics = [
@@ -498,6 +499,34 @@ test('site exposes humans.txt credits without personal links', () => {
   assert.match(humans, /Pierre Van der Eecken/);
   assert.doesNotMatch(humans, /https?:\/\//);
   assert.doesNotMatch(humans, /@/);
+});
+
+test('site exposes a concise llms.txt for AI assistants', () => {
+  assert.ok(fs.existsSync(llmsPath), 'Expected llms.txt to exist');
+
+  const llms = fs.readFileSync(llmsPath, 'utf8');
+  assert.match(llms, new RegExp(`^# ${expectedSiteTitle}`, 'm'));
+  assert.match(llms, new RegExp(`^> ${expectedSocialDescription}`, 'm'));
+  assert.match(llms, /^## Canonical$/m);
+  assert.match(llms, /^## Language States$/m);
+  assert.match(llms, /^## Crawling Notes$/m);
+  assert.match(
+    llms,
+    /- \[Homepage\]\(https:\/\/www\.wallonie\.vlaanderen\/\): The canonical public page\./,
+  );
+  ['nl', 'fr', 'de'].forEach((language) => {
+    assert.match(
+      llms,
+      new RegExp(`- \\[[^\\]]+\\]\\(https://www\\.wallonie\\.vlaanderen/\\?lang=${language}\\): Opens the site with [^\\.]+ selected\\.`),
+    );
+    assert.match(
+      llms,
+      new RegExp(`- \\[[^\\]]+ lyrics\\]\\(https://www\\.wallonie\\.vlaanderen/\\?lyrics=1&lang=${language}\\): Opens the lyrics overlay in [^\\.]+\\.`),
+    );
+  });
+  assert.match(llms, /Canonical URL: https:\/\/www\.wallonie\.vlaanderen\//);
+  assert.match(llms, /Language query URLs are shareable UI states, not separate canonical pages\./);
+  assert.match(llms, /Public AI assistants and search crawlers may reference this page\./);
 });
 
 test('site exposes JSON-LD WebSite and WebPage schema', () => {
