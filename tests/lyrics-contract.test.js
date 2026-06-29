@@ -7,7 +7,10 @@ const vm = require('node:vm');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const faviconPath = path.join(__dirname, '..', 'favicon.svg');
 const ogImagePath = path.join(__dirname, '..', 'og-image.jpg');
+const anthemMp3Path = path.join(__dirname, '..', 'brabançonne.mp3');
+const anthemOggPath = path.join(__dirname, '..', 'brabançonne.ogg');
 const lyricsBackgroundPath = path.join(__dirname, '..', 'lyrics-bg.jpg');
+const expectedSocialDescription = 'Eendracht maakt macht. L’union fait la force. Einigkeit macht stark.';
 const expectedDutchLyrics = [
   "O dierbaar België, o heilig land der vaad'ren",
   'Onze ziel en ons hart zijn u gewijd.',
@@ -407,20 +410,26 @@ test('initial flag has an SVG paint layer for measurable first contentful paint'
 });
 
 test('site exposes the social preview image metadata', () => {
+  const metaDescription = tagWithAttribute('meta', 'name', 'description');
+  const ogDescription = tagWithAttribute('meta', 'property', 'og:description');
   const ogImage = tagWithAttribute('meta', 'property', 'og:image');
   const ogImageSecureUrl = tagWithAttribute('meta', 'property', 'og:image:secure_url');
   const ogImageType = tagWithAttribute('meta', 'property', 'og:image:type');
   const ogImageWidth = tagWithAttribute('meta', 'property', 'og:image:width');
   const ogImageHeight = tagWithAttribute('meta', 'property', 'og:image:height');
   const twitterCard = tagWithAttribute('meta', 'name', 'twitter:card');
+  const twitterDescription = tagWithAttribute('meta', 'name', 'twitter:description');
   const twitterImage = tagWithAttribute('meta', 'name', 'twitter:image');
 
+  assertTagHasAttribute(metaDescription, 'content', expectedSocialDescription);
+  assertTagHasAttribute(ogDescription, 'content', expectedSocialDescription);
   assertTagHasAttribute(ogImage, 'content', 'https://www.wallonie.vlaanderen/og-image.jpg');
   assertTagHasAttribute(ogImageSecureUrl, 'content', 'https://www.wallonie.vlaanderen/og-image.jpg');
   assertTagHasAttribute(ogImageType, 'content', 'image/jpeg');
   assertTagHasAttribute(ogImageWidth, 'content', '1200');
   assertTagHasAttribute(ogImageHeight, 'content', '630');
   assertTagHasAttribute(twitterCard, 'content', 'summary_large_image');
+  assertTagHasAttribute(twitterDescription, 'content', expectedSocialDescription);
   assertTagHasAttribute(twitterImage, 'content', 'https://www.wallonie.vlaanderen/og-image.jpg');
   assert.ok(fs.existsSync(ogImagePath), 'Expected og-image.jpg to exist');
   assert.deepEqual([...fs.readFileSync(ogImagePath).subarray(0, 3)], [0xff, 0xd8, 0xff]);
@@ -702,6 +711,19 @@ test('first-interaction audio guard safely ignores shared controls', () => {
     html,
     /var isControl = evt\.target && evt\.target\.closest && evt\.target\.closest\('\.control-btn'\);\s*if \(isControl\) return;\s*prepareAudioAnalysis\(\);\s*play\(\);\s*events\.forEach/s,
   );
+});
+
+test('anthem audio files use the Brabançonne filename', () => {
+  const mp3Source = tagWithAttribute('source', 'src', 'brabançonne.mp3');
+  const oggSource = tagWithAttribute('source', 'src', 'brabançonne.ogg');
+
+  assertTagHasAttribute(mp3Source, 'type', 'audio/mpeg');
+  assertTagHasAttribute(oggSource, 'type', 'audio/ogg');
+  assert.ok(fs.existsSync(anthemMp3Path), 'Expected brabançonne.mp3 to exist');
+  assert.ok(fs.existsSync(anthemOggPath), 'Expected brabançonne.ogg to exist');
+  assert.ok(!fs.existsSync(path.join(__dirname, '..', 'belgium.mp3')), 'Expected belgium.mp3 to be renamed');
+  assert.ok(!fs.existsSync(path.join(__dirname, '..', 'belgium.ogg')), 'Expected belgium.ogg to be renamed');
+  assert.doesNotMatch(html, /belgium\.(?:mp3|ogg)/);
 });
 
 test('audio control reflects autoplay blocking and retries playback on click', () => {
