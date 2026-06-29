@@ -1203,7 +1203,8 @@ test('desktop lyrics include the Brabançonne title above the sheet', () => {
   assert.match(html, /var LYRICS_TITLE = \{[\s\S]*nl:\s*'DE BRABANÇONNE'[\s\S]*fr:\s*'LA BRABANÇONNE'[\s\S]*de:\s*'DIE BRABANÇONNE'[\s\S]*\};/);
   assert.match(html, /\.lyrics-title\s*\{[^}]*font:\s*600 20px\/1\.2 "mendl-sans-dusk", sans-serif/);
   assert.match(html, /\.lyrics-title\s*\{[^}]*text-transform:\s*uppercase/);
-  assert.match(html, /\.lyrics-title\s*\{[^}]*letter-spacing:\s*0/);
+  assert.match(html, /\.lyrics-title\s*\{[^}]*letter-spacing:\s*0\.08em/);
+  assert.doesNotMatch(html, /\.lyrics-title\s*\{[^}]*letter-spacing:\s*0(?:;|\s)/);
   assert.match(html, /\.lyrics-title\s*\{[^}]*-webkit-font-smoothing:\s*antialiased/);
   assert.doesNotMatch(html, /\.lyrics-title-line/);
   assert.match(
