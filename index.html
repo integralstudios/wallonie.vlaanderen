@@ -367,10 +367,14 @@
         --lyrics-viewport-fade-top: 32px;
         --lyrics-viewport-fade-top-mid: 20px;
         --lyrics-viewport-fade-top-soft: 8px;
-        position: relative;
+        position: absolute;
+        top: 0;
+        left: max(24px, calc((100% - 1000px) / 2));
+        right: max(24px, calc((100% - 1000px) / 2));
+        bottom: 0;
         z-index: 1;
-        width: min(1000px, 100%);
-        height: 100vh;
+        width: auto;
+        height: auto;
         overflow-y: hidden;
         overscroll-behavior: contain;
         scrollbar-width: thin;
@@ -409,7 +413,7 @@
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         gap: 9px;
         min-height: 100%;
         padding-top: var(--lyrics-track-top-pad, 0);
@@ -527,7 +531,8 @@
           --lyrics-viewport-fade: 96px;
           --lyrics-viewport-fade-mid: calc(100% - 56px);
           --lyrics-viewport-fade-soft: calc(100% - 20px);
-          height: 100vh;
+          left: 18px;
+          right: 18px;
         }
         .lyrics-line {
           font-size: 18px;
