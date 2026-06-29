@@ -723,11 +723,14 @@ test('mobile lyrics type is slightly smaller than desktop', () => {
   );
 });
 
-test('mobile overflowing lyrics fade progressively behind the controls', () => {
-  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade:\s*24px/);
-  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-mid:\s*calc\(100% - 14px\)/);
-  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-soft:\s*calc\(100% - 6px\)/);
+test('overflowing lyrics fade progressively behind controls on desktop and mobile', () => {
+  assert.match(html, /\.lyrics-overlay[\s\S]*padding:\s*72px 24px 0/);
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade:\s*96px/);
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-mid:\s*calc\(100% - 56px\)/);
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-soft:\s*calc\(100% - 20px\)/);
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*height:\s*calc\(100vh - 72px\)/);
   assert.match(html, /\.lyrics-track\s*\{[^}]*padding-bottom:\s*var\(--lyrics-track-bottom-pad, 0\)/);
+  assert.match(html, /\.lyrics-track\s*\{[^}]*--lyrics-track-bottom-pad:\s*104px/);
   assert.match(
     html,
     /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.84\) var\(--lyrics-viewport-fade-mid\)[\s\S]*rgba\(0, 0, 0, 0\.38\) var\(--lyrics-viewport-fade-soft\)[\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/,
@@ -745,6 +748,7 @@ test('mobile overflowing lyrics fade progressively behind the controls', () => {
     /@media \(max-width:\s*520px\)[\s\S]*?\.lyrics-track\s*\{[^}]*--lyrics-track-bottom-pad:\s*104px/,
   );
   assert.doesNotMatch(html, /@media \(max-width:\s*520px\)[\s\S]*--lyrics-viewport-fade:\s*6px/);
+  assert.doesNotMatch(html, /@media \(max-width:\s*820px\)[\s\S]*--lyrics-viewport-fade:\s*6px/);
 });
 
 test('lyrics entrance suppresses temporary Firefox transform overflow', () => {
@@ -784,17 +788,16 @@ test('lyrics overlay uses the shader with the provided image as fallback', () =>
   assert.doesNotMatch(html, /-webkit-backdrop-filter:\s*blur\(/);
   assert.match(html, /prefers-reduced-motion:\s*reduce/);
   assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-background-image/);
-  assert.match(html, /\.lyrics-overlay[\s\S]*padding:\s*72px 24px 72px/);
-  assert.match(html, /\.lyrics-viewport[\s\S]*height:\s*calc\(100vh - 144px\)/);
+  assert.match(html, /\.lyrics-overlay[\s\S]*padding:\s*72px 24px 0/);
+  assert.match(html, /\.lyrics-viewport[\s\S]*height:\s*calc\(100vh - 72px\)/);
   assert.match(html, /\.lyrics-viewport\s*\{[^}]*overflow-y:\s*hidden/);
   assert.match(html, /\.lyrics-viewport\.has-overflow\s*\{[^}]*overflow-y:\s*auto/);
-  assert.match(html, /--lyrics-viewport-fade:\s*24px/);
-  assert.match(html, /--lyrics-viewport-fade-mid:\s*calc\(100% - 14px\)/);
-  assert.match(html, /--lyrics-viewport-fade-soft:\s*calc\(100% - 6px\)/);
+  assert.match(html, /--lyrics-viewport-fade:\s*96px/);
+  assert.match(html, /--lyrics-viewport-fade-mid:\s*calc\(100% - 56px\)/);
+  assert.match(html, /--lyrics-viewport-fade-soft:\s*calc\(100% - 20px\)/);
   assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/);
   assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/);
-  assert.match(html, /@media \(max-width:\s*820px\)[\s\S]*\.lyrics-viewport[\s\S]*--lyrics-viewport-fade:\s*6px/);
-  assert.match(html, /@media \(max-width:\s*820px\)[\s\S]*\.lyrics-viewport[\s\S]*height:\s*calc\(100vh - 144px\)/);
+  assert.doesNotMatch(html, /@media \(max-width:\s*820px\)[\s\S]*\.lyrics-viewport[\s\S]*--lyrics-viewport-fade:\s*6px/);
   assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-overlay[\s\S]*padding:\s*40px 18px 0px/);
   assert.match(html, /@media \(max-width:\s*520px\)[\s\S]*\.lyrics-viewport[\s\S]*height:\s*calc\(100vh - 40px\)/);
   assert.doesNotMatch(html, /padding:\s*76px 18px 104px/);
