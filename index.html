@@ -425,6 +425,20 @@
       .lyrics-overlay.is-open.is-language-switching .lyrics-track {
         animation: lyricsLanguageSwitch 0.56s cubic-bezier(0.22, 0.61, 0.36, 1) both;
       }
+      .lyrics-title {
+        margin: 0 0 34px;
+        color: #ffffff;
+        font: 600 20px/1.2 "mendl-sans-dusk", sans-serif;
+        font-style: normal;
+        letter-spacing: 0;
+        text-align: center;
+        text-transform: uppercase;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .lyrics-title-line {
+        display: block;
+      }
       .lyrics-line {
         margin: 0;
         color: #ffffff;
@@ -536,6 +550,9 @@
         }
         .lyrics-line {
           font-size: 18px;
+        }
+        .lyrics-title {
+          display: none;
         }
         .lyrics-language-switcher {
           bottom: 38px;
@@ -729,6 +746,7 @@
             if (black) black.style.willChange = 'auto';
           }, { once: true });
         }
+        var LYRICS_TITLE = ['DE BRABANÇONNE', 'LA BRABANÇONNE', 'DIE BRABANÇONNE'];
         var LYRICS = {
           nl: [
             "O dierbaar België, o heilig land der vaad'ren",
@@ -1241,6 +1259,16 @@
           var wordIndex = 0;
           lyricsEntranceLastWord = null;
           while (lyricsTrack.firstChild) lyricsTrack.removeChild(lyricsTrack.firstChild);
+          var titleNode = document.createElement('div');
+          titleNode.className = 'lyrics-title';
+          titleNode.setAttribute('aria-hidden', 'true');
+          LYRICS_TITLE.forEach(function (titleLine) {
+            var titleLineNode = document.createElement('span');
+            titleLineNode.className = 'lyrics-title-line';
+            titleLineNode.textContent = titleLine;
+            titleNode.appendChild(titleLineNode);
+          });
+          lyricsTrack.appendChild(titleNode);
           lines.forEach(function (line, index) {
             var lineNode = document.createElement('p');
             lineNode.className = 'lyrics-line';

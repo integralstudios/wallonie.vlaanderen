@@ -16,6 +16,7 @@ const humansPath = path.join(__dirname, '..', 'humans.txt');
 const llmsPath = path.join(__dirname, '..', 'llms.txt');
 const expectedSocialDescription = 'Eendracht maakt macht. L’union fait la force. Einigkeit macht stark.';
 const expectedSiteTitle = 'BELGIË - BELGIQUE - BELGIEN';
+const expectedLyricsTitle = ['DE BRABANÇONNE', 'LA BRABANÇONNE', 'DIE BRABANÇONNE'];
 const expectedDutchLyrics = [
   "O dierbaar België, o heilig land der vaad'ren",
   'Onze ziel en ons hart zijn u gewijd.',
@@ -350,7 +351,15 @@ function selectedLyricsLanguage(runtime) {
 }
 
 function renderedLyrics(runtime) {
-  return runtime.lyricsTrack.children.map((line) => line.textContent);
+  return runtime.lyricsTrack.children
+    .filter((line) => /\blyrics-line\b/.test(line.className))
+    .map((line) => line.textContent);
+}
+
+function renderedLyricsTitle(runtime) {
+  const title = runtime.lyricsTrack.children.find((child) => /\blyrics-title\b/.test(child.className));
+  assert.ok(title, 'Expected rendered lyrics title');
+  return title.children.map((line) => line.textContent);
 }
 
 function lastReplacedUrl(runtime) {
@@ -1184,6 +1193,31 @@ test('lyrics runtime uses the same Dutch line layout on mobile and desktop', () 
   });
   click(mobileFrenchRuntime.lyricsBtn);
   assert.deepEqual(renderedLyrics(mobileFrenchRuntime), expectedFrenchLyrics);
+});
+
+test('desktop lyrics include the Brabançonne title above the sheet', () => {
+  assert.match(html, /var LYRICS_TITLE = \[\s*'DE BRABANÇONNE',\s*'LA BRABANÇONNE',\s*'DIE BRABANÇONNE'\s*\];/);
+  assert.match(html, /\.lyrics-title\s*\{[^}]*font:\s*600 20px\/1\.2 "mendl-sans-dusk", sans-serif/);
+  assert.match(html, /\.lyrics-title\s*\{[^}]*text-transform:\s*uppercase/);
+  assert.match(html, /\.lyrics-title\s*\{[^}]*letter-spacing:\s*0/);
+  assert.match(html, /\.lyrics-title\s*\{[^}]*-webkit-font-smoothing:\s*antialiased/);
+  assert.match(html, /\.lyrics-title-line\s*\{[^}]*display:\s*block/);
+  assert.match(
+    html,
+    /@media \(max-width:\s*520px\)[\s\S]*?\.lyrics-title\s*\{[^}]*display:\s*none/,
+  );
+
+  const runtime = createLyricsRuntime({
+    language: 'nl-BE',
+    languages: ['nl-BE'],
+  });
+  click(runtime.lyricsBtn);
+
+  assert.deepEqual(renderedLyricsTitle(runtime), expectedLyricsTitle);
+  const titleIndex = runtime.lyricsTrack.children.findIndex((child) => /\blyrics-title\b/.test(child.className));
+  const firstLyricIndex = runtime.lyricsTrack.children.findIndex((child) => /\blyrics-line\b/.test(child.className));
+  assert.ok(titleIndex >= 0 && firstLyricIndex > titleIndex, 'Expected title before lyric lines');
+  assert.deepEqual(renderedLyrics(runtime), expectedDutchLyrics);
 });
 
 test('lyrics runtime uses a valid lang URL parameter without opening the overlay', () => {
