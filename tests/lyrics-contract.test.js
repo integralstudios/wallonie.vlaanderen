@@ -14,6 +14,7 @@ const robotsPath = path.join(__dirname, '..', 'robots.txt');
 const sitemapPath = path.join(__dirname, '..', 'sitemap.xml');
 const humansPath = path.join(__dirname, '..', 'humans.txt');
 const expectedSocialDescription = 'Eendracht maakt macht. L’union fait la force. Einigkeit macht stark.';
+const expectedSiteTitle = 'BELGIE - BELGIQUE - BELGIEN';
 const expectedDutchLyrics = [
   "O dierbaar België, o heilig land der vaad'ren",
   'Onze ziel en ons hart zijn u gewijd.',
@@ -396,7 +397,7 @@ test('site exposes one visually hidden H1', () => {
   const h1Matches = [...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/g)];
 
   assert.equal(h1Matches.length, 1);
-  assert.equal(h1Matches[0][1].trim(), 'BELGIE - BELGIQUE - BELGIEN');
+  assert.equal(h1Matches[0][1].trim(), expectedSiteTitle);
   assertTagHasClass(h1Matches[0][0], 'visually-hidden');
 
   const hiddenRule = html.match(/\.visually-hidden\s*\{([\s\S]*?)\}/);
@@ -408,6 +409,22 @@ test('site exposes one visually hidden H1', () => {
   assert.match(hiddenRule[1], /clip-path:\s*inset\(50%\)/);
   assert.doesNotMatch(hiddenRule[1], /display:\s*none/);
   assert.doesNotMatch(hiddenRule[1], /visibility:\s*hidden/);
+});
+
+test('site exposes default language, canonical URL, and main landmark', () => {
+  const htmlTag = tagWithAttribute('html', 'lang', 'nl-BE');
+  const canonical = tagWithAttribute('link', 'rel', 'canonical');
+  const mainMatches = [...html.matchAll(/<main\b[^>]*>([\s\S]*?)<\/main>/g)];
+
+  assertTagHasAttribute(htmlTag, 'lang', 'nl-BE');
+  assertTagHasAttribute(canonical, 'href', 'https://www.wallonie.vlaanderen/');
+  assert.equal(mainMatches.length, 1);
+  assert.match(mainMatches[0][1], /<h1\b[^>]*>BELGIE - BELGIQUE - BELGIEN<\/h1>/);
+  assert.match(mainMatches[0][1], /<div class="flag">/);
+  assert.match(mainMatches[0][1], /<audio id="anthem"/);
+  assert.match(mainMatches[0][1], /<button id="muteBtn"/);
+  assert.match(mainMatches[0][1], /<button id="lyricsBtn"/);
+  assert.match(mainMatches[0][1], /<section id="lyricsOverlay"/);
 });
 
 test('site exposes the SVG favicon', () => {
@@ -439,6 +456,7 @@ test('site exposes the social preview image metadata', () => {
   const ogImageWidth = tagWithAttribute('meta', 'property', 'og:image:width');
   const ogImageHeight = tagWithAttribute('meta', 'property', 'og:image:height');
   const twitterCard = tagWithAttribute('meta', 'name', 'twitter:card');
+  const twitterTitle = tagWithAttribute('meta', 'name', 'twitter:title');
   const twitterDescription = tagWithAttribute('meta', 'name', 'twitter:description');
   const twitterImage = tagWithAttribute('meta', 'name', 'twitter:image');
 
@@ -450,6 +468,7 @@ test('site exposes the social preview image metadata', () => {
   assertTagHasAttribute(ogImageWidth, 'content', '1200');
   assertTagHasAttribute(ogImageHeight, 'content', '630');
   assertTagHasAttribute(twitterCard, 'content', 'summary_large_image');
+  assertTagHasAttribute(twitterTitle, 'content', expectedSiteTitle);
   assertTagHasAttribute(twitterDescription, 'content', expectedSocialDescription);
   assertTagHasAttribute(twitterImage, 'content', 'https://www.wallonie.vlaanderen/og-image.jpg');
   assert.ok(fs.existsSync(ogImagePath), 'Expected og-image.jpg to exist');
@@ -493,7 +512,7 @@ test('site exposes JSON-LD WebSite and WebPage schema', () => {
   const webpage = schema['@graph'].find((node) => node['@type'] === 'WebPage');
   assert.ok(website, 'Expected WebSite schema node');
   assert.ok(webpage, 'Expected WebPage schema node');
-  assert.equal(website.name, 'BELGIE - BELGIQUE - BELGIEN');
+  assert.equal(website.name, expectedSiteTitle);
   assert.equal(website.url, 'https://www.wallonie.vlaanderen/');
   assert.deepEqual(website.inLanguage, ['nl-BE', 'fr-BE', 'de-BE']);
   assert.equal(webpage.description, expectedSocialDescription);
