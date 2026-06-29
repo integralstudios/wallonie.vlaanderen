@@ -503,16 +503,27 @@ test('site exposes minimal crawl files', () => {
   assert.match(sitemap, /<lastmod>2026-06-29<\/lastmod>/);
 });
 
-test('site exposes humans.txt credits without personal links', () => {
+test('site exposes humans.txt credits with personal links', () => {
   assert.ok(fs.existsSync(humansPath), 'Expected humans.txt to exist');
 
   const humans = fs.readFileSync(humansPath, 'utf8');
-  assert.match(humans, /Arthur Lambillotte/);
-  assert.match(humans, /Pierre Van der Eecken/);
+  assert.match(humans, /^\/\* TEAM \*\/$/m);
+  assert.match(humans, /^Arthur Lambillotte$/m);
+  assert.match(humans, /^Pierre Van der Eecken$/m);
+  assert.match(humans, /^\/\* LINKS \*\/$/m);
+  [
+    'https://x.com/artlambi',
+    'https://www.instagram.com/artlambi/',
+    'https://artlambi.be/',
+    'https://dribbble.com/artlambi',
+    'https://www.linkedin.com/in/pierre-van-der-eecken-2045b861/',
+    'https://pierrevde.com/',
+  ].forEach((link) => {
+    assert.match(humans, new RegExp(link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  });
+  assert.doesNotMatch(humans, /Codex/);
   assert.match(humans, new RegExp(`Name: ${expectedSiteTitle}`));
   assert.doesNotMatch(humans, /Name: BELGIE - BELGIQUE - BELGIEN/);
-  assert.doesNotMatch(humans, /https?:\/\//);
-  assert.doesNotMatch(humans, /@/);
 });
 
 test('site exposes a concise llms.txt for AI assistants', () => {

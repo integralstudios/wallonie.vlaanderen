@@ -1,5 +1,17 @@
 /* TEAM */
-Website by: Arthur Lambillotte and Pierre Van der Eecken
+Arthur Lambillotte
+Pierre Van der Eecken
+
+/* LINKS */
+Arthur Lambillotte
+https://x.com/artlambi
+https://www.instagram.com/artlambi/
+https://artlambi.be/
+https://dribbble.com/artlambi
+
+Pierre Van der Eecken
+https://www.linkedin.com/in/pierre-van-der-eecken-2045b861/
+https://pierrevde.com/
 
 /* SITE */
 Name: BELGIË - BELGIQUE - BELGIEN
