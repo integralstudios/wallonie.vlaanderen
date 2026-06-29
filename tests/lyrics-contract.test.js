@@ -728,16 +728,19 @@ test('overflowing lyrics fade progressively behind controls on desktop and mobil
   assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade:\s*96px/);
   assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-mid:\s*calc\(100% - 56px\)/);
   assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-soft:\s*calc\(100% - 20px\)/);
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-top:\s*32px/);
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-top-mid:\s*20px/);
+  assert.match(html, /\.lyrics-viewport\s*\{[^}]*--lyrics-viewport-fade-top-soft:\s*8px/);
   assert.match(html, /\.lyrics-viewport\s*\{[^}]*height:\s*calc\(100vh - 72px\)/);
   assert.match(html, /\.lyrics-track\s*\{[^}]*padding-bottom:\s*var\(--lyrics-track-bottom-pad, 0\)/);
   assert.match(html, /\.lyrics-track\s*\{[^}]*--lyrics-track-bottom-pad:\s*104px/);
   assert.match(
     html,
-    /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.84\) var\(--lyrics-viewport-fade-mid\)[\s\S]*rgba\(0, 0, 0, 0\.38\) var\(--lyrics-viewport-fade-soft\)[\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/,
+    /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.12\) 0[\s\S]*rgba\(0, 0, 0, 0\.38\) var\(--lyrics-viewport-fade-top-soft\)[\s\S]*rgba\(0, 0, 0, 0\.84\) var\(--lyrics-viewport-fade-top-mid\)[\s\S]*#000 var\(--lyrics-viewport-fade-top\)[\s\S]*rgba\(0, 0, 0, 0\.84\) var\(--lyrics-viewport-fade-mid\)[\s\S]*rgba\(0, 0, 0, 0\.38\) var\(--lyrics-viewport-fade-soft\)[\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/,
   );
   assert.match(
     html,
-    /\.lyrics-viewport\.has-overflow[\s\S]*mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.84\) var\(--lyrics-viewport-fade-mid\)[\s\S]*rgba\(0, 0, 0, 0\.38\) var\(--lyrics-viewport-fade-soft\)[\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/,
+    /\.lyrics-viewport\.has-overflow[\s\S]*mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.12\) 0[\s\S]*rgba\(0, 0, 0, 0\.38\) var\(--lyrics-viewport-fade-top-soft\)[\s\S]*rgba\(0, 0, 0, 0\.84\) var\(--lyrics-viewport-fade-top-mid\)[\s\S]*#000 var\(--lyrics-viewport-fade-top\)[\s\S]*rgba\(0, 0, 0, 0\.84\) var\(--lyrics-viewport-fade-mid\)[\s\S]*rgba\(0, 0, 0, 0\.38\) var\(--lyrics-viewport-fade-soft\)[\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/,
   );
   assert.match(
     html,
@@ -795,6 +798,9 @@ test('lyrics overlay uses the shader with the provided image as fallback', () =>
   assert.match(html, /--lyrics-viewport-fade:\s*96px/);
   assert.match(html, /--lyrics-viewport-fade-mid:\s*calc\(100% - 56px\)/);
   assert.match(html, /--lyrics-viewport-fade-soft:\s*calc\(100% - 20px\)/);
+  assert.match(html, /--lyrics-viewport-fade-top:\s*32px/);
+  assert.match(html, /--lyrics-viewport-fade-top-mid:\s*20px/);
+  assert.match(html, /--lyrics-viewport-fade-top-soft:\s*8px/);
   assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*-webkit-mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/);
   assert.match(html, /\.lyrics-viewport\.has-overflow[\s\S]*mask-image:\s*linear-gradient\([\s\S]*rgba\(0, 0, 0, 0\.12\) 100%/);
   assert.doesNotMatch(html, /@media \(max-width:\s*820px\)[\s\S]*\.lyrics-viewport[\s\S]*--lyrics-viewport-fade:\s*6px/);

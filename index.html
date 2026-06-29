@@ -364,6 +364,9 @@
         --lyrics-viewport-fade: 96px;
         --lyrics-viewport-fade-mid: calc(100% - 56px);
         --lyrics-viewport-fade-soft: calc(100% - 20px);
+        --lyrics-viewport-fade-top: 32px;
+        --lyrics-viewport-fade-top-mid: 20px;
+        --lyrics-viewport-fade-top-soft: 8px;
         position: relative;
         z-index: 1;
         width: min(1000px, 100%);
@@ -376,7 +379,10 @@
         overflow-y: auto;
         -webkit-mask-image: linear-gradient(
           to bottom,
-          #000 0,
+          rgba(0, 0, 0, 0.12) 0,
+          rgba(0, 0, 0, 0.38) var(--lyrics-viewport-fade-top-soft),
+          rgba(0, 0, 0, 0.84) var(--lyrics-viewport-fade-top-mid),
+          #000 var(--lyrics-viewport-fade-top),
           #000 calc(100% - var(--lyrics-viewport-fade)),
           rgba(0, 0, 0, 0.84) var(--lyrics-viewport-fade-mid),
           rgba(0, 0, 0, 0.38) var(--lyrics-viewport-fade-soft),
@@ -384,7 +390,10 @@
         );
         mask-image: linear-gradient(
           to bottom,
-          #000 0,
+          rgba(0, 0, 0, 0.12) 0,
+          rgba(0, 0, 0, 0.38) var(--lyrics-viewport-fade-top-soft),
+          rgba(0, 0, 0, 0.84) var(--lyrics-viewport-fade-top-mid),
+          #000 var(--lyrics-viewport-fade-top),
           #000 calc(100% - var(--lyrics-viewport-fade)),
           rgba(0, 0, 0, 0.84) var(--lyrics-viewport-fade-mid),
           rgba(0, 0, 0, 0.38) var(--lyrics-viewport-fade-soft),
