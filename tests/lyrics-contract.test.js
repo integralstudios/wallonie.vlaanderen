@@ -16,7 +16,11 @@ const humansPath = path.join(__dirname, '..', 'humans.txt');
 const llmsPath = path.join(__dirname, '..', 'llms.txt');
 const expectedSocialDescription = 'Eendracht maakt macht. L’union fait la force. Einigkeit macht stark.';
 const expectedSiteTitle = 'BELGIË - BELGIQUE - BELGIEN';
-const expectedLyricsTitle = ['DE BRABANÇONNE', 'LA BRABANÇONNE', 'DIE BRABANÇONNE'];
+const expectedLyricsTitle = {
+  nl: 'DE BRABANÇONNE',
+  fr: 'LA BRABANÇONNE',
+  de: 'DIE BRABANÇONNE',
+};
 const expectedDutchLyrics = [
   "O dierbaar België, o heilig land der vaad'ren",
   'Onze ziel en ons hart zijn u gewijd.',
@@ -359,7 +363,7 @@ function renderedLyrics(runtime) {
 function renderedLyricsTitle(runtime) {
   const title = runtime.lyricsTrack.children.find((child) => /\blyrics-title\b/.test(child.className));
   assert.ok(title, 'Expected rendered lyrics title');
-  return title.children.map((line) => line.textContent);
+  return title.textContent;
 }
 
 function lastReplacedUrl(runtime) {
@@ -1196,12 +1200,12 @@ test('lyrics runtime uses the same Dutch line layout on mobile and desktop', () 
 });
 
 test('desktop lyrics include the Brabançonne title above the sheet', () => {
-  assert.match(html, /var LYRICS_TITLE = \[\s*'DE BRABANÇONNE',\s*'LA BRABANÇONNE',\s*'DIE BRABANÇONNE'\s*\];/);
+  assert.match(html, /var LYRICS_TITLE = \{[\s\S]*nl:\s*'DE BRABANÇONNE'[\s\S]*fr:\s*'LA BRABANÇONNE'[\s\S]*de:\s*'DIE BRABANÇONNE'[\s\S]*\};/);
   assert.match(html, /\.lyrics-title\s*\{[^}]*font:\s*600 20px\/1\.2 "mendl-sans-dusk", sans-serif/);
   assert.match(html, /\.lyrics-title\s*\{[^}]*text-transform:\s*uppercase/);
   assert.match(html, /\.lyrics-title\s*\{[^}]*letter-spacing:\s*0/);
   assert.match(html, /\.lyrics-title\s*\{[^}]*-webkit-font-smoothing:\s*antialiased/);
-  assert.match(html, /\.lyrics-title-line\s*\{[^}]*display:\s*block/);
+  assert.doesNotMatch(html, /\.lyrics-title-line/);
   assert.match(
     html,
     /@media \(max-width:\s*520px\)[\s\S]*?\.lyrics-title\s*\{[^}]*display:\s*none/,
@@ -1213,11 +1217,25 @@ test('desktop lyrics include the Brabançonne title above the sheet', () => {
   });
   click(runtime.lyricsBtn);
 
-  assert.deepEqual(renderedLyricsTitle(runtime), expectedLyricsTitle);
+  assert.equal(renderedLyricsTitle(runtime), expectedLyricsTitle.nl);
   const titleIndex = runtime.lyricsTrack.children.findIndex((child) => /\blyrics-title\b/.test(child.className));
   const firstLyricIndex = runtime.lyricsTrack.children.findIndex((child) => /\blyrics-line\b/.test(child.className));
   assert.ok(titleIndex >= 0 && firstLyricIndex > titleIndex, 'Expected title before lyric lines');
   assert.deepEqual(renderedLyrics(runtime), expectedDutchLyrics);
+
+  const frenchButton = runtime.languageButtons.find(
+    (button) => button.getAttribute('data-language') === 'fr',
+  );
+  click(frenchButton);
+  assert.equal(renderedLyricsTitle(runtime), expectedLyricsTitle.fr);
+  assert.deepEqual(renderedLyrics(runtime), expectedFrenchLyrics);
+
+  const germanButton = runtime.languageButtons.find(
+    (button) => button.getAttribute('data-language') === 'de',
+  );
+  click(germanButton);
+  assert.equal(renderedLyricsTitle(runtime), expectedLyricsTitle.de);
+  assert.deepEqual(renderedLyrics(runtime), expectedGermanLyrics);
 });
 
 test('lyrics runtime uses a valid lang URL parameter without opening the overlay', () => {

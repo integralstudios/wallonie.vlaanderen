@@ -436,9 +436,6 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
-      .lyrics-title-line {
-        display: block;
-      }
       .lyrics-line {
         margin: 0;
         color: #ffffff;
@@ -746,7 +743,11 @@
             if (black) black.style.willChange = 'auto';
           }, { once: true });
         }
-        var LYRICS_TITLE = ['DE BRABANÇONNE', 'LA BRABANÇONNE', 'DIE BRABANÇONNE'];
+        var LYRICS_TITLE = {
+          nl: 'DE BRABANÇONNE',
+          fr: 'LA BRABANÇONNE',
+          de: 'DIE BRABANÇONNE'
+        };
         var LYRICS = {
           nl: [
             "O dierbaar België, o heilig land der vaad'ren",
@@ -1262,12 +1263,7 @@
           var titleNode = document.createElement('div');
           titleNode.className = 'lyrics-title';
           titleNode.setAttribute('aria-hidden', 'true');
-          LYRICS_TITLE.forEach(function (titleLine) {
-            var titleLineNode = document.createElement('span');
-            titleLineNode.className = 'lyrics-title-line';
-            titleLineNode.textContent = titleLine;
-            titleNode.appendChild(titleLineNode);
-          });
+          titleNode.textContent = LYRICS_TITLE[selectedLanguage] || LYRICS_TITLE.nl;
           lyricsTrack.appendChild(titleNode);
           lines.forEach(function (line, index) {
             var lineNode = document.createElement('p');
