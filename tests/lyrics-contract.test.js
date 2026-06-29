@@ -15,7 +15,7 @@ const sitemapPath = path.join(__dirname, '..', 'sitemap.xml');
 const humansPath = path.join(__dirname, '..', 'humans.txt');
 const llmsPath = path.join(__dirname, '..', 'llms.txt');
 const expectedSocialDescription = 'Eendracht maakt macht. L’union fait la force. Einigkeit macht stark.';
-const expectedSiteTitle = 'BELGIE - BELGIQUE - BELGIEN';
+const expectedSiteTitle = 'BELGIË - BELGIQUE - BELGIEN';
 const expectedDutchLyrics = [
   "O dierbaar België, o heilig land der vaad'ren",
   'Onze ziel en ons hart zijn u gewijd.',
@@ -394,6 +394,18 @@ test('site gives Safari a black document background to sample', () => {
   assert.match(html, /html,\s*body\s*\{[^}]*background-color:\s*#000000/);
 });
 
+test('site exposes the accented Belgian title in SEO metadata', () => {
+  const titleMatch = html.match(/<title>([\s\S]*?)<\/title>/);
+  const ogTitle = tagWithAttribute('meta', 'property', 'og:title');
+  const twitterTitle = tagWithAttribute('meta', 'name', 'twitter:title');
+
+  assert.ok(titleMatch, 'Expected document title');
+  assert.equal(titleMatch[1], expectedSiteTitle);
+  assertTagHasAttribute(ogTitle, 'content', expectedSiteTitle);
+  assertTagHasAttribute(twitterTitle, 'content', expectedSiteTitle);
+  assert.doesNotMatch(html, /BELGIE - BELGIQUE - BELGIEN/);
+});
+
 test('site exposes one visually hidden H1', () => {
   const h1Matches = [...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/g)];
 
@@ -420,7 +432,7 @@ test('site exposes default language, canonical URL, and main landmark', () => {
   assertTagHasAttribute(htmlTag, 'lang', 'nl-BE');
   assertTagHasAttribute(canonical, 'href', 'https://www.wallonie.vlaanderen/');
   assert.equal(mainMatches.length, 1);
-  assert.match(mainMatches[0][1], /<h1\b[^>]*>BELGIE - BELGIQUE - BELGIEN<\/h1>/);
+  assert.match(mainMatches[0][1], /<h1\b[^>]*>BELGIË - BELGIQUE - BELGIEN<\/h1>/);
   assert.match(mainMatches[0][1], /<div class="flag">/);
   assert.match(mainMatches[0][1], /<audio id="anthem"/);
   assert.match(mainMatches[0][1], /<button id="muteBtn"/);
@@ -497,6 +509,8 @@ test('site exposes humans.txt credits without personal links', () => {
   const humans = fs.readFileSync(humansPath, 'utf8');
   assert.match(humans, /Arthur Lambillotte/);
   assert.match(humans, /Pierre Van der Eecken/);
+  assert.match(humans, new RegExp(`Name: ${expectedSiteTitle}`));
+  assert.doesNotMatch(humans, /Name: BELGIE - BELGIQUE - BELGIEN/);
   assert.doesNotMatch(humans, /https?:\/\//);
   assert.doesNotMatch(humans, /@/);
 });
@@ -506,6 +520,7 @@ test('site exposes a concise llms.txt for AI assistants', () => {
 
   const llms = fs.readFileSync(llmsPath, 'utf8');
   assert.match(llms, new RegExp(`^# ${expectedSiteTitle}`, 'm'));
+  assert.doesNotMatch(llms, /^# BELGIE - BELGIQUE - BELGIEN$/m);
   assert.match(llms, new RegExp(`^> ${expectedSocialDescription}`, 'm'));
   assert.match(llms, /^## Canonical$/m);
   assert.match(llms, /^## Language States$/m);

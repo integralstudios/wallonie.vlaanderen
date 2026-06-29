@@ -2,5 +2,5 @@
 Website by: Arthur Lambillotte and Pierre Van der Eecken
 
 /* SITE */
-Name: BELGIE - BELGIQUE - BELGIEN
+Name: BELGIË - BELGIQUE - BELGIEN
 Domain: wallonie.vlaanderen
