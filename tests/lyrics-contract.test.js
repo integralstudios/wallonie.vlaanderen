@@ -10,6 +10,9 @@ const ogImagePath = path.join(__dirname, '..', 'og-image.jpg');
 const anthemMp3Path = path.join(__dirname, '..', 'brabançonne.mp3');
 const anthemOggPath = path.join(__dirname, '..', 'brabançonne.ogg');
 const lyricsBackgroundPath = path.join(__dirname, '..', 'lyrics-bg.jpg');
+const robotsPath = path.join(__dirname, '..', 'robots.txt');
+const sitemapPath = path.join(__dirname, '..', 'sitemap.xml');
+const humansPath = path.join(__dirname, '..', 'humans.txt');
 const expectedSocialDescription = 'Eendracht maakt macht. L’union fait la force. Einigkeit macht stark.';
 const expectedDutchLyrics = [
   "O dierbaar België, o heilig land der vaad'ren",
@@ -389,6 +392,24 @@ test('site gives Safari a black document background to sample', () => {
   assert.match(html, /html,\s*body\s*\{[^}]*background-color:\s*#000000/);
 });
 
+test('site exposes one visually hidden H1', () => {
+  const h1Matches = [...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/g)];
+
+  assert.equal(h1Matches.length, 1);
+  assert.equal(h1Matches[0][1].trim(), 'BELGIE - BELGIQUE - BELGIEN');
+  assertTagHasClass(h1Matches[0][0], 'visually-hidden');
+
+  const hiddenRule = html.match(/\.visually-hidden\s*\{([\s\S]*?)\}/);
+  assert.ok(hiddenRule, 'Expected visually-hidden CSS rule');
+  assert.match(hiddenRule[1], /position:\s*absolute/);
+  assert.match(hiddenRule[1], /width:\s*1px/);
+  assert.match(hiddenRule[1], /height:\s*1px/);
+  assert.match(hiddenRule[1], /overflow:\s*hidden/);
+  assert.match(hiddenRule[1], /clip-path:\s*inset\(50%\)/);
+  assert.doesNotMatch(hiddenRule[1], /display:\s*none/);
+  assert.doesNotMatch(hiddenRule[1], /visibility:\s*hidden/);
+});
+
 test('site exposes the SVG favicon', () => {
   const favicon = tagWithAttribute('link', 'rel', 'icon');
 
@@ -433,6 +454,55 @@ test('site exposes the social preview image metadata', () => {
   assertTagHasAttribute(twitterImage, 'content', 'https://www.wallonie.vlaanderen/og-image.jpg');
   assert.ok(fs.existsSync(ogImagePath), 'Expected og-image.jpg to exist');
   assert.deepEqual([...fs.readFileSync(ogImagePath).subarray(0, 3)], [0xff, 0xd8, 0xff]);
+});
+
+test('site exposes minimal crawl files', () => {
+  assert.ok(fs.existsSync(robotsPath), 'Expected robots.txt to exist');
+  assert.ok(fs.existsSync(sitemapPath), 'Expected sitemap.xml to exist');
+
+  const robots = fs.readFileSync(robotsPath, 'utf8');
+  assert.match(robots, /User-agent:\s*\*/);
+  assert.match(robots, /Allow:\s*\//);
+  assert.match(robots, /Sitemap:\s*https:\/\/www\.wallonie\.vlaanderen\/sitemap\.xml/);
+
+  const sitemap = fs.readFileSync(sitemapPath, 'utf8');
+  assert.match(sitemap, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(sitemap, /<loc>https:\/\/www\.wallonie\.vlaanderen\/<\/loc>/);
+  assert.match(sitemap, /<lastmod>2026-06-29<\/lastmod>/);
+});
+
+test('site exposes humans.txt credits without personal links', () => {
+  assert.ok(fs.existsSync(humansPath), 'Expected humans.txt to exist');
+
+  const humans = fs.readFileSync(humansPath, 'utf8');
+  assert.match(humans, /Arthur Lambillotte/);
+  assert.match(humans, /Pierre Van der Eecken/);
+  assert.doesNotMatch(humans, /https?:\/\//);
+  assert.doesNotMatch(humans, /@/);
+});
+
+test('site exposes JSON-LD WebSite and WebPage schema', () => {
+  const schemaMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  assert.ok(schemaMatch, 'Expected JSON-LD schema block');
+
+  const schema = JSON.parse(schemaMatch[1]);
+  assert.equal(schema['@context'], 'https://schema.org');
+  assert.ok(Array.isArray(schema['@graph']), 'Expected schema @graph');
+
+  const website = schema['@graph'].find((node) => node['@type'] === 'WebSite');
+  const webpage = schema['@graph'].find((node) => node['@type'] === 'WebPage');
+  assert.ok(website, 'Expected WebSite schema node');
+  assert.ok(webpage, 'Expected WebPage schema node');
+  assert.equal(website.name, 'BELGIE - BELGIQUE - BELGIEN');
+  assert.equal(website.url, 'https://www.wallonie.vlaanderen/');
+  assert.deepEqual(website.inLanguage, ['nl-BE', 'fr-BE', 'de-BE']);
+  assert.equal(webpage.description, expectedSocialDescription);
+  assert.equal(webpage.isPartOf['@id'], 'https://www.wallonie.vlaanderen/#website');
+  assert.equal(webpage.primaryImageOfPage.url, 'https://www.wallonie.vlaanderen/og-image.jpg');
+  assert.deepEqual(
+    webpage.creator.map((creator) => creator.name),
+    ['Arthur Lambillotte', 'Pierre Van der Eecken'],
+  );
 });
 
 test('lyrics language picker is centered on desktop and left-aligned on mobile', () => {
