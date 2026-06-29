@@ -503,7 +503,7 @@ test('site exposes minimal crawl files', () => {
   assert.match(sitemap, /<lastmod>2026-06-29<\/lastmod>/);
 });
 
-test('site exposes humans.txt credits with personal links', () => {
+test('site exposes humans.txt credits with personal and related links', () => {
   assert.ok(fs.existsSync(humansPath), 'Expected humans.txt to exist');
 
   const humans = fs.readFileSync(humansPath, 'utf8');
@@ -521,6 +521,12 @@ test('site exposes humans.txt credits with personal links', () => {
   ].forEach((link) => {
     assert.match(humans, new RegExp(link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   });
+  assert.match(humans, /^\/\* RELATED \*\/$/m);
+  assert.match(humans, /^Belgian Red Devils wallpapers$/m);
+  assert.match(
+    humans,
+    /https:\/\/artlambi\.be\/project\/belgian-red-devils-wallpapers/,
+  );
   assert.doesNotMatch(humans, /Codex/);
   assert.match(humans, new RegExp(`Name: ${expectedSiteTitle}`));
   assert.doesNotMatch(humans, /Name: BELGIE - BELGIQUE - BELGIEN/);
