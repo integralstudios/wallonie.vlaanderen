@@ -366,6 +366,23 @@ function renderedLyricsTitle(runtime) {
   return title.textContent;
 }
 
+function setLyricsViewportMetrics(runtime, { clientHeight, scrollHeight, titledScrollHeight }) {
+  Object.defineProperty(runtime.lyricsViewport, 'clientHeight', {
+    configurable: true,
+    get() {
+      return clientHeight;
+    },
+  });
+  Object.defineProperty(runtime.lyricsViewport, 'scrollHeight', {
+    configurable: true,
+    get() {
+      return /\bcan-show-mobile-title\b/.test(runtime.lyricsOverlay.className)
+        ? titledScrollHeight
+        : scrollHeight;
+    },
+  });
+}
+
 function lastReplacedUrl(runtime) {
   assert.ok(runtime.replacedUrls.length > 0, 'Expected a replaceState call');
   return new URL(runtime.replacedUrls[runtime.replacedUrls.length - 1], 'https://example.test');
@@ -1239,6 +1256,46 @@ test('desktop lyrics include the Brabançonne title above the sheet', () => {
   assert.deepEqual(renderedLyrics(runtime), expectedGermanLyrics);
 });
 
+test('mobile lyrics title appears only when the measured sheet still fits', () => {
+  assert.match(
+    html,
+    /@media \(max-width:\s*520px\)[\s\S]*?\.lyrics-title\s*\{[^}]*display:\s*none/,
+  );
+  assert.match(
+    html,
+    /@media \(max-width:\s*520px\)[\s\S]*?\.lyrics-overlay\.can-show-mobile-title\s+\.lyrics-title\s*\{[^}]*display:\s*block/,
+  );
+  assert.match(html, /function canShowMobileLyricsTitle\(\)/);
+
+  const roomyRuntime = createLyricsRuntime({
+    language: 'nl-BE',
+    languages: ['nl-BE'],
+    mobile: true,
+  });
+  setLyricsViewportMetrics(roomyRuntime, {
+    clientHeight: 520,
+    scrollHeight: 480,
+    titledScrollHeight: 520,
+  });
+  click(roomyRuntime.lyricsBtn);
+  assert.match(roomyRuntime.lyricsOverlay.className, /\bcan-show-mobile-title\b/);
+  assert.doesNotMatch(roomyRuntime.lyricsViewport.className, /\bhas-overflow\b/);
+
+  const tightRuntime = createLyricsRuntime({
+    language: 'nl-BE',
+    languages: ['nl-BE'],
+    mobile: true,
+  });
+  setLyricsViewportMetrics(tightRuntime, {
+    clientHeight: 520,
+    scrollHeight: 480,
+    titledScrollHeight: 560,
+  });
+  click(tightRuntime.lyricsBtn);
+  assert.doesNotMatch(tightRuntime.lyricsOverlay.className, /\bcan-show-mobile-title\b/);
+  assert.doesNotMatch(tightRuntime.lyricsViewport.className, /\bhas-overflow\b/);
+});
+
 test('lyrics runtime uses a valid lang URL parameter without opening the overlay', () => {
   const runtime = createLyricsRuntime({
     language: 'nl-BE',
@@ -1377,6 +1434,37 @@ test('lyrics runtime keeps entrance state until the final word animation complet
   runtime.lyricsTrack.handlers.animationend({ target: lyricWords[lyricWords.length - 1] });
   assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
   assert.match(runtime.lyricsViewport.className, /\bhas-overflow\b/);
+});
+
+test('lyrics runtime animates the sheet out before hiding the overlay', () => {
+  assert.match(html, /\.lyrics-overlay\.is-open\.is-lyrics-exiting\s*\{[^}]*opacity:\s*0/);
+  assert.match(html, /\.lyrics-overlay\.is-open\.is-lyrics-exiting\s*\{[^}]*pointer-events:\s*none/);
+  assert.match(html, /\.lyrics-overlay\.is-open\.is-lyrics-exiting \.lyrics-track[\s\S]*animation:\s*lyricsTrackExit 0\.24s cubic-bezier\(0\.33, 1, 0\.68, 1\) both/);
+  assert.match(html, /@keyframes lyricsTrackExit[\s\S]*transform:\s*translate3d\(0, 18px, 0\)/);
+  assert.match(html, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.lyrics-overlay\.is-open\.is-lyrics-exiting \.lyrics-track[\s\S]*animation:\s*none/);
+
+  const runtime = createLyricsRuntime({
+    language: 'nl-BE',
+    languages: ['nl-BE'],
+  });
+
+  click(runtime.lyricsBtn);
+  click(runtime.lyricsBtn);
+
+  assert.equal(runtime.lyricsBtn.getAttribute('aria-pressed'), 'false');
+  assert.match(runtime.lyricsOverlay.className, /\bis-open\b/);
+  assert.match(runtime.lyricsOverlay.className, /\bis-lyrics-exiting\b/);
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-lyrics-entering\b/);
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-language-switching\b/);
+  assert.equal(runtime.lyricsOverlay.getAttribute('aria-hidden'), 'false');
+  assert.equal(runtime.lyricsOverlay.getAttribute('inert'), '');
+
+  runtime.lyricsTrack.handlers.animationend({ target: runtime.lyricsTrack });
+
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-open\b/);
+  assert.doesNotMatch(runtime.lyricsOverlay.className, /\bis-lyrics-exiting\b/);
+  assert.equal(runtime.lyricsOverlay.getAttribute('aria-hidden'), 'true');
+  assert.equal(runtime.lyricsOverlay.getAttribute('inert'), '');
 });
 
 test('lyrics runtime renders text safely and restores focus before inert close', () => {
